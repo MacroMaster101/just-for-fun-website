@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JUST FOR FUN | Gaming Channel</title>
+
+  <!-- Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div class="loading-screen">
+    <div class="loading-particles">
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+    </div>
+    <div class="loading-content">
+      <div class="loading-logo">
+        <div class="logo-rings">
+          <div class="ring ring-1"></div>
+          <div class="ring ring-2"></div>
+          <div class="ring ring-3"></div>
+        </div>
+        <div class="logo-center">
+          <span class="logo-emoji">🎮</span>
+        </div>
+      </div>
+      <div class="loading-text-container">
+        <h1 class="loading-title">
+          <span class="title-word">JUST</span>
+          <span class="title-word">FOR</span>
+          <span class="title-word">FUN</span>
+        </h1>
+        <p class="loading-subtitle">Gaming Channel</p>
+      </div>
+      <div class="loading-bar-container">
+        <div class="loading-bar">
+          <div class="loading-progress"></div>
+          <div class="loading-glow"></div>
+        </div>
+        <p class="loading-status">Loading<span class="loading-dots"></span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Animated background -->
+  <div class="bg-animated"></div>
+
+  <header class="site-header">
+    <div class="logo">
+      <!-- LOGO IMAGE – create images/logo-jff.png -->
+      <div class="logo-row">
+        <img class="logo-mark" src="images/logo-jff.png" alt="JUST FOR FUN logo" onerror="this.style.display='none'">
+        <div class="logo-text">
+          <span class="logo-main">🎮 JUST FOR FUN</span>
+          <span class="logo-tagline">Gaming • Streams • Epic Moments</span>
+        </div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a href="#hero" class="nav-link">🏠 Home</a>
+      <a href="#about" class="nav-link">📖 About</a>
+      <a href="#latest" class="nav-link">🎬 Latest</a>
+      <a href="#schedule" class="nav-link">📅 Schedule</a>
+      <a href="#merch" class="nav-link">🛍️ Merch</a>
+      <a href="#socials" class="nav-link">🌐 Socials</a>
+      <a href="#contact" class="nav-link">✉️ Contact</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- HERO / SUBSCRIBE -->
+    <section id="hero" class="section hero">
+      <div class="hero-background-effects">
+        <div class="hero-gradient"></div>
+        <div class="hero-grid"></div>
+      </div>
+      
+      <div class="hero-content">
+        <div class="hero-badge hero-fade-in">
+          <span class="badge-pulse"></span>
+          <span class="badge-text">🎮 Live Gaming Channel</span>
+        </div>
+        
+        <h1 class="hero-title hero-fade-in">
+          <span class="title-line">JUST FOR</span>
+          <span class="title-line title-main">FUN</span>
+          <span class="title-subtitle">GAMING CHANNEL</span>
+        </h1>
+        
+        <p class="hero-subtitle hero-fade-in">
+          🔥 Experience <strong>high-octane gameplay</strong>, epic moments, and a community that never sleeps.
+          <br>
+          <span class="subtitle-highlight">Welcome to the ultimate gaming experience!</span>
+        </p>
+
+        <div class="hero-games hero-fade-in">
+          <span class="game-tag">🎯 Valorant</span>
+          <span class="game-tag">⚔️ Valheim</span>
+          <span class="game-tag">💥 Battlefield</span>
+          <span class="game-tag">🎮 & More</span>
+        </div>
+
+        <div class="hero-buttons hero-fade-in">
+          <a href="https://www.youtube.com/channel/UCcCp0B0bypJE4EJjwq8u2lQ?sub_confirmation=1"
+             target="_blank" class="btn btn-primary">
+            <span>🔴 Subscribe Now</span>
+            <span class="btn-shine"></span>
+          </a>
+          <a href="#latest" class="btn btn-outline">
+            <span>▶️ Watch Latest</span>
+          </a>
+        </div>
+
+        <div class="hero-stats hero-fade-in">
+          <div class="stat-item stat-glow">
+            <div class="stat-icon-wrapper">
+              <span class="stat-icon">👥</span>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value" data-stat="subscribers">1K+</span>
+              <span class="stat-label">Subscribers</span>
+            </div>
+          </div>
+          <div class="stat-item stat-glow">
+            <div class="stat-icon-wrapper">
+              <span class="stat-icon">🎬</span>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value" data-stat="videos">50+</span>
+              <span class="stat-label">Videos</span>
+            </div>
+          </div>
+          <div class="stat-item stat-glow">
+            <div class="stat-icon-wrapper">
+              <span class="stat-icon">👁️</span>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value" data-stat="views">10K+</span>
+              <span class="stat-label">Total Views</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NEXT STREAM CARD (auto-filled by JS) -->
+      <div class="stream-card hero-fade-in">
+        <div class="stream-card-glow"></div>
+        <div class="stream-badge">
+          <span class="live-dot"></span>
+          <span id="stream-status">UPCOMING</span>
+        </div>
+        <div class="stream-content">
+          <h3 class="stream-title" id="stream-title">Variety Gaming Night</h3>
+          <p class="stream-time" id="stream-time">🕐 Every Weekend • 8:00 PM</p>
+          <p class="stream-description" id="stream-note">
+            🔔 Turn on notifications to never miss the action!
+          </p>
+          <div class="stream-footer">
+            <span class="stream-platform">📺 YouTube Live</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABOUT -->
+    <section id="about" class="section section-dark">
+      <div class="section-header">
+        <h2><span class="section-icon">🎯</span> About the Channel</h2>
+        <p>🎮 Welcome to the community! Here's what makes us special.</p>
+      </div>
+
+      <div class="about-container">
+        <div class="about-hero">
+          <div class="about-hero-content">
+            <h3 class="about-title">🌟 What is <span class="text-gradient">JUST FOR FUN</span>?</h3>
+            <p class="about-lead">
+              Your go-to gaming channel for <strong>chill vibes</strong>, <strong>epic moments</strong>, and genuine entertainment.
+              No try-hard attitude, no drama — just pure gaming joy with an awesome community.
+            </p>
+            <div class="about-stats">
+              <div class="about-stat">
+                <span class="about-stat-value">🎯</span>
+                <span class="about-stat-label">FPS Games</span>
+              </div>
+              <div class="about-stat">
+                <span class="about-stat-value">⚔️</span>
+                <span class="about-stat-label">Survival</span>
+              </div>
+              <div class="about-stat">
+                <span class="about-stat-value">🤝</span>
+                <span class="about-stat-label">Co-op Fun</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="about-features">
+          <div class="feature-card">
+            <div class="feature-icon-wrapper">
+              <span class="feature-icon">🎮</span>
+            </div>
+            <div class="feature-content">
+              <h4>Main Games</h4>
+              <p>Valorant • Valheim • Battlefield • And many more exciting titles!</p>
+            </div>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon-wrapper">
+              <span class="feature-icon">💬</span>
+            </div>
+            <div class="feature-content">
+              <h4>Stream Vibe</h4>
+              <p>Chill, interactive, and community-focused. Everyone's welcome here!</p>
+            </div>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon-wrapper">
+              <span class="feature-icon">🎯</span>
+            </div>
+            <div class="feature-content">
+              <h4>Our Mission</h4>
+              <p>Build the most awesome gaming community — JUST FOR FUN!</p>
+            </div>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon-wrapper">
+              <span class="feature-icon">⚡</span>
+            </div>
+            <div class="feature-content">
+              <h4>Content Mix</h4>
+              <p>Epic gameplay, hilarious fails, clutch moments, and helpful tutorials.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LATEST VIDEOS (DYNAMIC FROM YOUTUBE API) -->
+    <section id="latest" class="section section-videos">
+      <div class="section-header">
+        <div class="section-title-wrapper">
+          <span class="section-icon">🎬</span>
+          <h2>Latest Videos</h2>
+        </div>
+        <p class="section-description">Check out the newest content and don't forget to subscribe!</p>
+      </div>
+
+      <div id="yt-videos" class="cards-grid">
+        <!-- JS will inject video cards here -->
+      </div>
+
+      <div class="section-cta">
+        <p class="schedule-note" id="yt-error" style="display:none;">
+          Couldn't load videos right now. Please try again later.
+        </p>
+        <a href="https://www.youtube.com/channel/UCcCp0B0bypJE4EJjwq8u2lQ" 
+           target="_blank" class="btn btn-outline btn-large">
+          <span>View All Videos on YouTube</span>
+          <span class="btn-icon">→</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- SCHEDULE -->
+    <section id="schedule" class="section section-schedule">
+      <div class="section-header">
+        <div class="section-title-wrapper">
+          <span class="section-icon">📅</span>
+          <h2>Stream Schedule</h2>
+        </div>
+        <p class="section-description">Mark your calendars! Here's when you can catch the action live.</p>
+      </div>
+
+      <div class="schedule-grid">
+        <div class="schedule-card">
+          <div class="schedule-day-badge">FRI</div>
+          <div class="schedule-content">
+            <div class="schedule-header">
+              <span class="schedule-icon">🎮</span>
+              <h3 class="day">Friday Night</h3>
+            </div>
+            <div class="time-slot">
+              <span class="time-icon">⏰</span>
+              <span class="time">8:00 PM – 11:00 PM</span>
+            </div>
+            <p class="schedule-description">Chill start to the weekend with mixed games and good vibes!</p>
+          </div>
+        </div>
+        <div class="schedule-card schedule-featured">
+          <div class="featured-badge">⭐ MAIN EVENT</div>
+          <div class="schedule-day-badge featured">SAT</div>
+          <div class="schedule-content">
+            <div class="schedule-header">
+              <span class="schedule-icon">🔥</span>
+              <h3 class="day">Saturday Prime</h3>
+            </div>
+            <div class="time-slot">
+              <span class="time-icon">⏰</span>
+              <span class="time">8:00 PM – Late Night</span>
+            </div>
+            <p class="schedule-description">Prime time gaming marathon with the squad! The biggest stream of the week!</p>
+          </div>
+        </div>
+        <div class="schedule-card">
+          <div class="schedule-day-badge">SUN</div>
+          <div class="schedule-content">
+            <div class="schedule-header">
+              <span class="schedule-icon">🎲</span>
+              <h3 class="day">Sunday Surprise</h3>
+            </div>
+            <div class="time-slot">
+              <span class="time-icon">⏰</span>
+              <span class="time">Anytime (Surprise!)</span>
+            </div>
+            <p class="schedule-description">Random chill streams and community hangouts. Enable notifications!</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="schedule-footer">
+        <p class="schedule-note">
+          ⚠️ <strong>Note:</strong> Times are flexible and may vary. Follow the channel and enable notifications 🔔 to never miss a stream!
+        </p>
+      </div>
+    </section>
+
+    <!-- MERCH SECTION -->
+    <section id="merch" class="section merch-section">
+      <div class="section-header">
+        <h2><span class="section-icon">🛍️</span> Official Merch</h2>
+        <p>🔥 Rep the JUST FOR FUN brand with exclusive gear!</p>
+      </div>
+
+      <div class="merch-content">
+        <div class="coming-soon-container">
+          <div class="coming-soon-badge">
+            <span class="badge-pulse"></span>
+            <span class="badge-text">COMING SOON</span>
+          </div>
+          
+          <div class="merch-preview">
+            <div class="merch-item-preview">
+              <div class="merch-icon">👕</div>
+              <h3>Premium T-Shirts</h3>
+            </div>
+            <div class="merch-item-preview">
+              <div class="merch-icon">🧢</div>
+              <h3>Snapback Caps</h3>
+            </div>
+            <div class="merch-item-preview">
+              <div class="merch-icon">🎮</div>
+              <h3>Gaming Accessories</h3>
+            </div>
+            <div class="merch-item-preview">
+              <div class="merch-icon">🖱️</div>
+              <h3>Mouse Pads</h3>
+            </div>
+          </div>
+
+          <div class="merch-message">
+            <h3>🚀 Launching Soon!</h3>
+            <p>We're working on bringing you the coolest gaming merch. Subscribe to get notified when the store drops!</p>
+            <div class="merch-notify">
+              <a href="https://www.youtube.com/channel/UCcCp0B0bypJE4EJjwq8u2lQ?sub_confirmation=1" target="_blank" class="btn btn-primary btn-glow">
+                🔔 Notify Me on Launch
+              </a>
+            </div>
+          </div>
+
+          <div class="merch-features">
+            <div class="feature-badge">🏆 Premium Quality</div>
+            <div class="feature-badge">🌍 Worldwide Shipping</div>
+            <div class="feature-badge">🎨 Unique Designs</div>
+            <div class="feature-badge">💯 Limited Edition</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SOCIALS -->
+    <section id="socials" class="section section-dark">
+      <div class="section-header">
+        <h2><span class="section-icon">🌐</span> Connect with Me</h2>
+        <p>🤝 Join the community and stay connected across all platforms!</p>
+      </div>
+
+      <div class="socials-grid">
+        <a class="social-card social-youtube" href="https://www.youtube.com/channel/UCcCp0B0bypJE4EJjwq8u2lQ" target="_blank">
+          <span class="icon">📺</span>
+          <div class="social-content">
+            <span class="name">YouTube</span>
+            <span class="tag">Main Channel</span>
+            <span class="social-cta">Subscribe →</span>
+          </div>
+        </a>
+
+        <!-- ⚠️ UPDATE: Replace with your actual Discord server invite link -->
+        <a class="social-card social-discord" href="https://discord.gg/yourserver" target="_blank">
+          <span class="icon">💬</span>
+          <div class="social-content">
+            <span class="name">Discord</span>
+            <span class="tag">Community Server</span>
+            <span class="social-cta">Join Now →</span>
+          </div>
+        </a>
+
+        <!-- ⚠️ UPDATE: Replace with your actual Instagram profile -->
+        <a class="social-card social-instagram" href="https://instagram.com/justforfun" target="_blank">
+          <span class="icon">📸</span>
+          <div class="social-content">
+            <span class="name">Instagram</span>
+            <span class="tag">Behind the Scenes</span>
+            <span class="social-cta">Follow →</span>
+          </div>
+        </a>
+
+        <a class="social-card social-tiktok" href="https://tiktok.com/@justforfun" target="_blank">
+          <span class="icon">🎵</span>
+          <div class="social-content">
+            <span class="name">TikTok</span>
+            <span class="tag">Clips & Highlights</span>
+            <span class="social-cta">Watch →</span>
+          </div>
+        </a>
+
+        <!-- ⚠️ UPDATE: Replace with your actual Twitter/X profile -->
+        <a class="social-card social-twitter" href="https://twitter.com/justforfun" target="_blank">
+          <span class="icon">🐦</span>
+          <div class="social-content">
+            <span class="name">Twitter / X</span>
+            <span class="tag">Updates & Memes</span>
+            <span class="social-cta">Follow →</span>
+          </div>
+        </a>
+
+        <a class="social-card social-twitch" href="https://twitch.tv/justforfun" target="_blank">
+          <span class="icon">🎮</span>
+          <div class="social-content">
+            <span class="name">Twitch</span>
+            <span class="tag">Backup Streams</span>
+            <span class="social-cta">Follow →</span>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- CONTACT -->
+    <section id="contact" class="section">
+      <div class="section-header">
+        <h2><span class="section-icon">✉️</span> Get in Touch</h2>
+        <p>💼 Business inquiries, collaboration ideas, or just want to say hi? Drop a message!</p>
+      </div>
+
+      <div class="contact-wrapper">
+        <div class="contact-info">
+          <h3>📬 Let's Talk!</h3>
+          <p>Whether you have a business proposal, want to collaborate, or just want to share feedback — I'd love to hear from you!</p>
+          <div class="contact-reasons">
+            <div class="reason-item">💼 Business Inquiries</div>
+            <div class="reason-item">🤝 Collaboration Ideas</div>
+            <div class="reason-item">💡 Suggestions</div>
+            <div class="reason-item">🎮 Game Recommendations</div>
+          </div>
+        </div>
+        
+        <!-- ⚠️ UPDATE: Replace 'your-email@example.com' with your actual email address -->
+        <form class="contact-form"
+              action="mailto:your-email@example.com"
+              method="post" enctype="text/plain">
+          <div class="form-row">
+            <label for="name">👤 Your Name</label>
+            <input id="name" name="name" type="text"
+                   placeholder="Enter your name" required />
+          </div>
+
+          <div class="form-row">
+            <label for="email">📧 Your Email</label>
+            <input id="email" name="email" type="email"
+                   placeholder="you@example.com" required />
+          </div>
+
+          <div class="form-row">
+            <label for="message">💬 Your Message</label>
+            <textarea id="message" name="message" rows="5"
+                      placeholder="Tell me what's on your mind..." required></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block">
+            <span>Send Message</span>
+            <span class="btn-arrow">→</span>
+          </button>
+          <p class="contact-note">
+            📧 This will open your email client. Alternatively, you can reach out via social media!
+          </p>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-wave"></div>
+    <div class="footer-content">
+      <div class="footer-main">
+        <div class="footer-brand">
+          <h3>🎮 JUST FOR FUN</h3>
+          <p>Your go-to gaming channel for epic content, chill vibes, and awesome community!</p>
+          <div class="footer-social">
+            <a href="https://www.youtube.com/channel/UCcCp0B0bypJE4EJjwq8u2lQ" target="_blank" class="footer-social-link" title="YouTube">
+              <span>📺</span>
+            </a>
+            <a href="https://discord.gg/yourserver" target="_blank" class="footer-social-link" title="Discord">
+              <span>💬</span>
+            </a>
+            <a href="https://twitter.com/justforfun" target="_blank" class="footer-social-link" title="Twitter">
+              <span>🐦</span>
+            </a>
+          </div>
+        </div>
+        <div class="footer-links-group">
+          <h4>Quick Links</h4>
+          <div class="footer-links">
+            <a href="#hero">Home</a>
+            <a href="#about">About</a>
+            <a href="#latest">Videos</a>
+            <a href="#schedule">Schedule</a>
+            <a href="#contact">Contact</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© <span id="year"></span> JUST FOR FUN • All rights reserved • Made with ❤️ for the gaming community</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
