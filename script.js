@@ -485,15 +485,17 @@ function updateAuthUI(user) {
     if (profileSection) profileSection.style.display = 'block';
     if (profileNavLink) profileNavLink.style.display = 'block';
     
-    // Update user info
-    const userName = document.getElementById('user-name');
-    const userEmail = document.getElementById('user-email');
-    
-    if (userName) userName.textContent = user.user_metadata?.full_name || 'Gamer';
-    if (userEmail) userEmail.textContent = user.email;
-    
-    // Load user profile
-    loadUserProfile(user);
+    // Load user profile first to get username
+    loadUserProfile(user).then(() => {
+      // Update user info with username from profile or fallback
+      const userName = document.getElementById('user-name');
+      const userEmail = document.getElementById('user-email');
+      
+      if (userName) {
+        userName.textContent = currentProfile?.username || user.user_metadata?.full_name || 'Gamer';
+      }
+      if (userEmail) userEmail.textContent = user.email;
+    });
   } else {
     // User is logged out
     authButton.style.display = 'flex';
@@ -513,13 +515,20 @@ async function loadUserProfile(user) {
     if (response.ok) {
       currentProfile = data;
       displayProfile(user, data);
+      return data;
     } else {
       console.error('Error loading profile:', data.error);
-      displayProfile(user, { username: user.user_metadata?.full_name || 'Gamer', bio: '', exists: false });
+      const defaultProfile = { username: user.user_metadata?.full_name || 'Gamer', bio: '', exists: false };
+      currentProfile = defaultProfile;
+      displayProfile(user, defaultProfile);
+      return defaultProfile;
     }
   } catch (error) {
     console.error('Error fetching profile:', error);
-    displayProfile(user, { username: user.user_metadata?.full_name || 'Gamer', bio: '', exists: false });
+    const defaultProfile = { username: user.user_metadata?.full_name || 'Gamer', bio: '', exists: false };
+    currentProfile = defaultProfile;
+    displayProfile(user, defaultProfile);
+    return defaultProfile;
   }
 }
 
