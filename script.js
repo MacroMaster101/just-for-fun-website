@@ -388,163 +388,25 @@ if (window.netlifyIdentity) {
   });
 }
 
-// ===== CUSTOM AUTH MODALS =====
+// Login and Sign Up button handlers - use Netlify Identity widget
+const loginButton = document.getElementById('login-button');
+const signupButton = document.getElementById('signup-button');
 
-// Wait for DOM to be fully loaded
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('Initializing custom auth modals...');
-  
-  // Modal elements
-  const loginModal = document.getElementById('custom-login-modal');
-  const signupModal = document.getElementById('custom-signup-modal');
-  const recoverModal = document.getElementById('custom-recover-modal');
-  
-  console.log('Login modal:', loginModal);
-  console.log('Signup modal:', signupModal);
-  console.log('Recover modal:', recoverModal);
-
-  // Button handlers - show custom modals
-  const loginButton = document.getElementById('login-button');
-  const signupButton = document.getElementById('signup-button');
-  
-  console.log('Login button:', loginButton);
-  console.log('Signup button:', signupButton);
-
-  if (loginButton && loginModal) {
-    loginButton.addEventListener('click', (e) => {
-      e.preventDefault();
-      console.log('Login button clicked');
-      loginModal.style.display = 'flex';
-    });
-  }
-
-  if (signupButton && signupModal) {
-    signupButton.addEventListener('click', (e) => {
-      e.preventDefault();
-      console.log('Signup button clicked');
-      signupModal.style.display = 'flex';
-    });
-  }
-
-  // Close modal handlers
-  const closeLogin = document.getElementById('close-login-modal');
-  const closeSignup = document.getElementById('close-signup-modal');
-  const closeRecover = document.getElementById('close-recover-modal');
-  
-  if (closeLogin && loginModal) {
-    closeLogin.addEventListener('click', () => {
-      console.log('Closing login modal');
-      loginModal.style.display = 'none';
-    });
-  }
-
-  if (closeSignup && signupModal) {
-    closeSignup.addEventListener('click', () => {
-      console.log('Closing signup modal');
-      signupModal.style.display = 'none';
-    });
-  }
-
-  if (closeRecover && recoverModal) {
-    closeRecover.addEventListener('click', () => {
-      console.log('Closing recover modal');
-      recoverModal.style.display = 'none';
-    });
-  }
-
-  // Close on overlay click
-  [loginModal, signupModal, recoverModal].forEach(modal => {
-    if (modal) {
-      const overlay = modal.querySelector('.custom-auth-overlay');
-      if (overlay) {
-        overlay.addEventListener('click', () => {
-          console.log('Overlay clicked');
-          modal.style.display = 'none';
-        });
-      }
+if (loginButton) {
+  loginButton.addEventListener('click', () => {
+    if (window.netlifyIdentity) {
+      window.netlifyIdentity.open('login');
     }
   });
+}
 
-  // Show password recovery
-  const showRecoverLink = document.getElementById('show-recover-link');
-  if (showRecoverLink && loginModal && recoverModal) {
-    showRecoverLink.addEventListener('click', (e) => {
-      e.preventDefault();
-      console.log('Show recover modal');
-      loginModal.style.display = 'none';
-      recoverModal.style.display = 'flex';
-    });
-  }
-
-  // Back to login
-  const backToLoginLink = document.getElementById('back-to-login-link');
-  if (backToLoginLink && loginModal && recoverModal) {
-    backToLoginLink.addEventListener('click', (e) => {
-      e.preventDefault();
-      console.log('Back to login');
-      recoverModal.style.display = 'none';
-      loginModal.style.display = 'flex';
-    });
-  }
-
-  // Login form handler
-  const loginForm = document.getElementById('login-form');
-  if (loginForm && loginModal) {
-    loginForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      console.log('Login form submitted');
-      
-      const email = document.getElementById('login-email').value;
-      const password = document.getElementById('login-password').value;
-      
-      // For now, open the Netlify widget in login mode
-      // The custom forms provide the UI, but we'll use the widget's secure auth flow
-      if (window.netlifyIdentity) {
-        loginModal.style.display = 'none';
-        window.netlifyIdentity.open('login');
-      }
-    });
-  }
-
-  // Signup form handler
-  const signupForm = document.getElementById('signup-form');
-  if (signupForm && signupModal) {
-    signupForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      console.log('Signup form submitted');
-      
-      const name = document.getElementById('signup-name').value;
-      const email = document.getElementById('signup-email').value;
-      const password = document.getElementById('signup-password').value;
-      
-      // For now, open the Netlify widget in signup mode
-      // The custom forms provide the UI, but we'll use the widget's secure auth flow
-      if (window.netlifyIdentity) {
-        signupModal.style.display = 'none';
-        window.netlifyIdentity.open('signup');
-      }
-    });
-  }
-
-  // Password recovery form handler
-  const recoverForm = document.getElementById('recover-form');
-  if (recoverForm && recoverModal) {
-    recoverForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      console.log('Recover form submitted');
-      
-      const email = document.getElementById('recover-email').value;
-      
-      // For now, open the Netlify widget in login mode for password recovery
-      if (window.netlifyIdentity) {
-        recoverModal.style.display = 'none';
-        window.netlifyIdentity.open('login');
-      }
-    });
-  }
-  
-  console.log('Custom auth modals initialized');
-});
+if (signupButton) {
+  signupButton.addEventListener('click', () => {
+    if (window.netlifyIdentity) {
+      window.netlifyIdentity.open('signup');
+    }
+  });
+}
 
 // Update authentication UI based on user state
 function updateAuthUI(user) {
