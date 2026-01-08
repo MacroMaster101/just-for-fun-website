@@ -1,0 +1,8 @@
+{
+  "name": "just-for-fun-website",
+  "version": "1.0.0",
+  "description": "Gaming channel website with user profiles",
+  "dependencies": {
+    "@neondatabase/serverless": "^0.9.0"
+  }
+}

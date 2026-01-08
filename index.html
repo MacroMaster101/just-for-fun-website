@@ -98,6 +98,7 @@
     <nav class="nav">
       <a href="#hero" class="nav-link">🏠 Home</a>
       <a href="#about" class="nav-link">📖 About</a>
+      <a href="#profile" class="nav-link" id="profile-nav-link" style="display: none;">👤 Profile</a>
       <a href="#latest" class="nav-link">🎬 Latest</a>
       <a href="#schedule" class="nav-link">📅 Schedule</a>
       <a href="#merch" class="nav-link">🛍️ Merch</a>
@@ -286,6 +287,102 @@
             <div class="feature-content">
               <h4>Content Mix</h4>
               <p>Epic gameplay, hilarious fails, clutch moments, and helpful tutorials.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- USER PROFILE SECTION (Shows when logged in) -->
+    <section id="profile" class="section section-profile" style="display: none;">
+      <div class="section-header">
+        <div class="section-title-wrapper">
+          <span class="section-icon">👤</span>
+          <h2>My Profile</h2>
+        </div>
+        <p class="section-tagline">Manage your gaming profile</p>
+      </div>
+
+      <div class="profile-container">
+        <div class="profile-card">
+          <div class="profile-header">
+            <div class="profile-avatar-wrapper">
+              <div class="profile-avatar" id="profile-avatar">👤</div>
+              <button class="avatar-edit-btn" id="avatar-edit-btn" title="Change avatar">📷</button>
+            </div>
+            <div class="profile-info">
+              <h3 class="profile-name" id="profile-display-name">Loading...</h3>
+              <p class="profile-email" id="profile-display-email">Loading...</p>
+              <p class="profile-joined">Member since: <span id="profile-joined-date">Loading...</span></p>
+            </div>
+          </div>
+
+          <div class="profile-body">
+            <div class="profile-section">
+              <h4>Username</h4>
+              <div class="profile-field">
+                <input 
+                  type="text" 
+                  id="profile-username" 
+                  class="profile-input" 
+                  placeholder="Enter your username" 
+                  maxlength="50"
+                />
+              </div>
+            </div>
+
+            <div class="profile-section">
+              <h4>Bio</h4>
+              <div class="profile-field">
+                <textarea 
+                  id="profile-bio" 
+                  class="profile-textarea" 
+                  placeholder="Tell us about yourself... Your favorite games, playstyle, or anything you'd like to share!" 
+                  maxlength="500"
+                  rows="5"
+                ></textarea>
+                <div class="char-count">
+                  <span id="bio-char-count">0</span>/500
+                </div>
+              </div>
+            </div>
+
+            <div class="profile-actions">
+              <button id="save-profile-btn" class="btn btn-primary">
+                <span class="btn-icon">💾</span>
+                Save Profile
+              </button>
+              <button id="cancel-profile-btn" class="btn btn-secondary">
+                Cancel
+              </button>
+            </div>
+
+            <div id="profile-message" class="profile-message" style="display: none;"></div>
+          </div>
+        </div>
+
+        <div class="profile-stats-card">
+          <h3>Stats & Achievements</h3>
+          <div class="profile-stats-grid">
+            <div class="stat-item">
+              <div class="stat-icon">🎮</div>
+              <div class="stat-value" id="user-videos-watched">0</div>
+              <div class="stat-label">Videos Watched</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-icon">💬</div>
+              <div class="stat-value" id="user-comments">0</div>
+              <div class="stat-label">Comments</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-icon">⭐</div>
+              <div class="stat-value" id="user-favorites">0</div>
+              <div class="stat-label">Favorites</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-icon">🏆</div>
+              <div class="stat-value">Member</div>
+              <div class="stat-label">Status</div>
             </div>
           </div>
         </div>

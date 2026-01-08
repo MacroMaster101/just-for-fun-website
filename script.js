@@ -463,3 +463,201 @@ function showLogoutMessage() {
     setTimeout(() => toast.remove(), 300);
   }, 3000);
 }
+
+// ===== USER PROFILE SYSTEM =====
+
+let currentUser = null;
+let currentProfile = null;
+
+// Override updateAuthUI to include profile logic
+function updateAuthUI(user) {
+  const authButton = document.getElementById('auth-button');
+  const userMenu = document.getElementById('user-menu');
+  const profileSection = document.getElementById('profile');
+  const profileNavLink = document.getElementById('profile-nav-link');
+  
+  currentUser = user;
+  
+  if (user) {
+    // User is logged in
+    authButton.style.display = 'none';
+    userMenu.style.display = 'block';
+    if (profileSection) profileSection.style.display = 'block';
+    if (profileNavLink) profileNavLink.style.display = 'block';
+    
+    // Update user info
+    const userName = document.getElementById('user-name');
+    const userEmail = document.getElementById('user-email');
+    
+    if (userName) userName.textContent = user.user_metadata?.full_name || 'Gamer';
+    if (userEmail) userEmail.textContent = user.email;
+    
+    // Load user profile
+    loadUserProfile(user);
+  } else {
+    // User is logged out
+    authButton.style.display = 'flex';
+    userMenu.style.display = 'none';
+    if (profileSection) profileSection.style.display = 'none';
+    if (profileNavLink) profileNavLink.style.display = 'none';
+    currentProfile = null;
+  }
+}
+
+// Load user profile from database
+async function loadUserProfile(user) {
+  try {
+    const response = await fetch(`/.netlify/functions/get-profile?userId=${user.id}`);
+    const data = await response.json();
+    
+    if (response.ok) {
+      currentProfile = data;
+      displayProfile(user, data);
+    } else {
+      console.error('Error loading profile:', data.error);
+      displayProfile(user, { username: user.user_metadata?.full_name || 'Gamer', bio: '', exists: false });
+    }
+  } catch (error) {
+    console.error('Error fetching profile:', error);
+    displayProfile(user, { username: user.user_metadata?.full_name || 'Gamer', bio: '', exists: false });
+  }
+}
+
+// Display profile data
+function displayProfile(user, profile) {
+  const displayName = document.getElementById('profile-display-name');
+  const displayEmail = document.getElementById('profile-display-email');
+  const joinedDate = document.getElementById('profile-joined-date');
+  const usernameInput = document.getElementById('profile-username');
+  const bioTextarea = document.getElementById('profile-bio');
+  const avatarEl = document.getElementById('profile-avatar');
+  
+  if (displayName) displayName.textContent = profile.username || user.user_metadata?.full_name || 'Gamer';
+  if (displayEmail) displayEmail.textContent = user.email;
+  
+  if (joinedDate) {
+    const joined = new Date(user.created_at).toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    joinedDate.textContent = joined;
+  }
+  
+  if (usernameInput) usernameInput.value = profile.username || user.user_metadata?.full_name || '';
+  if (bioTextarea) bioTextarea.value = profile.bio || '';
+  
+  updateCharCount();
+  
+  if (avatarEl) {
+    avatarEl.textContent = profile.avatarUrl || '👤';
+  }
+}
+
+// Update bio character count
+function updateCharCount() {
+  const bioTextarea = document.getElementById('profile-bio');
+  const charCount = document.getElementById('bio-char-count');
+  if (bioTextarea && charCount) {
+    charCount.textContent = bioTextarea.value.length;
+  }
+}
+
+// Save profile
+async function saveProfile() {
+  if (!currentUser) {
+    showProfileMessage('Please log in to save your profile', 'error');
+    return;
+  }
+
+  const username = document.getElementById('profile-username').value.trim();
+  const bio = document.getElementById('profile-bio').value.trim();
+  
+  if (!username) {
+    showProfileMessage('Username is required', 'error');
+    return;
+  }
+
+  const saveBtn = document.getElementById('save-profile-btn');
+  saveBtn.disabled = true;
+  saveBtn.innerHTML = '<span class="btn-icon">⏳</span> Saving...';
+
+  try {
+    const response = await fetch('/.netlify/functions/update-profile', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        userId: currentUser.id,
+        username,
+        bio,
+        avatarUrl: null
+      })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      currentProfile = data.profile;
+      showProfileMessage('Profile saved successfully! 🎉', 'success');
+      
+      const displayName = document.getElementById('profile-display-name');
+      const userName = document.getElementById('user-name');
+      if (displayName) displayName.textContent = username;
+      if (userName) userName.textContent = username;
+    } else {
+      showProfileMessage(`Error: ${data.error}`, 'error');
+    }
+  } catch (error) {
+    console.error('Error saving profile:', error);
+    showProfileMessage('Failed to save profile. Please try again.', 'error');
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = '<span class="btn-icon">💾</span> Save Profile';
+  }
+}
+
+// Show profile message
+function showProfileMessage(message, type = 'success') {
+  const messageEl = document.getElementById('profile-message');
+  if (messageEl) {
+    messageEl.textContent = message;
+    messageEl.className = `profile-message ${type}`;
+    messageEl.style.display = 'block';
+    
+    setTimeout(() => {
+      messageEl.style.display = 'none';
+    }, 5000);
+  }
+}
+
+// Event listeners for profile
+document.addEventListener('DOMContentLoaded', () => {
+  const bioTextarea = document.getElementById('profile-bio');
+  if (bioTextarea) {
+    bioTextarea.addEventListener('input', updateCharCount);
+  }
+
+  const saveBtn = document.getElementById('save-profile-btn');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', saveProfile);
+  }
+
+  const cancelBtn = document.getElementById('cancel-profile-btn');
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', () => {
+      if (currentUser && currentProfile) {
+        displayProfile(currentUser, currentProfile);
+        showProfileMessage('Changes canceled', 'info');
+      }
+    });
+  }
+
+  const avatarEditBtn = document.getElementById('avatar-edit-btn');
+  if (avatarEditBtn) {
+    avatarEditBtn.addEventListener('click', () => {
+      alert('Avatar upload feature coming soon! 🎨');
+    });
+  }
+});
