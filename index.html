@@ -108,10 +108,16 @@
 
     <!-- User Authentication -->
     <div class="auth-container">
-      <button id="auth-button" class="btn btn-auth" data-netlify-identity-button>
-        <span class="auth-icon">👤</span>
-        <span class="auth-text">Login / Sign Up</span>
-      </button>
+      <div id="auth-buttons" class="auth-buttons">
+        <button id="login-button" class="btn btn-auth btn-login">
+          <span class="auth-icon">👤</span>
+          <span class="auth-text">Login</span>
+        </button>
+        <button id="signup-button" class="btn btn-auth btn-signup">
+          <span class="auth-icon">✨</span>
+          <span class="auth-text">Sign Up</span>
+        </button>
+      </div>
       <div id="user-menu" class="user-menu" style="display: none;">
         <div class="user-info">
           <div class="user-avatar">👤</div>

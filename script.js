@@ -388,9 +388,29 @@ if (window.netlifyIdentity) {
   });
 }
 
+// Login and Sign Up button handlers
+const loginButton = document.getElementById('login-button');
+const signupButton = document.getElementById('signup-button');
+
+if (loginButton) {
+  loginButton.addEventListener('click', () => {
+    if (window.netlifyIdentity) {
+      window.netlifyIdentity.open('login');
+    }
+  });
+}
+
+if (signupButton) {
+  signupButton.addEventListener('click', () => {
+    if (window.netlifyIdentity) {
+      window.netlifyIdentity.open('signup');
+    }
+  });
+}
+
 // Update authentication UI based on user state
 function updateAuthUI(user) {
-  const authButton = document.getElementById('auth-button');
+  const authButtons = document.getElementById('auth-buttons');
   const userMenu = document.getElementById('user-menu');
   
   if (user) {
@@ -424,14 +444,15 @@ if (logoutButton) {
 // Close user menu when clicking outside or on profile link
 document.addEventListener('click', (e) => {
   const userMenu = document.getElementById('user-menu');
-  const authButton = document.getElementById('auth-button');
+  const userAvatar = document.querySelector('.user-avatar');
   
-  if (!userMenu || !authButton) return;
+  if (!userMenu) return;
   
   // Close menu when clicking outside
   if (userMenu.style.display === 'block' && 
       !userMenu.contains(e.target) && 
-      e.target !== authButton) {
+      e.target !== userAvatar &&
+      !e.target.closest('.user-menu')) {
     userMenu.style.display = 'none';
   }
   
@@ -442,19 +463,17 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// Toggle user menu when clicking auth button
-document.addEventListener('DOMContentLoaded', () => {
-  const authButton = document.getElementById('auth-button');
+// Toggle user menu when clicking user avatar
+document.addEventListener('click', (e) => {
+  const userAvatar = document.querySelector('.user-avatar');
   const userMenu = document.getElementById('user-menu');
   
-  if (authButton && userMenu) {
-    authButton.addEventListener('click', () => {
-      if (userMenu.style.display === 'block') {
-        userMenu.style.display = 'none';
-      } else {
-        userMenu.style.display = 'block';
-      }
-    });
+  if (userAvatar && userMenu && e.target === userAvatar) {
+    if (userMenu.style.display === 'block') {
+      userMenu.style.display = 'none';
+    } else {
+      userMenu.style.display = 'block';
+    }
   }
 });
 
@@ -508,7 +527,7 @@ let currentProfile = null;
 
 // Override updateAuthUI to include profile logic
 function updateAuthUI(user) {
-  const authButton = document.getElementById('auth-button');
+  const authButtons = document.getElementById('auth-buttons');
   const userMenu = document.getElementById('user-menu');
   const profileSection = document.getElementById('profile');
   const profileNavLink = document.getElementById('profile-nav-link');
@@ -517,8 +536,8 @@ function updateAuthUI(user) {
   
   if (user) {
     // User is logged in
-    authButton.style.display = 'none';
-    userMenu.style.display = 'block';
+    if (authButtons) authButtons.style.display = 'none';
+    if (userMenu) userMenu.style.display = 'block';
     if (profileSection) profileSection.style.display = 'block';
     if (profileNavLink) profileNavLink.style.display = 'block';
     
@@ -535,8 +554,8 @@ function updateAuthUI(user) {
     });
   } else {
     // User is logged out
-    authButton.style.display = 'flex';
-    userMenu.style.display = 'none';
+    if (authButtons) authButtons.style.display = 'flex';
+    if (userMenu) userMenu.style.display = 'none';
     if (profileSection) profileSection.style.display = 'none';
     if (profileNavLink) profileNavLink.style.display = 'none';
     currentProfile = null;

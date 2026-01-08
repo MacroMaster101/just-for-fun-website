@@ -2958,12 +2958,19 @@ body {
   position: relative;
 }
 
+/* Auth Buttons Container */
+.auth-buttons {
+  display: flex;
+  gap: 12px;
+}
+
 /* Auth Button - Modern Glass Design */
 .btn-auth {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 14px 28px;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 24px;
   background: linear-gradient(135deg, 
     rgba(220, 20, 60, 0.2) 0%, 
     rgba(139, 0, 0, 0.15) 100%);
@@ -2971,7 +2978,7 @@ body {
   border-radius: 16px;
   color: var(--text-main);
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 0.95rem;
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 
@@ -2983,6 +2990,7 @@ body {
   position: relative;
   overflow: hidden;
   min-height: 52px;
+  min-width: 120px;
 }
 
 .btn-auth::before {
@@ -3021,6 +3029,26 @@ body {
   box-shadow: 
     0 6px 16px rgba(0, 0, 0, 0.4),
     0 2px 8px rgba(220, 20, 60, 0.3);
+}
+
+/* Login Button Specific */
+.btn-login {
+  background: linear-gradient(135deg, 
+    rgba(220, 20, 60, 0.25) 0%, 
+    rgba(139, 0, 0, 0.18) 100%);
+}
+
+/* Sign Up Button Specific */
+.btn-signup {
+  background: linear-gradient(135deg, 
+    rgba(220, 20, 60, 0.3) 0%, 
+    rgba(139, 0, 0, 0.22) 100%);
+}
+
+.btn-signup:hover {
+  background: linear-gradient(135deg, 
+    rgba(220, 20, 60, 0.45) 0%, 
+    rgba(139, 0, 0, 0.3) 100%);
 }
 
 .auth-icon {
