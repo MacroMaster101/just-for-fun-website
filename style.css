@@ -3294,23 +3294,28 @@ body {
 }
 
 /* Netlify Identity Widget Customization - Glass Morphism Theme */
-.netlify-identity-widget {
+.netlify-identity-widget,
+div[class*="netlify-identity"] {
   font-family: "Poppins", sans-serif !important;
 }
 
 /* Widget Modal Container */
-.modalContainer {
+.modalContainer,
+div[class*="modalContainer"],
+[class*="Container"] {
   backdrop-filter: blur(12px) !important;
   -webkit-backdrop-filter: blur(12px) !important;
   background: rgba(0, 0, 0, 0.75) !important;
 }
 
 /* Main Modal */
-.modalContent {
+.modalContent,
+div[class*="modalContent"],
+[class*="modal"][class*="content"] {
   background: linear-gradient(135deg, 
     rgba(13, 13, 13, 0.95) 0%, 
     rgba(26, 26, 26, 0.95) 100%) !important;
-  border: 2px solid var(--glass-border) !important;
+  border: 2px solid rgba(220, 20, 60, 0.3) !important;
   border-radius: 24px !important;
   box-shadow: 
     0 24px 64px rgba(0, 0, 0, 0.8),
@@ -3323,7 +3328,9 @@ body {
 }
 
 /* Modal Header */
-.modalHeader {
+.modalHeader,
+div[class*="modalHeader"],
+header[class*="modal"] {
   border-bottom: none !important;
   padding-bottom: 24px !important;
   margin-bottom: 28px !important;
@@ -3332,16 +3339,19 @@ body {
   gap: 8px !important;
 }
 
-.modalHeader h2 {
+.modalHeader h2,
+div[class*="modalHeader"] h2 {
   display: none !important;
 }
 
 /* Close Button */
-.modalCloseButton {
+.modalCloseButton,
+button[class*="Close"],
+[class*="close"][class*="button"] {
   background: rgba(220, 20, 60, 0.15) !important;
-  border: 2px solid var(--glass-border) !important;
+  border: 2px solid rgba(220, 20, 60, 0.3) !important;
   border-radius: 50% !important;
-  color: var(--text-main) !important;
+  color: #fff !important;
   width: 40px !important;
   height: 40px !important;
   transition: all 0.3s ease !important;
@@ -3359,12 +3369,15 @@ body {
 }
 
 /* Tabs - Enhanced Design */
-.btnHeader {
+.btnHeader,
+button[class*="Header"],
+[class*="btn"][class*="header"],
+nav button {
   background: transparent !important;
   border: none !important;
   border-bottom: 3px solid transparent !important;
   border-radius: 0 !important;
-  color: var(--text-muted) !important;
+  color: rgba(255, 255, 255, 0.6) !important;
   padding: 12px 32px !important;
   font-weight: 700 !important;
   font-size: 1.1rem !important;
@@ -3373,7 +3386,9 @@ body {
   position: relative !important;
 }
 
-.btnHeader::after {
+.btnHeader::after,
+button[class*="Header"]::after,
+[class*="btn"][class*="header"]::after {
   content: '' !important;
   position: absolute !important;
   bottom: -3px !important;
@@ -3384,37 +3399,46 @@ body {
   transition: all 0.3s ease !important;
 }
 
-.btnHeader:hover {
+.btnHeader:hover,
+button[class*="Header"]:hover {
   background: transparent !important;
-  color: var(--text-main) !important;
+  color: #fff !important;
   transform: none !important;
 }
 
-.btnHeader:hover::after {
+.btnHeader:hover::after,
+button[class*="Header"]:hover::after {
   background: rgba(220, 20, 60, 0.3) !important;
 }
 
-.btnHeader.active {
+.btnHeader.active,
+button[class*="Header"][class*="active"],
+[class*="btn"][class*="header"][class*="active"] {
   background: transparent !important;
   border: none !important;
-  color: var(--text-main) !important;
+  color: #fff !important;
   text-shadow: 0 0 20px rgba(220, 20, 60, 0.5) !important;
 }
 
-.btnHeader.active::after {
+.btnHeader.active::after,
+button[class*="Header"][class*="active"]::after {
   background: linear-gradient(90deg, 
-    var(--primary) 0%, 
+    #dc143c 0%, 
     #ff1744 100%) !important;
   box-shadow: 0 0 20px rgba(220, 20, 60, 0.6) !important;
 }
 
 /* Form Inputs - Enhanced Glass Design */
-.formGroup {
+.formGroup,
+div[class*="formGroup"],
+div[class*="form"][class*="group"] {
   margin-bottom: 24px !important;
 }
 
-.formLabel {
-  color: var(--text-main) !important;
+.formLabel,
+label[class*="form"],
+[class*="label"] {
+  color: #fff !important;
   font-weight: 600 !important;
   font-size: 0.9rem !important;
   margin-bottom: 10px !important;
@@ -3425,11 +3449,16 @@ body {
   opacity: 0.9 !important;
 }
 
-.formControl {
+.formControl,
+input[class*="form"],
+input[type="email"],
+input[type="password"],
+input[type="text"],
+[class*="input"] {
   background: rgba(255, 255, 255, 0.04) !important;
-  border: 2px solid var(--glass-border) !important;
+  border: 2px solid rgba(220, 20, 60, 0.3) !important;
   border-radius: 14px !important;
-  color: var(--text-main) !important;
+  color: #fff !important;
   padding: 16px 20px !important;
   padding-left: 48px !important;
   font-size: 1rem !important;
@@ -3443,20 +3472,23 @@ body {
   -webkit-backdrop-filter: blur(10px) !important;
 }
 
-.formControl::placeholder {
-  color: var(--text-muted) !important;
-  opacity: 0.5 !important;
+.formControl::placeholder,
+input::placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
+  opacity: 1 !important;
   font-weight: 400 !important;
 }
 
-.formControl:hover {
-  border-color: rgba(220, 20, 60, 0.4) !important;
+.formControl:hover,
+input:hover {
+  border-color: rgba(220, 20, 60, 0.5) !important;
   background: rgba(255, 255, 255, 0.06) !important;
 }
 
-.formControl:focus {
+.formControl:focus,
+input:focus {
   background: rgba(255, 255, 255, 0.06) !important;
-  border-color: var(--primary) !important;
+  border-color: #dc143c !important;
   outline: none !important;
   box-shadow: 
     inset 0 2px 6px rgba(0, 0, 0, 0.3),
@@ -3466,13 +3498,15 @@ body {
 }
 
 /* Submit Button - Enhanced */
-.btn {
+.btn,
+button[type="submit"],
+button[class*="btn"]:not([class*="Header"]):not([class*="header"]):not([class*="Link"]) {
   background: linear-gradient(135deg, 
-    rgba(220, 20, 60, 0.35) 0%, 
-    rgba(139, 0, 0, 0.25) 100%) !important;
-  border: 2px solid var(--glass-border) !important;
+    rgba(220, 20, 60, 0.4) 0%, 
+    rgba(139, 0, 0, 0.3) 100%) !important;
+  border: 2px solid rgba(220, 20, 60, 0.4) !important;
   border-radius: 16px !important;
-  color: var(--text-main) !important;
+  color: #fff !important;
   padding: 16px 32px !important;
   font-weight: 700 !important;
   font-size: 1.1rem !important;
@@ -3490,7 +3524,8 @@ body {
   overflow: hidden !important;
 }
 
-.btn::before {
+.btn::before,
+button[type="submit"]::before {
   content: '' !important;
   position: absolute !important;
   top: 0 !important;
