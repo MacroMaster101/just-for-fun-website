@@ -40,6 +40,9 @@
 /* SMOOTH SCROLLING */
 html {
   scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+  -webkit-text-size-adjust: 100%; /* Prevent text size adjustment on mobile */
+  touch-action: manipulation; /* Faster touch response */
 }
 
 /* BACKGROUND ANIMATION */
@@ -51,6 +54,8 @@ body {
   position: relative;
   overflow-x: hidden;
   line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .bg-animated {
@@ -2187,6 +2192,11 @@ body {
 }
 
 /* RESPONSIVE */
+/* ========================================
+   MOBILE-FIRST RESPONSIVE DESIGN
+   ======================================== */
+
+/* TABLET LAYOUT (1024px and below) */
 @media (max-width: 1024px) {
   .hero {
     grid-template-columns: 1fr;
@@ -2200,48 +2210,210 @@ body {
   .contact-wrapper {
     grid-template-columns: 1fr;
   }
+  
+  .cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
+/* MOBILE LANDSCAPE & SMALL TABLET (768px and below) */
 @media (max-width: 768px) {
+  /* HEADER - Improved Mobile Navigation */
   .site-header {
+    padding: 16px 5vw;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
+    align-items: stretch;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    background: rgba(5, 5, 8, 0.98);
+    backdrop-filter: blur(20px);
+    z-index: 100;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  }
+
+  .logo-row {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .logo-mark {
+    width: 40px;
+    height: 40px;
+  }
+
+  .logo-main {
+    font-size: 1rem;
+  }
+
+  .logo-tagline {
+    font-size: 0.7rem;
   }
 
   .nav {
     width: 100%;
     justify-content: flex-start;
     overflow-x: auto;
-    padding-bottom: 4px;
+    padding: 8px 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary) transparent;
+    gap: 6px;
   }
 
+  .nav::-webkit-scrollbar {
+    height: 3px;
+  }
+
+  .nav::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .nav::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 10px;
+  }
+
+  .nav-link {
+    font-size: 0.85rem;
+    padding: 10px 16px;
+    white-space: nowrap;
+    min-width: fit-content;
+  }
+
+  /* SECTIONS - Better Mobile Spacing */
   .section {
     padding: 60px 5vw;
   }
 
-  .section-header h2 {
-    font-size: 1.8rem;
+  .section-header {
+    margin-bottom: 40px;
+    text-align: center;
   }
 
+  .section-header h2 {
+    font-size: 1.8rem;
+    line-height: 1.2;
+  }
+
+  .section-tagline {
+    font-size: 0.9rem;
+  }
+
+  /* HERO - Mobile Optimized */
   .hero {
-    padding-top: 60px;
+    padding-top: 40px;
     padding-bottom: 60px;
+    gap: 32px;
+  }
+
+  .hero-title {
+    font-size: 2rem;
+    line-height: 1.2;
+  }
+
+  .hero-subtitle {
+    font-size: 1rem;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .hero-actions .btn {
+    width: 100%;
+    justify-content: center;
   }
 
   .hero-stats {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 
+  .stat-card {
+    padding: 24px;
+  }
+
+  /* BUTTONS - Larger Touch Targets */
+  .btn {
+    padding: 14px 24px;
+    font-size: 0.9rem;
+    min-height: 48px;
+    touch-action: manipulation;
+  }
+
+  /* CARDS - Single Column on Mobile */
+  .cards-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .card {
+    padding: 24px;
+  }
+
+  /* VIDEO THUMBNAILS - Better Grid */
+  .thumbs-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .video-thumb {
+    height: 200px;
+  }
+
+  /* SCHEDULE CARDS */
+  .schedule-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  /* SOCIAL CARDS */
+  .socials-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  /* ABOUT FEATURES */
+  .about-features {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  /* FORMS - Mobile Friendly */
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-input,
+  .form-textarea {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 14px 18px;
+  }
+
+  .form-textarea {
+    min-height: 140px;
+  }
+
+  /* FOOTER */
   .footer-content {
     flex-direction: column;
+    text-align: center;
+    gap: 40px;
+  }
+
+  .footer-links-group {
     text-align: center;
   }
 
   .footer-links {
     justify-content: center;
+    flex-wrap: wrap;
   }
 
+  /* MERCH SECTION */
   .coming-soon-container {
     padding: 40px 24px;
   }
@@ -2258,40 +2430,106 @@ body {
   .merch-message p {
     font-size: 1rem;
   }
+
+  .merch-item {
+    padding: 24px 16px;
+  }
+
+  .merch-icon {
+    font-size: 2.5rem;
+  }
 }
 
+/* MOBILE PORTRAIT (640px and below) */
 @media (max-width: 640px) {
+  /* ULTRA-MOBILE OPTIMIZATIONS */
   .section {
     padding: 48px 5vw;
   }
 
-  .nav-link {
-    font-size: 0.8rem;
-    padding: 6px 12px;
+  .section-header h2 {
+    font-size: 1.6rem;
+  }
+
+  /* HERO - Compact Mobile */
+  .hero {
+    padding-top: 32px;
+    padding-bottom: 48px;
   }
 
   .hero-title {
-    font-size: 2.2rem;
+    font-size: 1.8rem;
+    letter-spacing: 0.02em;
   }
 
-  .btn {
-    padding: 12px 20px;
+  .hero-emoji {
+    font-size: 3rem;
+  }
+
+  .hero-subtitle {
+    font-size: 0.95rem;
+  }
+
+  /* CARDS - More Padding */
+  .card {
+    padding: 20px;
+  }
+
+  /* VIDEO THUMBNAILS - Smaller Height */
+  .video-thumb {
+    height: 180px;
+  }
+
+  /* STATS - Compact */
+  .stat-card {
+    padding: 20px;
+  }
+
+  .stat-number {
+    font-size: 1.8rem;
+  }
+
+  .stat-label {
     font-size: 0.85rem;
   }
 
-  .cards-grid,
-  .thumbs-grid,
-  .schedule-grid,
-  .socials-grid {
-    grid-template-columns: 1fr;
+  /* BUTTONS - Full Width */
+  .btn {
+    padding: 14px 20px;
+    font-size: 0.9rem;
   }
 
-  .about-features {
-    grid-template-columns: 1fr;
+  /* LOADING SCREEN - Mobile Adjustments */
+  .loading-title {
+    flex-direction: column;
+    gap: 4px;
   }
 
+  .title-word {
+    font-size: 2rem;
+  }
+
+  .loading-subtitle {
+    font-size: 0.85rem;
+  }
+
+  .loading-logo {
+    width: 100px;
+    height: 100px;
+  }
+
+  .logo-emoji {
+    font-size: 2rem;
+  }
+
+  .loading-bar-container {
+    width: 280px;
+  }
+
+  /* MERCH - Single Column */
   .merch-preview {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .coming-soon-badge {
@@ -2313,6 +2551,69 @@ body {
   .feature-badge {
     font-size: 0.85rem;
     padding: 10px 18px;
+  }
+
+  /* CONTACT FORM - Better Mobile Layout */
+  .contact-wrapper {
+    gap: 32px;
+  }
+
+  .contact-info {
+    gap: 20px;
+  }
+
+  .info-item {
+    padding: 16px;
+  }
+
+  /* FOOTER - Compact */
+  .footer {
+    padding: 48px 5vw 24px;
+  }
+
+  .footer-content {
+    gap: 32px;
+  }
+
+  .footer-links-group h4 {
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+
+  .footer-links a {
+    font-size: 0.9rem;
+  }
+
+  .footer-bottom {
+    padding: 20px 0;
+    font-size: 0.8rem;
+  }
+}
+
+/* SMALL MOBILE (480px and below) */
+@media (max-width: 480px) {
+  .hero-title {
+    font-size: 1.6rem;
+  }
+
+  .section-header h2 {
+    font-size: 1.4rem;
+  }
+
+  .video-thumb {
+    height: 160px;
+  }
+
+  .stat-number {
+    font-size: 1.6rem;
+  }
+
+  .title-word {
+    font-size: 1.6rem;
+  }
+
+  .merch-message h3 {
+    font-size: 1.4rem;
   }
 }
 
