@@ -132,6 +132,120 @@
         <button id="logout-button" class="btn btn-sm btn-logout">Logout</button>
       </div>
     </div>
+
+    <!-- Custom Login Modal -->
+    <div id="custom-login-modal" class="custom-auth-modal" style="display: none;">
+      <div class="custom-auth-overlay"></div>
+      <div class="custom-auth-content">
+        <button class="custom-auth-close" id="close-login-modal">×</button>
+        <h2 class="custom-auth-title">Welcome Back! 🎮</h2>
+        <p class="custom-auth-subtitle">Login to continue your gaming journey</p>
+        
+        <form id="login-form" class="custom-auth-form">
+          <div class="custom-form-group">
+            <label for="login-email">Email</label>
+            <div class="custom-input-wrapper">
+              <span class="custom-input-icon">📧</span>
+              <input type="email" id="login-email" placeholder="Enter your email" required>
+            </div>
+          </div>
+          
+          <div class="custom-form-group">
+            <label for="login-password">Password</label>
+            <div class="custom-input-wrapper">
+              <span class="custom-input-icon">🔒</span>
+              <input type="password" id="login-password" placeholder="Enter your password" required>
+            </div>
+          </div>
+          
+          <div class="custom-auth-error" id="login-error" style="display: none;"></div>
+          
+          <button type="submit" class="custom-auth-submit">
+            <span class="btn-text">Login</span>
+            <span class="btn-loader" style="display: none;">⏳</span>
+          </button>
+          
+          <div class="custom-auth-links">
+            <a href="#" id="show-recover-link" class="custom-auth-link">Forgot password?</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Custom Signup Modal -->
+    <div id="custom-signup-modal" class="custom-auth-modal" style="display: none;">
+      <div class="custom-auth-overlay"></div>
+      <div class="custom-auth-content">
+        <button class="custom-auth-close" id="close-signup-modal">×</button>
+        <h2 class="custom-auth-title">Join the Adventure! ✨</h2>
+        <p class="custom-auth-subtitle">Create your account and start gaming</p>
+        
+        <form id="signup-form" class="custom-auth-form">
+          <div class="custom-form-group">
+            <label for="signup-name">Full Name</label>
+            <div class="custom-input-wrapper">
+              <span class="custom-input-icon">👤</span>
+              <input type="text" id="signup-name" placeholder="Enter your name" required>
+            </div>
+          </div>
+          
+          <div class="custom-form-group">
+            <label for="signup-email">Email</label>
+            <div class="custom-input-wrapper">
+              <span class="custom-input-icon">📧</span>
+              <input type="email" id="signup-email" placeholder="Enter your email" required>
+            </div>
+          </div>
+          
+          <div class="custom-form-group">
+            <label for="signup-password">Password</label>
+            <div class="custom-input-wrapper">
+              <span class="custom-input-icon">🔒</span>
+              <input type="password" id="signup-password" placeholder="Create a password (min 6 characters)" required minlength="6">
+            </div>
+          </div>
+          
+          <div class="custom-auth-error" id="signup-error" style="display: none;"></div>
+          
+          <button type="submit" class="custom-auth-submit">
+            <span class="btn-text">Sign Up</span>
+            <span class="btn-loader" style="display: none;">⏳</span>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Custom Password Recovery Modal -->
+    <div id="custom-recover-modal" class="custom-auth-modal" style="display: none;">
+      <div class="custom-auth-overlay"></div>
+      <div class="custom-auth-content">
+        <button class="custom-auth-close" id="close-recover-modal">×</button>
+        <h2 class="custom-auth-title">Reset Password 🔑</h2>
+        <p class="custom-auth-subtitle">We'll send you a recovery link</p>
+        
+        <form id="recover-form" class="custom-auth-form">
+          <div class="custom-form-group">
+            <label for="recover-email">Email</label>
+            <div class="custom-input-wrapper">
+              <span class="custom-input-icon">📧</span>
+              <input type="email" id="recover-email" placeholder="Enter your email" required>
+            </div>
+          </div>
+          
+          <div class="custom-auth-error" id="recover-error" style="display: none;"></div>
+          <div class="custom-auth-success" id="recover-success" style="display: none;"></div>
+          
+          <button type="submit" class="custom-auth-submit">
+            <span class="btn-text">Send Recovery Link</span>
+            <span class="btn-loader" style="display: none;">⏳</span>
+          </button>
+          
+          <div class="custom-auth-links">
+            <a href="#" id="back-to-login-link" class="custom-auth-link">← Back to login</a>
+          </div>
+        </form>
+      </div>
+    </div>
   </header>
 
   <main>
