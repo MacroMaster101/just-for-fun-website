@@ -2281,6 +2281,29 @@ body {
     min-width: fit-content;
   }
 
+  /* AUTH - Mobile Adjustments */
+  .auth-container {
+    width: 100%;
+    margin-top: 12px;
+  }
+
+  .btn-auth {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .user-menu {
+    left: 0;
+    right: 0;
+    top: calc(100% + 8px);
+  }
+
+  .auth-toast {
+    left: 20px;
+    right: 20px;
+    min-width: auto;
+  }
+
   /* SECTIONS - Better Mobile Spacing */
   .section {
     padding: 60px 5vw;
@@ -2897,5 +2920,183 @@ body {
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.03) 25%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0.03) 75%);
   background-size: 1000px 100%;
   animation: shimmer 2s infinite;
+}
+
+/* ========================================
+   AUTHENTICATION STYLES
+   ======================================== */
+
+/* Authentication Container */
+.auth-container {
+  position: relative;
+}
+
+/* Auth Button */
+.btn-auth {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--gradient-primary);
+  border: none;
+  border-radius: var(--radius-lg);
+  color: var(--text-main);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-sm);
+  min-height: 44px;
+}
+
+.btn-auth:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
+}
+
+.auth-icon {
+  font-size: 1.2rem;
+}
+
+.auth-text {
+  font-size: 0.9rem;
+}
+
+/* User Menu */
+.user-menu {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  background: var(--bg-card);
+  border: 2px solid var(--border-medium);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  min-width: 250px;
+  box-shadow: var(--shadow-lg);
+  z-index: 200;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.user-info {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.user-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.user-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-main);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-email {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-logout {
+  width: 100%;
+  padding: 10px;
+  background: rgba(220, 20, 60, 0.1);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  color: var(--text-main);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-logout:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+
+/* Toast Notifications */
+.auth-toast {
+  position: fixed;
+  top: 100px;
+  right: 20px;
+  background: var(--bg-card);
+  border: 2px solid var(--primary);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  box-shadow: var(--shadow-lg);
+  z-index: 9998;
+  min-width: 300px;
+  opacity: 0;
+  transform: translateX(400px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.auth-toast.show {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.toast-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.toast-content {
+  flex: 1;
+}
+
+.toast-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-main);
+  margin-bottom: 4px;
+}
+
+.toast-message {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* Netlify Identity Widget Customization */
+.netlify-identity-widget {
+  font-family: "Poppins", sans-serif !important;
 }
 

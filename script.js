@@ -367,3 +367,99 @@ loadChannelStats();
 loadHeroThumbnail();
 loadLatestVideos();
 loadNextStream();
+
+// ===== NETLIFY IDENTITY AUTHENTICATION =====
+
+// Initialize Netlify Identity
+if (window.netlifyIdentity) {
+  window.netlifyIdentity.on("init", user => {
+    updateAuthUI(user);
+  });
+
+  window.netlifyIdentity.on("login", user => {
+    updateAuthUI(user);
+    window.netlifyIdentity.close();
+    showWelcomeMessage(user);
+  });
+
+  window.netlifyIdentity.on("logout", () => {
+    updateAuthUI(null);
+    showLogoutMessage();
+  });
+}
+
+// Update authentication UI based on user state
+function updateAuthUI(user) {
+  const authButton = document.getElementById('auth-button');
+  const userMenu = document.getElementById('user-menu');
+  
+  if (user) {
+    // User is logged in
+    authButton.style.display = 'none';
+    userMenu.style.display = 'block';
+    
+    // Update user info
+    const userName = document.getElementById('user-name');
+    const userEmail = document.getElementById('user-email');
+    
+    if (userName) userName.textContent = user.user_metadata?.full_name || 'Gamer';
+    if (userEmail) userEmail.textContent = user.email;
+  } else {
+    // User is logged out
+    authButton.style.display = 'flex';
+    userMenu.style.display = 'none';
+  }
+}
+
+// Logout button handler
+const logoutButton = document.getElementById('logout-button');
+if (logoutButton) {
+  logoutButton.addEventListener('click', () => {
+    if (window.netlifyIdentity) {
+      window.netlifyIdentity.logout();
+    }
+  });
+}
+
+// Welcome message
+function showWelcomeMessage(user) {
+  const name = user.user_metadata?.full_name || 'Gamer';
+  
+  // Create toast notification
+  const toast = document.createElement('div');
+  toast.className = 'auth-toast';
+  toast.innerHTML = `
+    <div class="toast-icon">🎮</div>
+    <div class="toast-content">
+      <div class="toast-title">Welcome back, ${name}!</div>
+      <div class="toast-message">You're now logged in</div>
+    </div>
+  `;
+  document.body.appendChild(toast);
+  
+  setTimeout(() => toast.classList.add('show'), 100);
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+// Logout message
+function showLogoutMessage() {
+  const toast = document.createElement('div');
+  toast.className = 'auth-toast';
+  toast.innerHTML = `
+    <div class="toast-icon">👋</div>
+    <div class="toast-content">
+      <div class="toast-title">Logged out</div>
+      <div class="toast-message">See you next time!</div>
+    </div>
+  `;
+  document.body.appendChild(toast);
+  
+  setTimeout(() => toast.classList.add('show'), 100);
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
