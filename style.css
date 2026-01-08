@@ -3300,48 +3300,55 @@ body {
 
 /* Widget Modal Container */
 .modalContainer {
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  background: rgba(0, 0, 0, 0.75) !important;
 }
 
 /* Main Modal */
 .modalContent {
-  background: var(--glass-bg) !important;
+  background: linear-gradient(135deg, 
+    rgba(13, 13, 13, 0.95) 0%, 
+    rgba(26, 26, 26, 0.95) 100%) !important;
   border: 2px solid var(--glass-border) !important;
   border-radius: 24px !important;
   box-shadow: 
-    0 24px 64px rgba(0, 0, 0, 0.7),
-    0 12px 32px rgba(220, 20, 60, 0.2),
+    0 24px 64px rgba(0, 0, 0, 0.8),
+    0 12px 32px rgba(220, 20, 60, 0.25),
     inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
   backdrop-filter: blur(20px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
-  padding: 32px !important;
+  padding: 40px !important;
+  max-width: 440px !important;
 }
 
 /* Modal Header */
 .modalHeader {
-  border-bottom: 2px solid var(--glass-border) !important;
-  padding-bottom: 20px !important;
-  margin-bottom: 24px !important;
+  border-bottom: none !important;
+  padding-bottom: 24px !important;
+  margin-bottom: 28px !important;
+  display: flex !important;
+  justify-content: center !important;
+  gap: 8px !important;
 }
 
 .modalHeader h2 {
-  color: var(--text-main) !important;
-  font-weight: 700 !important;
-  font-size: 1.8rem !important;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+  display: none !important;
 }
 
 /* Close Button */
 .modalCloseButton {
   background: rgba(220, 20, 60, 0.15) !important;
   border: 2px solid var(--glass-border) !important;
-  border-radius: 12px !important;
+  border-radius: 50% !important;
   color: var(--text-main) !important;
   width: 40px !important;
   height: 40px !important;
   transition: all 0.3s ease !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  position: absolute !important;
+  top: 20px !important;
+  right: 20px !important;
 }
 
 .modalCloseButton:hover {
@@ -3351,180 +3358,260 @@ body {
   box-shadow: 0 6px 16px rgba(220, 20, 60, 0.4) !important;
 }
 
-/* Tabs */
+/* Tabs - Enhanced Design */
 .btnHeader {
-  background: rgba(220, 20, 60, 0.1) !important;
-  border: 2px solid var(--glass-border) !important;
-  border-radius: 12px !important;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 3px solid transparent !important;
+  border-radius: 0 !important;
   color: var(--text-muted) !important;
-  padding: 12px 24px !important;
-  font-weight: 600 !important;
+  padding: 12px 32px !important;
+  font-weight: 700 !important;
+  font-size: 1.1rem !important;
   transition: all 0.3s ease !important;
-  margin: 0 6px !important;
+  margin: 0 4px !important;
+  position: relative !important;
+}
+
+.btnHeader::after {
+  content: '' !important;
+  position: absolute !important;
+  bottom: -3px !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 3px !important;
+  background: transparent !important;
+  transition: all 0.3s ease !important;
 }
 
 .btnHeader:hover {
-  background: rgba(220, 20, 60, 0.2) !important;
+  background: transparent !important;
   color: var(--text-main) !important;
-  transform: translateY(-2px) !important;
+  transform: none !important;
+}
+
+.btnHeader:hover::after {
+  background: rgba(220, 20, 60, 0.3) !important;
 }
 
 .btnHeader.active {
-  background: linear-gradient(135deg, 
-    rgba(220, 20, 60, 0.3) 0%, 
-    rgba(139, 0, 0, 0.2) 100%) !important;
-  border-color: var(--primary) !important;
+  background: transparent !important;
+  border: none !important;
   color: var(--text-main) !important;
-  box-shadow: 
-    0 6px 16px rgba(0, 0, 0, 0.4),
-    0 3px 8px rgba(220, 20, 60, 0.3) !important;
+  text-shadow: 0 0 20px rgba(220, 20, 60, 0.5) !important;
 }
 
-/* Form Inputs */
+.btnHeader.active::after {
+  background: linear-gradient(90deg, 
+    var(--primary) 0%, 
+    #ff1744 100%) !important;
+  box-shadow: 0 0 20px rgba(220, 20, 60, 0.6) !important;
+}
+
+/* Form Inputs - Enhanced Glass Design */
 .formGroup {
-  margin-bottom: 20px !important;
+  margin-bottom: 24px !important;
 }
 
 .formLabel {
   color: var(--text-main) !important;
   font-weight: 600 !important;
-  font-size: 0.95rem !important;
-  margin-bottom: 8px !important;
+  font-size: 0.9rem !important;
+  margin-bottom: 10px !important;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+  display: block !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  opacity: 0.9 !important;
 }
 
 .formControl {
-  background: rgba(255, 255, 255, 0.03) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
   border: 2px solid var(--glass-border) !important;
-  border-radius: 12px !important;
+  border-radius: 14px !important;
   color: var(--text-main) !important;
-  padding: 14px 16px !important;
+  padding: 16px 20px !important;
+  padding-left: 48px !important;
   font-size: 1rem !important;
   font-family: "Poppins", sans-serif !important;
+  font-weight: 500 !important;
   transition: all 0.3s ease !important;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+  box-shadow: 
+    inset 0 2px 6px rgba(0, 0, 0, 0.3),
+    0 2px 8px rgba(0, 0, 0, 0.2) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
 }
 
 .formControl::placeholder {
   color: var(--text-muted) !important;
-  opacity: 0.6 !important;
+  opacity: 0.5 !important;
+  font-weight: 400 !important;
+}
+
+.formControl:hover {
+  border-color: rgba(220, 20, 60, 0.4) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
 }
 
 .formControl:focus {
-  background: rgba(255, 255, 255, 0.05) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
   border-color: var(--primary) !important;
   outline: none !important;
   box-shadow: 
-    inset 0 2px 4px rgba(0, 0, 0, 0.2),
-    0 0 0 3px rgba(220, 20, 60, 0.15) !important;
+    inset 0 2px 6px rgba(0, 0, 0, 0.3),
+    0 4px 16px rgba(0, 0, 0, 0.3),
+    0 0 0 4px rgba(220, 20, 60, 0.2) !important;
+  transform: translateY(-2px) !important;
 }
 
-/* Submit Button */
+/* Submit Button - Enhanced */
 .btn {
   background: linear-gradient(135deg, 
-    rgba(220, 20, 60, 0.25) 0%, 
-    rgba(139, 0, 0, 0.2) 100%) !important;
+    rgba(220, 20, 60, 0.35) 0%, 
+    rgba(139, 0, 0, 0.25) 100%) !important;
   border: 2px solid var(--glass-border) !important;
-  border-radius: 14px !important;
+  border-radius: 16px !important;
   color: var(--text-main) !important;
-  padding: 14px 28px !important;
+  padding: 16px 32px !important;
   font-weight: 700 !important;
-  font-size: 1.05rem !important;
+  font-size: 1.1rem !important;
   cursor: pointer !important;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
   box-shadow: 
-    0 8px 24px rgba(0, 0, 0, 0.4),
-    0 4px 12px rgba(220, 20, 60, 0.2) !important;
+    0 8px 24px rgba(0, 0, 0, 0.5),
+    0 4px 12px rgba(220, 20, 60, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
   width: 100% !important;
-  margin-top: 8px !important;
+  margin-top: 12px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.btn::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: -100% !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(220, 20, 60, 0.4), 
+    transparent) !important;
+  transition: left 0.6s ease !important;
+}
+
+.btn:hover::before {
+  left: 100% !important;
 }
 
 .btn:hover {
   background: linear-gradient(135deg, 
-    rgba(220, 20, 60, 0.4) 0%, 
-    rgba(139, 0, 0, 0.3) 100%) !important;
+    rgba(220, 20, 60, 0.5) 0%, 
+    rgba(139, 0, 0, 0.35) 100%) !important;
   border-color: var(--primary) !important;
   transform: translateY(-3px) scale(1.02) !important;
   box-shadow: 
-    0 12px 32px rgba(0, 0, 0, 0.5),
-    0 6px 16px rgba(220, 20, 60, 0.4),
-    0 0 30px rgba(220, 20, 60, 0.3) !important;
+    0 12px 36px rgba(0, 0, 0, 0.6),
+    0 6px 20px rgba(220, 20, 60, 0.5),
+    0 0 40px rgba(220, 20, 60, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
 }
 
 .btn:active {
   transform: translateY(-1px) scale(0.98) !important;
 }
 
-/* Links */
+/* Links - Enhanced */
 .btnLink {
   color: var(--primary) !important;
   font-weight: 600 !important;
+  font-size: 0.9rem !important;
   transition: all 0.3s ease !important;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+  text-decoration: none !important;
 }
 
 .btnLink:hover {
   color: #ff1744 !important;
-  text-decoration: underline !important;
+  text-decoration: none !important;
+  text-shadow: 0 0 15px rgba(220, 20, 60, 0.6) !important;
 }
 
-/* Error Messages */
+/* Error Messages - Enhanced */
 .flashMessage {
-  background: rgba(220, 20, 60, 0.15) !important;
-  border: 2px solid rgba(220, 20, 60, 0.4) !important;
-  border-radius: 12px !important;
+  background: linear-gradient(135deg, 
+    rgba(220, 20, 60, 0.2) 0%, 
+    rgba(139, 0, 0, 0.15) 100%) !important;
+  border: 2px solid rgba(220, 20, 60, 0.5) !important;
+  border-radius: 14px !important;
   color: #ff6b6b !important;
-  padding: 14px 16px !important;
-  margin-bottom: 16px !important;
+  padding: 16px 20px !important;
+  margin-bottom: 20px !important;
   font-weight: 600 !important;
+  font-size: 0.95rem !important;
   box-shadow: 
-    0 4px 12px rgba(220, 20, 60, 0.2),
+    0 4px 12px rgba(220, 20, 60, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
 }
 
 /* Success Messages */
 .flashMessage.success {
-  background: rgba(46, 213, 115, 0.15) !important;
-  border-color: rgba(46, 213, 115, 0.4) !important;
+  background: linear-gradient(135deg, 
+    rgba(46, 213, 115, 0.2) 0%, 
+    rgba(34, 197, 94, 0.15) 100%) !important;
+  border-color: rgba(46, 213, 115, 0.5) !important;
   color: #2ed573 !important;
+  box-shadow: 
+    0 4px 12px rgba(46, 213, 115, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
 }
 
 /* Loading State */
 .saving {
-  opacity: 0.6 !important;
+  opacity: 0.5 !important;
   pointer-events: none !important;
+  filter: blur(1px) !important;
 }
 
 /* Divider */
 .hr {
   border-color: var(--glass-border) !important;
-  margin: 24px 0 !important;
+  margin: 28px 0 !important;
+  opacity: 0.5 !important;
 }
 
 /* Social Login Buttons */
 .provider {
-  background: rgba(255, 255, 255, 0.03) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
   border: 2px solid var(--glass-border) !important;
-  border-radius: 12px !important;
+  border-radius: 14px !important;
   color: var(--text-main) !important;
-  padding: 12px 20px !important;
+  padding: 14px 24px !important;
+  font-weight: 600 !important;
   transition: all 0.3s ease !important;
-  margin: 8px 0 !important;
+  margin: 10px 0 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
 }
 
 .provider:hover {
-  background: rgba(255, 255, 255, 0.05) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
   border-color: var(--primary) !important;
   transform: translateY(-2px) !important;
-  box-shadow: 0 6px 16px rgba(220, 20, 60, 0.2) !important;
+  box-shadow: 0 6px 16px rgba(220, 20, 60, 0.3) !important;
 }
 
 /* Confirmation Message */
 .confirmationMessage {
   background: var(--glass-bg) !important;
   border: 2px solid var(--glass-border) !important;
-  border-radius: 16px !important;
-  padding: 24px !important;
+  border-radius: 18px !important;
+  padding: 28px !important;
   text-align: center !important;
   box-shadow: 
     0 8px 24px rgba(0, 0, 0, 0.4),
@@ -3534,7 +3621,7 @@ body {
 .confirmationMessage p {
   color: var(--text-main) !important;
   font-size: 1.05rem !important;
-  line-height: 1.6 !important;
+  line-height: 1.7 !important;
   margin-bottom: 16px !important;
 }
 
