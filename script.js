@@ -421,6 +421,43 @@ if (logoutButton) {
   });
 }
 
+// Close user menu when clicking outside or on profile link
+document.addEventListener('click', (e) => {
+  const userMenu = document.getElementById('user-menu');
+  const authButton = document.getElementById('auth-button');
+  
+  if (!userMenu || !authButton) return;
+  
+  // Close menu when clicking outside
+  if (userMenu.style.display === 'block' && 
+      !userMenu.contains(e.target) && 
+      e.target !== authButton) {
+    userMenu.style.display = 'none';
+  }
+  
+  // Close menu when clicking profile link
+  if (e.target.classList.contains('btn-profile') || 
+      e.target.closest('.btn-profile')) {
+    userMenu.style.display = 'none';
+  }
+});
+
+// Toggle user menu when clicking auth button
+document.addEventListener('DOMContentLoaded', () => {
+  const authButton = document.getElementById('auth-button');
+  const userMenu = document.getElementById('user-menu');
+  
+  if (authButton && userMenu) {
+    authButton.addEventListener('click', () => {
+      if (userMenu.style.display === 'block') {
+        userMenu.style.display = 'none';
+      } else {
+        userMenu.style.display = 'block';
+      }
+    });
+  }
+});
+
 // Welcome message
 function showWelcomeMessage(user) {
   const name = user.user_metadata?.full_name || 'Gamer';
