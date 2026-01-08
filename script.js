@@ -55,7 +55,7 @@ observedBlocks.forEach((el) => observer.observe(el));
 // ===== YOUTUBE API CONFIG =====
 
 // NOTE: make sure you restricted this key in Google Cloud
-const API_KEY = "AIzaSyCk2HpROQNkxb3kFlyfjRu1i_wPry_J9wI";
+const API_KEY = "AIzaSyAZ1Z_JmzSKeeWFys9FfJdXCj4OdZSsiTs";
 const CHANNEL_ID = "UCcCp0B0bypJE4EJjwq8u2lQ";
 
 const videoContainer = document.getElementById("yt-videos");

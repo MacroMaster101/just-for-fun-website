@@ -47,8 +47,11 @@ To increase your quota:
 ```
 just-for-fun-website/
 ├── index.html          # Main HTML structure
-├── style.css           # All styling (2551 lines)
-├── script.js           # JavaScript & YouTube API integration (368 lines)
+├── style.css           # All styling (2601 lines)
+├── script.js           # JavaScript & YouTube API integration (370 lines)
+├── netlify.toml        # Netlify configuration
+├── _redirects          # Netlify redirect rules
+├── .gitignore          # Git ignore file
 ├── images/
 │   └── logo-jff.png   # Channel logo
 └── README.md          # This file
@@ -96,15 +99,100 @@ just-for-fun-website/
 
 ## 🚀 Deployment
 
-Simply upload all files to your web hosting service:
-- GitHub Pages
-- Netlify
-- Vercel
-- Any static hosting provider
+### Deploy to Netlify
+
+#### Option 1: Deploy via GitHub (Recommended)
+
+1. **Push to GitHub**:
+   ```bash
+   git init
+   git add .
+   git commit -m "Initial commit"
+   git branch -M main
+   git remote add origin https://github.com/YOUR_USERNAME/just-for-fun-website.git
+   git push -u origin main
+   ```
+
+2. **Connect to Netlify**:
+   - Go to [Netlify](https://app.netlify.com/)
+   - Click "Add new site" → "Import an existing project"
+   - Choose "GitHub" and select your repository
+   - Click "Deploy site"
+   - Your site will be live at `https://random-name.netlify.app`
+
+3. **Custom Domain** (Optional):
+   - Go to Site settings → Domain management
+   - Click "Add custom domain"
+   - Follow the instructions to set up your domain
+
+#### Option 2: Deploy via Drag & Drop
+
+1. Go to [Netlify Drop](https://app.netlify.com/drop)
+2. Drag and drop your entire project folder
+3. Your site will be live instantly!
+
+#### Option 3: Netlify CLI
+
+```bash
+# Install Netlify CLI
+npm install -g netlify-cli
+
+# Login to Netlify
+netlify login
+
+# Deploy
+netlify deploy --prod
+```
+
+### Alternative Hosting Options
+
+- **GitHub Pages**: Enable in repository settings → Pages
+- **Vercel**: Import from GitHub at [vercel.com](https://vercel.com)
+- **Cloudflare Pages**: Connect GitHub repo at [pages.cloudflare.com](https://pages.cloudflare.com)
+
+## 📂 GitHub Setup
+
+### First Time Setup
+
+```bash
+# Navigate to your project folder
+cd "c:\Users\Kavisha Lakshan\OneDrive\Documents\GitHub\just-for-fun-website"
+
+# Initialize Git repository
+git init
+
+# Add all files
+git add .
+
+# Create first commit
+git commit -m "Initial commit: JUST FOR FUN gaming website"
+
+# Create main branch
+git branch -M main
+
+# Add your GitHub repository (create one first on github.com)
+git remote add origin https://github.com/YOUR_USERNAME/just-for-fun-website.git
+
+# Push to GitHub
+git push -u origin main
+```
+
+### Future Updates
+
+```bash
+# Add changes
+git add .
+
+# Commit with a message
+git commit -m "Update content"
+
+# Push to GitHub
+git push
+```
 
 ## 📝 License
 
-© 2025 JUST FOR FUN • All rights reserved
+© 2026 JUST FOR FUN • All rights reserved
 
 ---
 
