@@ -1,1 +1,0 @@
-cd "c:\Users\Kavisha Lakshan\OneDrive\Documents\GitHub\just-for-fun-website"; python -m http.server 8000

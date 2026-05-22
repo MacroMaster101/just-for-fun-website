@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-inter), sans-serif;
+  --font-display: var(--font-poppins), sans-serif;
+
+  --color-gaming-bg: #030712; /* gray-950 */
+  --color-gaming-card: #0b0f19; /* rich slate-900 */
+  --color-gaming-border: rgba(139, 92, 246, 0.15);
+  
+  --color-primary: #8b5cf6; /* Violet */
+  --color-primary-glow: rgba(139, 92, 246, 0.3);
+  --color-accent: #06b6d4; /* Cyan */
+  --color-accent-glow: rgba(6, 182, 212, 0.3);
+  --color-pink: #ec4899; /* Pink */
+  
+  --animate-glow-pulse: glow-pulse 3s infinite alternate;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-scanline: scanline 8s linear infinite;
+  
+  @keyframes glow-pulse {
+    0% {
+      box-shadow: 0 0 5px rgba(139, 92, 246, 0.2), 0 0 10px rgba(139, 92, 246, 0.1);
+    }
+    100% {
+      box-shadow: 0 0 15px rgba(139, 92, 246, 0.5), 0 0 25px rgba(139, 92, 246, 0.2);
+    }
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  @keyframes scanline {
+    0% {
+      transform: translateY(-100%);
+    }
+    100% {
+      transform: translateY(100%);
+    }
+  }
+}
+
+/* Custom base styles */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    background-color: var(--color-gaming-bg);
+    color: #f3f4f6; /* gray-100 */
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #030712;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1f2937;
+    border-radius: 4px;
+    border: 2px solid #030712;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #374151;
+  }
+}
+
+/* Custom utilities */
+@layer utilities {
+  .bg-grid-pattern {
+    background-size: 40px 40px;
+    background-image: 
+      linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  }
+  
+  .text-glow-primary {
+    text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+  }
+
+  .text-glow-accent {
+    text-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+  }
+
+  .border-glow-primary {
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.15);
+  }
+
+  .border-glow-accent {
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.15);
+  }
+}
