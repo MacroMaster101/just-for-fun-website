@@ -21,8 +21,6 @@ export const SplineRobot = ({ scene = ROBOT_SCENE, className = "" }: SplineRobot
       <Suspense fallback={<RobotPlaceholder />}>
         <Spline scene={scene} />
       </Suspense>
-      {/* Hide Spline watermark logo */}
-      <div className="absolute bottom-3 right-3 h-12 w-40 bg-[#0a0a0a]" aria-hidden />
     </div>
   );
 };

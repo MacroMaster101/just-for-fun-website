@@ -5,6 +5,7 @@ import { LogOut, Menu, Radio, X } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { Youtube } from "@/components/ui/Icons";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 type AmbientNodeGroup = {
   osc: OscillatorNode;
@@ -59,12 +60,12 @@ export const Header = () => {
 
   useEffect(() => {
     return () => {
-      if (!audioCtx) return;
+      if (!audioCtx || audioCtx.state === "closed") return;
       nodes.forEach((g) => {
-        g.osc.stop();
-        g.lfo.stop();
+        try { g.osc.stop(); } catch {}
+        try { g.lfo.stop(); } catch {}
       });
-      void audioCtx.close();
+      void audioCtx.close().catch(() => {});
     };
   }, [audioCtx, nodes]);
 
@@ -113,10 +114,12 @@ export const Header = () => {
   const stopAmbient = () => {
     if (!audioCtx) return;
     nodes.forEach((g) => {
-      g.osc.stop();
-      g.lfo.stop();
+      try { g.osc.stop(); } catch {}
+      try { g.lfo.stop(); } catch {}
     });
-    void audioCtx.close();
+    if (audioCtx.state !== "closed") {
+      void audioCtx.close().catch(() => {});
+    }
     setAudioCtx(null);
     setNodes([]);
     setAmbientPlaying(false);
@@ -137,8 +140,8 @@ export const Header = () => {
       <header
         className={`fixed inset-x-0 top-0 z-40 transition-all duration-300 ${
           scrolled
-            ? "border-b border-white/10 bg-[#060606]/90 py-2.5 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.5)]"
-            : "border-b border-transparent bg-[#060606]/40 py-3.5 backdrop-blur"
+            ? "border-b border-[var(--color-border)] bg-[var(--color-bg)]/90 py-2.5 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.5)]"
+            : "border-b border-transparent bg-[var(--color-bg)]/40 py-3.5 backdrop-blur"
         }`}
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 sm:px-6">
@@ -180,6 +183,7 @@ export const Header = () => {
 
           {/* Right cluster */}
           <div className="hidden items-center gap-2 md:flex">
+            <ThemeToggle />
             <button
               onClick={toggleAmbient}
               className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-[10px] font-black uppercase tracking-wider transition ${
@@ -238,6 +242,9 @@ export const Header = () => {
         }`}
       >
         <nav className="grid gap-2 text-sm font-bold uppercase tracking-wide text-neutral-300">
+          <div className="mb-3 flex justify-center">
+            <ThemeToggle />
+          </div>
           <button
             onClick={toggleAmbient}
             className="mb-3 flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-xs text-white"

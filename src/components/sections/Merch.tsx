@@ -248,7 +248,7 @@ export const Merch = () => {
             { icon: <Star size={14} className="text-[#ff4b5f]" />, text: "Limited Season Drops" },
             { icon: <Gift size={14} className="text-white" />, text: "Community VIP Discounts" },
           ].map((feat, idx) => (
-            <div key={idx} className="flex items-center gap-1.5 hover:text-white transition-colors cursor-default">
+            <div key={idx} className="flex items-center gap-1.5 transition-colors">
               {feat.icon}
               {feat.text}
             </div>
