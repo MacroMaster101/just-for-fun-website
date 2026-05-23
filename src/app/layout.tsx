@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Orbitron, Inter, Space_Grotesk } from "next/font/google";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { CustomCursor } from "@/components/ui/CustomCursor";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const orbitron = Orbitron({
@@ -43,6 +44,7 @@ export default function RootLayout({
           <CustomCursor />
           {children}
         </AuthProvider>
+        <Analytics />
       </body>
     </html>
   );
