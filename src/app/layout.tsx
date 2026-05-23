@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Orbitron, Inter, Space_Grotesk } from "next/font/google";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { CustomCursor } from "@/components/ui/CustomCursor";
 import "./globals.css";
@@ -43,6 +44,7 @@ export default function RootLayout({
           <CustomCursor />
           {children}
         </AuthProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
