@@ -1,162 +1,255 @@
 "use client";
 
-import React from "react";
-import { Play, Users, Video, Eye, Calendar, Sparkles } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { Bell, Eye, Play, Radio, Sparkles, Users, Video } from "lucide-react";
+import Image from "next/image";
 import { Youtube } from "@/components/ui/Icons";
 import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { Card } from "@/components/ui/Card";
+import { SplineRobot } from "@/components/ui/SplineRobot";
+import { CursorSpotlight } from "@/components/ui/CursorSpotlight";
+
+interface StatsItem {
+  subscribers: string;
+  videos: string;
+  views: string;
+  title: string;
+  customUrl: string;
+  description: string;
+  avatar: string;
+  banner: string;
+  channelUrl: string;
+}
+
+const fallbackStats: StatsItem = {
+  subscribers: "--",
+  videos: "--",
+  views: "--",
+  title: "Just For Fun BoYs",
+  customUrl: "@JustForFun-BoYs",
+  description:
+    "Sri Lankan gaming crew dropping clutch moments, chaotic fails, and weekend community streams.",
+  avatar: "",
+  banner: "",
+  channelUrl: "https://www.youtube.com/@JustForFun-BoYs",
+};
 
 export const Hero = () => {
+  const [stats, setStats] = useState<StatsItem>(fallbackStats);
+  const [loading, setLoading] = useState(true);
+  const [source, setSource] = useState<"youtube" | "fallback">("fallback");
+  const ref = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    fetch("/api/youtube")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.stats) {
+          setStats({ ...fallbackStats, ...data.stats });
+          setSource(data.source === "youtube" ? "youtube" : "fallback");
+        }
+      })
+      .catch((e) => console.error("Hero YT fetch:", e))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const onMove = (e: MouseEvent) => {
+      const rect = el.getBoundingClientRect();
+      const px = (e.clientX - rect.left) / rect.width - 0.5;
+      const py = (e.clientY - rect.top) / rect.height - 0.5;
+      el.style.setProperty("--px", px.toString());
+      el.style.setProperty("--py", py.toString());
+    };
+    window.addEventListener("mousemove", onMove);
+    return () => window.removeEventListener("mousemove", onMove);
+  }, []);
+
+  const channelUrl = stats.channelUrl || fallbackStats.channelUrl;
+
   return (
     <section
+      ref={ref}
       id="hero"
-      className="relative min-h-screen flex items-center justify-center pt-24 pb-16 overflow-hidden bg-grid-pattern bg-slate-950"
+      className="relative min-h-screen overflow-hidden bg-[#060606] pt-24 text-white scanlines"
+      style={{ ["--px" as string]: "0", ["--py" as string]: "0" }}
     >
-      {/* Dynamic Background Glows */}
-      <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-violet-600/10 blur-[150px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-[500px] h-[500px] bg-cyan-600/10 blur-[150px] rounded-full pointer-events-none" />
+      {/* Layered background */}
+      <div className="absolute inset-0 bg-cyber-matrix opacity-30" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_25%,rgba(255,0,51,0.28),transparent_45%),radial-gradient(circle_at_85%_75%,rgba(255,45,85,0.18),transparent_50%)]" />
+      <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-[#060606]" />
+      <CursorSpotlight color="rgba(255, 0, 51, 0.22)" size={800} />
 
-      {/* Cyber Grid Mask */}
-      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-slate-950 pointer-events-none" />
+      {/* Animated grid lines */}
+      <div className="absolute inset-x-0 top-24 h-px bg-gradient-to-r from-transparent via-[#ff0033]/60 to-transparent" />
 
-      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10 w-full">
-        {/* Left Column: Title and details */}
-        <div className="lg:col-span-7 space-y-6 text-left">
-          <div className="inline-flex">
-            <Badge variant="primary" pulse>
-              <Sparkles size={10} className="mr-1" /> Live Gaming Channel
-            </Badge>
+      <div className="relative z-10 mx-auto grid min-h-[calc(100vh-6rem)] max-w-7xl grid-cols-1 items-center gap-10 px-5 pb-16 sm:px-6 lg:grid-cols-12">
+        {/* LEFT: Copy block */}
+        <div className="lg:col-span-7">
+          <div className="mb-6 flex flex-wrap items-center gap-3 animate-fade-in-up">
+            <span className={`chip ${source === "youtube" ? "chip-red" : ""}`}>
+              <Radio size={11} className={loading ? "" : "animate-pulse"} />
+              {loading ? "Syncing YouTube" : source === "youtube" ? "Live YouTube Data" : "API Setup Needed"}
+            </span>
+            <span className="chip">
+              <Sparkles size={11} /> Official Channel
+            </span>
           </div>
 
-          <h1 className="font-display font-extrabold text-5xl sm:text-6xl xl:text-7xl tracking-tight leading-tight text-white">
-            JUST FOR <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-pink-400 to-cyan-400 drop-shadow-[0_0_20px_rgba(139,92,246,0.3)] animate-[glow-pulse_3s_infinite_alternate]">
-              FUN
-            </span>
+          <div className="mb-6 flex items-center gap-4 animate-fade-in-up [animation-delay:0.05s]">
+            <div
+              className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-2 border-[#ff0033] bg-[#131313] shadow-[0_0_36px_rgba(255,0,51,0.5)] transition-transform duration-300"
+              style={{
+                transform:
+                  "perspective(800px) rotateX(calc(var(--py) * -16deg)) rotateY(calc(var(--px) * 16deg))",
+              }}
+            >
+              {stats.avatar ? (
+                <Image src={stats.avatar} alt={stats.title} fill sizes="80px" className="object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center font-display text-2xl font-black">
+                  JFF
+                </div>
+              )}
+              <span className="absolute inset-0 border-neon rounded-2xl" aria-hidden />
+            </div>
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.32em] text-[#ff2d55]">
+                {stats.customUrl}
+              </p>
+              <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.24em] text-neutral-500">
+                Gaming · Variety · Sri Lanka
+              </p>
+            </div>
+          </div>
+
+          <h1 className="font-display text-5xl font-black uppercase leading-[0.9] tracking-tight text-white animate-fade-in-up [animation-delay:0.1s] sm:text-6xl lg:text-7xl">
+            <span className="block">Just For</span>
+            <span className="block text-gradient-animated text-glow-red">Fun BoYs</span>
           </h1>
 
-          <p className="text-slate-300 text-base sm:text-lg max-w-xl leading-relaxed">
-            Experience{" "}
-            <strong className="text-violet-400">high-octane gameplay</strong>,
-            epic clutches, and variety gaming. No try-hard drama, just pure gaming
-            with an awesome community!
+          <p className="mt-6 max-w-xl text-base font-medium leading-7 text-neutral-300 animate-fade-in-up [animation-delay:0.15s] sm:text-lg">
+            {stats.description}
           </p>
 
-          {/* Game Tags */}
-          <div className="flex flex-wrap gap-2.5">
-            {["🎯 Valorant", "⚔️ Valheim", "💥 Battlefield", "🎲 Variety Games"].map(
-              (tag) => (
-                <span
-                  key={tag}
-                  className="bg-slate-900 border border-white/5 px-3 py-1 rounded-xl text-xs font-semibold text-slate-300 hover:border-violet-500/20 transition-all cursor-default"
-                >
-                  {tag}
-                </span>
-              )
-            )}
-          </div>
-
-          {/* Action buttons */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2">
+          <div className="mt-8 flex flex-wrap gap-3 animate-fade-in-up [animation-delay:0.2s]">
             <a
-              href="https://www.youtube.com/channel/UCcCp0B0bypJE4EJjwq8u2lQ?sub_confirmation=1"
+              href={`${channelUrl}?sub_confirmation=1`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex"
             >
-              <Button size="lg" glow className="gap-2 w-full sm:w-auto">
-                <Youtube size={20} /> Subscribe Now
+              <Button size="lg" glow className="gap-2">
+                <Bell size={18} /> Subscribe
               </Button>
             </a>
-            <a href="#latest" className="inline-flex">
-              <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto">
-                <Play size={18} /> Watch Latest
+            <a href="#latest">
+              <Button variant="secondary" size="lg" className="gap-2">
+                <Play size={18} /> Latest Videos
+              </Button>
+            </a>
+            <a href={channelUrl} target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" size="lg" className="gap-2">
+                <Youtube size={18} /> Channel
               </Button>
             </a>
           </div>
 
-          {/* Channel Stats */}
-          <div className="grid grid-cols-3 gap-4 pt-8 border-t border-white/5 max-w-lg">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-violet-600/10 border border-violet-500/20 flex items-center justify-center text-violet-400">
-                <Users size={20} />
-              </div>
-              <div>
-                <div className="text-lg font-extrabold text-white leading-tight">1K+</div>
-                <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">
-                  Subs
+          {/* Stats strip */}
+          <div className="mt-10 grid grid-cols-3 gap-3 animate-fade-in-up [animation-delay:0.25s]">
+            {[
+              { label: "Subscribers", value: stats.subscribers, icon: Users },
+              { label: "Videos", value: stats.videos, icon: Video },
+              { label: "Total Views", value: stats.views, icon: Eye },
+            ].map((item, idx) => {
+              const Icon = item.icon;
+              return (
+                <div
+                  key={item.label}
+                  className="group relative overflow-hidden rounded-xl border border-white/10 bg-[#131313]/70 p-4 backdrop-blur-xl glass-hover"
+                  style={{
+                    transform: `perspective(900px) rotateX(calc(var(--py) * ${4 + idx * 2}deg)) rotateY(calc(var(--px) * ${-4 - idx * 2}deg))`,
+                  }}
+                >
+                  <div className="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-[#ff0033]/12 blur-2xl transition-opacity group-hover:opacity-100" />
+                  <div className="relative">
+                    <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-[#ff0033]/15 text-[#ff2d55]">
+                      <Icon size={17} />
+                    </div>
+                    <div className="font-display text-2xl font-black text-white">
+                      {loading ? (
+                        <span className="block h-7 w-16 animate-pulse rounded bg-white/10" />
+                      ) : (
+                        item.value
+                      )}
+                    </div>
+                    <p className="mt-1 text-[10px] font-black uppercase tracking-[0.22em] text-neutral-500">
+                      {item.label}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-cyan-600/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
-                <Video size={20} />
-              </div>
-              <div>
-                <div className="text-lg font-extrabold text-white leading-tight">50+</div>
-                <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">
-                  Videos
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-pink-600/10 border border-pink-500/20 flex items-center justify-center text-pink-400">
-                <Eye size={20} />
-              </div>
-              <div>
-                <div className="text-lg font-extrabold text-white leading-tight">10K+</div>
-                <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">
-                  Views
-                </div>
-              </div>
-            </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* Right Column: Upcoming stream preview card */}
-        <div className="lg:col-span-5 flex items-center justify-center lg:justify-end">
-          <Card
-            glow
-            hoverEffect
-            className="w-full max-w-sm border border-white/10 p-6 space-y-6 relative overflow-hidden"
-          >
-            {/* Header Badge */}
-            <div className="flex items-center justify-between">
-              <Badge variant="warning" pulse>
-                Upcoming Stream
-              </Badge>
-              <span className="text-slate-500 text-xs flex items-center gap-1">
-                <Calendar size={12} /> Live Next
-              </span>
+        {/* RIGHT: Spline 3D Robot */}
+        <div className="relative lg:col-span-5">
+          <div className="relative aspect-square w-full max-w-[560px] mx-auto">
+            {/* Glow rings behind robot */}
+            <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(255,0,51,0.35)_0%,transparent_55%)] animate-glow-pulse" />
+            <div className="absolute inset-8 rounded-full border border-[#ff0033]/20 animate-spin-slow" />
+            <div className="absolute inset-16 rounded-full border border-[#ff2d55]/15" />
+
+            {/* Orbiting badges */}
+            <div className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2">
+              <span className="absolute h-3 w-3 rounded-full bg-[#ff0033] shadow-[0_0_18px_rgba(255,0,51,0.9)] animate-orbit" />
+              <span
+                className="absolute h-2 w-2 rounded-full bg-white shadow-[0_0_14px_rgba(255,255,255,0.8)] animate-orbit"
+                style={{ animationDelay: "-7s", animationDuration: "18s" }}
+              />
+              <span
+                className="absolute h-2.5 w-2.5 rounded-full bg-[#ff2d55] shadow-[0_0_16px_rgba(255,45,85,0.8)] animate-orbit"
+                style={{ animationDelay: "-14s", animationDuration: "26s" }}
+              />
             </div>
 
-            {/* Content */}
-            <div className="space-y-2">
-              <h3 className="font-display font-extrabold text-xl text-white tracking-wide leading-snug">
-                Variety Gaming Night
-              </h3>
-              <p className="text-sm text-slate-400">
-                🕐 Every Weekend &bull; 8:00 PM
-              </p>
-              <p className="text-xs text-slate-500 leading-relaxed pt-2">
-                Join the live stream on YouTube for chill gaming sessions, viewer games, and QA chat!
-              </p>
-            </div>
+            <SplineRobot className="relative z-10" />
+          </div>
 
-            {/* Footer details */}
-            <div className="pt-4 border-t border-white/5 flex items-center justify-between">
-              <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">
-                Platform
-              </span>
-              <span className="text-xs font-bold text-red-500 bg-red-500/10 px-2.5 py-1 rounded-lg border border-red-500/20 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
-                YouTube Live
-              </span>
+          {/* HUD callouts */}
+          <div className="absolute left-0 top-4 hidden flex-col gap-2 lg:flex">
+            <span className="chip chip-red">SYS ONLINE</span>
+            <span className="chip">AI · v4.7</span>
+          </div>
+          <div className="absolute bottom-6 right-4 hidden flex-col items-end gap-2 lg:flex">
+            <span className="chip">3D · WebGL</span>
+            <span className="chip chip-red">LIVE LINK</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Marquee strip at bottom */}
+      <div className="absolute bottom-0 left-0 right-0 overflow-hidden border-y border-white/10 bg-[#0a0a0a]/80 py-3 backdrop-blur">
+        <div className="flex w-max animate-marquee gap-12 whitespace-nowrap font-display text-sm font-black uppercase tracking-[0.3em] text-neutral-500">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} className="flex shrink-0 items-center gap-12">
+              <span>★ Valorant</span>
+              <span className="text-[#ff0033]">●</span>
+              <span>★ Valheim</span>
+              <span className="text-[#ff0033]">●</span>
+              <span>★ GTA V</span>
+              <span className="text-[#ff0033]">●</span>
+              <span>★ Battlefield</span>
+              <span className="text-[#ff0033]">●</span>
+              <span>★ Minecraft</span>
+              <span className="text-[#ff0033]">●</span>
+              <span>★ Co-op Survival</span>
+              <span className="text-[#ff0033]">●</span>
+              <span>★ Weekend Streams</span>
+              <span className="text-[#ff0033]">●</span>
             </div>
-          </Card>
+          ))}
         </div>
       </div>
     </section>

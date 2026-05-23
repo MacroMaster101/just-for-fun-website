@@ -2,120 +2,124 @@
 
 import React from "react";
 import { Heart } from "lucide-react";
-import { Youtube, Twitter, Discord } from "@/components/ui/Icons";
+import { Youtube, Twitter, Discord, Twitch, Instagram } from "@/components/ui/Icons";
+
+const watchLinks = [
+  { label: "Home", href: "#hero" },
+  { label: "About", href: "#about" },
+  { label: "Squad", href: "#squad" },
+  { label: "Latest Videos", href: "#latest" },
+];
+
+const communityLinks = [
+  { label: "Sound Arena", href: "#arena" },
+  { label: "Challenge Wheel", href: "#wheel" },
+  { label: "Schedule", href: "#schedule" },
+  { label: "Creator Shop", href: "#merch" },
+  { label: "Contact", href: "#contact" },
+];
+
+const socials = [
+  { icon: <Youtube size={16} />, href: "https://www.youtube.com/@JustForFun-BoYs", label: "YouTube" },
+  { icon: <Twitch size={16} />, href: "https://www.twitch.tv/justforfunggez", label: "Twitch" },
+  { icon: <Discord size={16} />, href: "https://discord.gg/yourserver", label: "Discord" },
+  { icon: <Instagram size={16} />, href: "https://instagram.com/justforfun", label: "Instagram" },
+  { icon: <Twitter size={16} />, href: "https://twitter.com/justforfun", label: "X / Twitter" },
+];
 
 export const Footer = () => {
-  const currentYear = new Date().getFullYear();
+  const year = new Date().getFullYear();
 
   return (
-    <footer className="relative bg-slate-950 border-t border-white/5 pt-16 pb-8 overflow-hidden">
-      {/* Decorative Wave/Gradient */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/50 to-transparent" />
-      <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-violet-600/5 blur-[120px] rounded-full pointer-events-none" />
+    <footer className="relative overflow-hidden border-t border-white/10 bg-[#060606]">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ff0033]/70 to-transparent" />
+      <div className="absolute -left-32 -top-32 h-72 w-72 rounded-full bg-[#ff0033]/15 blur-[120px]" />
+      <div className="absolute -right-32 -bottom-32 h-72 w-72 rounded-full bg-[#ff2d55]/10 blur-[120px]" />
 
-      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-10 relative z-10">
-        {/* Brand */}
-        <div className="md:col-span-2 space-y-4">
-          <a href="#hero" className="flex items-center gap-2 font-display font-extrabold text-xl tracking-wider text-white">
-            <span>🎮</span> JUST FOR FUN
+      {/* Giant brand text */}
+      <div className="relative overflow-hidden">
+        <div className="select-none whitespace-nowrap text-center font-display text-[20vw] font-black uppercase leading-[0.85] tracking-tighter text-transparent [-webkit-text-stroke:1px_rgba(255,0,51,0.16)]">
+          Just For Fun
+        </div>
+      </div>
+
+      <div className="relative z-10 mx-auto grid max-w-7xl grid-cols-1 gap-12 px-5 pb-14 pt-4 sm:px-6 md:grid-cols-12">
+        <div className="md:col-span-5">
+          <a href="#hero" className="flex items-center gap-3">
+            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#ff0033] to-[#b30024] text-white shadow-[0_0_24px_rgba(255,0,51,0.45)]">
+              <Youtube size={22} />
+            </span>
+            <div>
+              <p className="font-display text-base font-black uppercase tracking-wider text-white">
+                Just For Fun BoYs
+              </p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-[#ff2d55]">
+                @JustForFun-BoYs
+              </p>
+            </div>
           </a>
-          <p className="text-slate-400 text-sm max-w-sm leading-relaxed">
-            Your ultimate gaming destination for epic clips, full walkthroughs, and chill vibes. Join our community and stay in the loop!
+          <p className="mt-5 max-w-md text-sm leading-6 text-neutral-400">
+            Official channel hub for clutch highlights, weekend community streams, gaming sessions
+            and creator drops. Live data straight from YouTube.
           </p>
-          <div className="flex items-center gap-3">
-            <a
-              href="https://www.youtube.com/channel/UCcCp0B0bypJE4EJjwq8u2lQ"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-10 h-10 rounded-xl bg-slate-900 border border-white/5 hover:border-red-500/50 hover:text-red-500 flex items-center justify-center transition-all hover:-translate-y-1"
-            >
-              <Youtube size={18} />
-            </a>
-            <a
-              href="https://discord.gg/yourserver"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-10 h-10 rounded-xl bg-slate-900 border border-white/5 hover:border-violet-500/50 hover:text-violet-500 flex items-center justify-center transition-all hover:-translate-y-1"
-            >
-              <Discord size={18} />
-            </a>
-            <a
-              href="https://twitter.com/justforfun"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-10 h-10 rounded-xl bg-slate-900 border border-white/5 hover:border-cyan-500/50 hover:text-cyan-500 flex items-center justify-center transition-all hover:-translate-y-1"
-            >
-              <Twitter size={18} />
-            </a>
+
+          <div className="mt-6 flex flex-wrap items-center gap-2">
+            {socials.map((s) => (
+              <a
+                key={s.label}
+                href={s.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={s.label}
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-neutral-300 transition hover:-translate-y-0.5 hover:border-[#ff0033]/60 hover:bg-[#ff0033]/10 hover:text-white"
+              >
+                {s.icon}
+              </a>
+            ))}
           </div>
         </div>
 
-        {/* Quick Links */}
-        <div>
-          <h4 className="font-display font-bold text-white text-sm tracking-wider uppercase mb-4">
-            Navigation
+        <div className="md:col-span-3">
+          <h4 className="mb-4 font-display text-xs font-black uppercase tracking-[0.28em] text-[#ff2d55]">
+            Watch
           </h4>
-          <ul className="space-y-2.5 text-sm text-slate-400">
-            <li>
-              <a href="#hero" className="hover:text-violet-400 transition-colors">
-                Home
-              </a>
-            </li>
-            <li>
-              <a href="#about" className="hover:text-violet-400 transition-colors">
-                About
-              </a>
-            </li>
-            <li>
-              <a href="#latest" className="hover:text-violet-400 transition-colors">
-                Latest Videos
-              </a>
-            </li>
-            <li>
-              <a href="#schedule" className="hover:text-violet-400 transition-colors">
-                Stream Schedule
-              </a>
-            </li>
+          <ul className="space-y-2.5 text-sm font-medium text-neutral-400">
+            {watchLinks.map((l) => (
+              <li key={l.href}>
+                <a href={l.href} className="inline-flex items-center gap-2 transition hover:text-white">
+                  <span className="h-px w-3 bg-[#ff0033] transition-all group-hover:w-5" />
+                  {l.label}
+                </a>
+              </li>
+            ))}
           </ul>
         </div>
 
-        {/* Support */}
-        <div>
-          <h4 className="font-display font-bold text-white text-sm tracking-wider uppercase mb-4">
-            Legal & Support
+        <div className="md:col-span-4">
+          <h4 className="mb-4 font-display text-xs font-black uppercase tracking-[0.28em] text-[#ff2d55]">
+            Community
           </h4>
-          <ul className="space-y-2.5 text-sm text-slate-400">
-            <li>
-              <a href="#contact" className="hover:text-violet-400 transition-colors">
-                Contact Us
-              </a>
-            </li>
-            <li>
-              <a href="#merch" className="hover:text-violet-400 transition-colors">
-                Store Help
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:text-violet-400 transition-colors">
-                Privacy Policy
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:text-violet-400 transition-colors">
-                Terms of Service
-              </a>
-            </li>
+          <ul className="space-y-2.5 text-sm font-medium text-neutral-400">
+            {communityLinks.map((l) => (
+              <li key={l.href}>
+                <a href={l.href} className="transition hover:text-white">
+                  {l.label}
+                </a>
+              </li>
+            ))}
           </ul>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-white/5 relative z-10 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-        <p>
-          &copy; {currentYear} JUST FOR FUN &bull; All rights reserved.
-        </p>
-        <p className="flex items-center gap-1.5">
-          Made with <Heart size={12} className="text-red-500 fill-red-500 animate-pulse" /> for the gaming community.
-        </p>
+      <div className="relative z-10 mx-auto flex max-w-7xl flex-col gap-3 border-t border-white/10 px-5 py-6 text-[11px] font-bold uppercase tracking-[0.22em] text-neutral-500 sm:px-6 md:flex-row md:items-center md:justify-between">
+        <span>&copy; {year} Just For Fun BoYs</span>
+        <span className="flex items-center gap-2">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#ff0033]" />
+          Live YouTube Data
+        </span>
+        <span className="flex items-center gap-2 text-neutral-400">
+          Built with <Heart size={12} className="fill-[#ff0033] text-[#ff0033]" /> & Spline 3D
+        </span>
       </div>
     </footer>
   );

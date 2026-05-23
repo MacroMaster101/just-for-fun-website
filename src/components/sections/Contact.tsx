@@ -48,32 +48,31 @@ export const Contact = () => {
   };
 
   return (
-    <section id="contact" className="relative py-24 bg-slate-950 overflow-hidden">
-      {/* Background Glow */}
-      <div className="absolute bottom-1/4 right-0 w-[400px] h-[400px] bg-violet-600/5 blur-[120px] pointer-events-none rounded-full" />
+    <section id="contact" className="relative py-24 bg-[#060606] overflow-hidden bg-grid-subtle">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ff0033]/45 to-transparent" />
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
           <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-white tracking-tight flex items-center justify-center gap-3">
-            <span className="text-violet-500">✉️</span> Get in Touch
+            <span className="text-[#ff0033] drop-shadow-[0_0_8px_rgba(255,0,51,0.5)]">✉️</span> Get in Touch
           </h2>
-          <p className="text-slate-400 text-sm tracking-wider uppercase font-semibold">
+          <p className="text-neutral-400 text-sm tracking-wider uppercase font-semibold">
             Business inquiries, collaborations, or just want to say hi? Drop a message!
           </p>
-          <div className="w-12 h-1 bg-gradient-to-r from-violet-500 to-cyan-500 mx-auto rounded-full mt-4" />
+          <div className="w-16 h-[2px] bg-gradient-to-r from-[#ff0033] via-white to-[#ff4b5f] mx-auto rounded-full mt-4" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-stretch max-w-5xl mx-auto">
           {/* Left Column: Information Card */}
-          <div className="lg:col-span-5 flex flex-col justify-between p-8 rounded-2xl border border-white/5 bg-slate-900/35 backdrop-blur-sm relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-24 h-24 bg-violet-600/10 blur-xl pointer-events-none rounded-full" />
+          <div className="lg:col-span-5 flex flex-col justify-between p-8 rounded-lg border border-white/10 bg-[#181818]/70 backdrop-blur-md relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-[#ff0033]" />
             
             <div className="space-y-6 relative z-10">
               <h3 className="font-display font-extrabold text-2xl text-white tracking-wide">
                 📬 Let&apos;s Talk!
               </h3>
-              <p className="text-slate-400 text-sm leading-relaxed">
+              <p className="text-neutral-400 text-sm leading-relaxed">
                 Whether you have a business proposal, want to collaborate on content, suggest games, or just share your thoughts — I&apos;d love to hear from you!
               </p>
               
@@ -86,7 +85,7 @@ export const Contact = () => {
                 ].map((reason) => (
                   <div
                     key={reason}
-                    className="bg-slate-950 border border-white/5 px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-300"
+                    className="bg-[#202020]/50 border border-white/10 px-4 py-2.5 rounded-lg text-xs font-semibold text-neutral-300 hover:border-[#ff0033]/40 hover:text-white transition-colors cursor-default"
                   >
                     {reason}
                   </div>
@@ -94,14 +93,14 @@ export const Contact = () => {
               </div>
             </div>
             
-            <p className="text-[10px] text-slate-500 tracking-wider font-semibold uppercase mt-8 border-t border-white/5 pt-4">
+            <p className="text-[10px] text-neutral-500 tracking-wider font-semibold uppercase mt-8 border-t border-white/5 pt-4">
               Average response time: 24-48 hours
             </p>
           </div>
 
           {/* Right Column: Contact Form */}
           <div className="lg:col-span-7">
-            <Card className="p-8 border border-white/10 bg-slate-900/60 backdrop-blur-md">
+            <Card className="p-8 border border-white/10 bg-[#181818]/80 backdrop-blur-xl">
               <form onSubmit={handleSubmit} className="space-y-5">
                 {success && (
                   <div className="flex items-start gap-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/20 p-4 text-xs text-emerald-300">
@@ -111,7 +110,7 @@ export const Contact = () => {
                 )}
 
                 {error && (
-                  <div className="flex items-start gap-2.5 rounded-xl bg-red-950/40 border border-red-500/20 p-4 text-xs text-red-300">
+                  <div className="flex items-start gap-2.5 rounded-xl bg-rose-950/40 border border-rose-500/20 p-4 text-xs text-rose-300">
                     <AlertCircle size={16} className="shrink-0 mt-0.5" />
                     <span>{error}</span>
                   </div>
@@ -147,6 +146,7 @@ export const Contact = () => {
                   disabled={loading}
                   glow
                   fullWidth
+                  variant="aurora"
                   className="gap-2 pt-3 pb-3"
                 >
                   {loading ? "Sending..." : "Send Message"}{" "}

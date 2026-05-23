@@ -34,20 +34,19 @@ export const Schedule = () => {
   ];
 
   return (
-    <section id="schedule" className="relative py-24 bg-slate-900/30 overflow-hidden">
-      {/* Background Glow */}
-      <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-96 h-96 bg-violet-600/5 blur-[120px] pointer-events-none rounded-full" />
+    <section id="schedule" className="relative py-24 bg-[#060606] overflow-hidden">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ff0033]/45 to-transparent" />
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
           <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-white tracking-tight flex items-center justify-center gap-3">
-            <span className="text-violet-500">📅</span> Stream Schedule
+            <span className="text-[#ff0033]">📅</span> Stream Schedule
           </h2>
-          <p className="text-slate-400 text-sm tracking-wider uppercase font-semibold">
+          <p className="text-neutral-400 text-sm tracking-wider uppercase font-semibold">
             Mark your calendars! Here&apos;s when you can catch the action live.
           </p>
-          <div className="w-12 h-1 bg-gradient-to-r from-violet-500 to-cyan-500 mx-auto rounded-full mt-4" />
+          <div className="w-12 h-1 bg-gradient-to-r from-[#ff0033] via-white to-[#ff4b5f] mx-auto rounded-full mt-4" />
         </div>
 
         {/* Schedule Cards Grid */}
@@ -59,12 +58,12 @@ export const Schedule = () => {
               glow={item.featured}
               className={`relative border p-6 flex flex-col justify-between overflow-hidden ${
                 item.featured
-                  ? "border-violet-500/35 bg-slate-900/80 scale-[1.02] shadow-[0_15px_30px_-15px_rgba(139,92,246,0.3)] md:-translate-y-1"
-                  : "border-white/5 bg-slate-900/40"
+                  ? "border-[#ff0033]/45 bg-[#181818]/90 scale-[1.02] shadow-[0_15px_30px_-15px_rgba(255,0,51,0.3)] md:-translate-y-1"
+                  : "border-white/10 bg-[#181818]/60"
               }`}
             >
               {item.featured && (
-                <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-violet-500 to-cyan-500" />
+                <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-[#ff0033] via-white to-[#ff4b5f] bg-[length:200%_auto] animate-aurora-shift" />
               )}
 
               <div className="space-y-6">
@@ -72,8 +71,8 @@ export const Schedule = () => {
                   <div
                     className={`w-14 h-14 rounded-2xl flex items-center justify-center font-display font-black text-lg ${
                       item.featured
-                        ? "bg-violet-500/20 text-violet-400 border border-violet-500/30"
-                        : "bg-slate-950 text-slate-400 border border-white/5"
+                        ? "bg-[#ff0033]/18 text-[#ff4b5f] border border-[#ff0033]/35"
+                        : "bg-[#0f0f0f] text-neutral-400 border border-white/10"
                     }`}
                   >
                     {item.day}
@@ -89,10 +88,10 @@ export const Schedule = () => {
                   <h3 className="font-display font-extrabold text-xl text-white flex items-center gap-2">
                     <span className="text-2xl">{item.icon}</span> {item.title}
                   </h3>
-                  <div className="flex items-center gap-2 text-xs font-bold text-cyan-400 bg-cyan-950/30 border border-cyan-500/10 px-3 py-1.5 rounded-xl w-fit">
+                  <div className="flex items-center gap-2 text-xs font-bold text-white bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl w-fit">
                     <Clock size={14} /> {item.time}
                   </div>
-                  <p className="text-slate-400 text-sm leading-relaxed">
+                  <p className="text-neutral-400 text-sm leading-relaxed">
                     {item.description}
                   </p>
                 </div>
@@ -102,8 +101,8 @@ export const Schedule = () => {
         </div>
 
         {/* Schedule Footer warnings */}
-        <div className="max-w-2xl mx-auto mt-16 p-4 rounded-2xl bg-amber-500/5 border border-amber-500/10 flex gap-3 text-xs text-amber-400 leading-relaxed">
-          <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+        <div className="max-w-2xl mx-auto mt-16 p-4 rounded-lg bg-[#ff0033]/8 border border-[#ff0033]/20 flex gap-3 text-xs text-[#ff4b5f] leading-relaxed">
+          <AlertTriangle size={16} className="text-[#ff0033] shrink-0 mt-0.5" />
           <p>
             <strong>Note:</strong> Stream times are flexible and may vary due to gaming updates, internet connection, or scheduling changes. Follow us on social media and turn on notifications 🔔 to get alerted whenever we go live!
           </p>

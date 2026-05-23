@@ -1,25 +1,128 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Menu, X, LogOut } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { LogOut, Menu, Radio, X } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { Youtube } from "@/components/ui/Icons";
+
+type AmbientNodeGroup = {
+  osc: OscillatorNode;
+  lfo: OscillatorNode;
+};
+
+const navLinks = [
+  { name: "Home", href: "#hero" },
+  { name: "About", href: "#about" },
+  { name: "Squad", href: "#squad" },
+  { name: "Videos", href: "#latest" },
+  { name: "Arena", href: "#arena" },
+  { name: "Wheel", href: "#wheel" },
+  { name: "Schedule", href: "#schedule" },
+  { name: "Shop", href: "#merch" },
+  { name: "Socials", href: "#socials" },
+  { name: "Contact", href: "#contact" },
+];
 
 export const Header = () => {
   const { user, signOut } = useAuth();
   const [scrolled, setScrolled] = useState(false);
+  const [activeSection, setActiveSection] = useState("hero");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
+  const [ambientPlaying, setAmbientPlaying] = useState(false);
+  const [audioCtx, setAudioCtx] = useState<AudioContext | null>(null);
+  const [nodes, setNodes] = useState<AmbientNodeGroup[]>([]);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
+    const onScroll = () => {
+      setScrolled(window.scrollY > 24);
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+      const sections = navLinks.map((l) => l.href.slice(1));
+      let current = "hero";
+      for (const id of sections) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        const rect = el.getBoundingClientRect();
+        if (rect.top <= 140 && rect.bottom > 140) {
+          current = id;
+          break;
+        }
+      }
+      setActiveSection(current);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (!audioCtx) return;
+      nodes.forEach((g) => {
+        g.osc.stop();
+        g.lfo.stop();
+      });
+      void audioCtx.close();
+    };
+  }, [audioCtx, nodes]);
+
+  const startAmbient = () => {
+    const AC =
+      window.AudioContext ||
+      (window as Window & typeof globalThis & { webkitAudioContext?: typeof AudioContext })
+        .webkitAudioContext;
+    if (!AC) return;
+    const ctx = new AC();
+    const filter = ctx.createBiquadFilter();
+    const masterGain = ctx.createGain();
+    filter.type = "lowpass";
+    filter.frequency.value = 340;
+    filter.Q.value = 1;
+    masterGain.gain.setValueAtTime(0.035, ctx.currentTime);
+    filter.connect(masterGain);
+    masterGain.connect(ctx.destination);
+
+    const groups = [65.41, 98, 130.81].map((freq, i) => {
+      const osc = ctx.createOscillator();
+      const oscGain = ctx.createGain();
+      const lfo = ctx.createOscillator();
+      const lfoGain = ctx.createGain();
+      osc.type = i % 2 === 0 ? "sawtooth" : "triangle";
+      osc.frequency.value = freq;
+      osc.detune.value = (i - 1) * 8;
+      oscGain.gain.value = 0.28;
+      lfo.type = "sine";
+      lfo.frequency.value = 0.1 + i * 0.05;
+      lfoGain.gain.value = 0.1;
+      osc.connect(oscGain);
+      oscGain.connect(filter);
+      lfo.connect(lfoGain);
+      lfoGain.connect(oscGain.gain);
+      osc.start();
+      lfo.start();
+      return { osc, lfo };
+    });
+
+    setAudioCtx(ctx);
+    setNodes(groups);
+    setAmbientPlaying(true);
+  };
+
+  const stopAmbient = () => {
+    if (!audioCtx) return;
+    nodes.forEach((g) => {
+      g.osc.stop();
+      g.lfo.stop();
+    });
+    void audioCtx.close();
+    setAudioCtx(null);
+    setNodes([]);
+    setAmbientPlaying(false);
+  };
+
+  const toggleAmbient = () => (ambientPlaying ? stopAmbient() : startAmbient());
 
   const openAuth = (mode: "login" | "signup") => {
     setAuthMode(mode);
@@ -27,75 +130,77 @@ export const Header = () => {
     setMobileMenuOpen(false);
   };
 
-  const navLinks = [
-    { name: "🏠 Home", href: "#hero" },
-    { name: "📖 About", href: "#about" },
-    ...(user ? [{ name: "👤 Profile", href: "#profile" }] : []),
-    { name: "🎬 Latest", href: "#latest" },
-    { name: "📅 Schedule", href: "#schedule" },
-    { name: "🛍️ Merch", href: "#merch" },
-    { name: "🌐 Socials", href: "#socials" },
-    { name: "✉️ Contact", href: "#contact" },
-  ];
+  const visibleNav = user ? [{ name: "Profile", href: "#profile" }, ...navLinks] : navLinks;
 
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
+        className={`fixed inset-x-0 top-0 z-40 transition-all duration-300 ${
           scrolled
-            ? "bg-slate-950/80 backdrop-blur-md border-b border-white/10 shadow-lg py-3"
-            : "bg-transparent py-5"
+            ? "border-b border-white/10 bg-[#060606]/90 py-2.5 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.5)]"
+            : "border-b border-transparent bg-[#060606]/40 py-3.5 backdrop-blur"
         }`}
       >
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 sm:px-6">
           {/* Logo */}
-          <a href="#hero" className="flex items-center gap-3 group">
-            <span className="text-3xl animate-float">🎮</span>
-            <div className="flex flex-col">
-              <span className="font-display font-extrabold text-lg tracking-wider text-white group-hover:text-violet-400 transition-colors">
-                JUST FOR FUN
+          <a href="#hero" className="group flex items-center gap-3">
+            <span className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#ff0033] to-[#b30024] text-white shadow-[0_0_24px_rgba(255,0,51,0.45)] transition-transform group-hover:scale-110">
+              <Youtube size={22} />
+              <span className="absolute inset-0 rounded-xl border border-white/20" />
+            </span>
+            <span className="hidden flex-col leading-none sm:flex">
+              <span className="font-display text-sm font-black uppercase tracking-wider text-white">
+                Just For Fun
               </span>
-              <span className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold leading-tight">
-                Gaming &bull; Streams &bull; Epic
+              <span className="mt-1 text-[10px] font-bold uppercase tracking-[0.28em] text-[#ff2d55]">
+                BoYs Channel
               </span>
-            </div>
+            </span>
           </a>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden xl:flex items-center gap-1.5">
-            {navLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="px-3 py-1.5 rounded-lg text-sm font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-all"
-              >
-                {link.name}
-              </a>
-            ))}
+          {/* Pill nav */}
+          <nav className="hidden items-center gap-1 rounded-full border border-white/10 bg-[#0c0c0c]/80 p-1 backdrop-blur xl:flex">
+            {visibleNav.map((link) => {
+              const active = activeSection === link.href.slice(1);
+              return (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className={`relative rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition ${
+                    active
+                      ? "bg-[#ff0033] text-white shadow-[0_0_18px_rgba(255,0,51,0.5)]"
+                      : "text-neutral-400 hover:text-white"
+                  }`}
+                >
+                  {link.name}
+                </a>
+              );
+            })}
           </nav>
 
-          {/* Auth Controls */}
-          <div className="hidden md:flex items-center gap-3">
+          {/* Right cluster */}
+          <div className="hidden items-center gap-2 md:flex">
+            <button
+              onClick={toggleAmbient}
+              className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-[10px] font-black uppercase tracking-wider transition ${
+                ambientPlaying
+                  ? "border-[#ff0033]/60 bg-[#ff0033]/15 text-[#ff2d55] shadow-[0_0_18px_rgba(255,0,51,0.3)]"
+                  : "border-white/10 bg-white/5 text-neutral-400 hover:text-white"
+              }`}
+            >
+              <Radio size={14} className={ambientPlaying ? "animate-pulse" : ""} />
+              {ambientPlaying ? "FX On" : "FX Off"}
+            </button>
+
             {user ? (
-              <div className="flex items-center gap-4 bg-slate-900 border border-white/10 rounded-xl px-4 py-1.5">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-violet-600/30 flex items-center justify-center border border-violet-500/50 text-white font-bold text-sm">
-                    {user.email?.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="flex flex-col text-left">
-                    <span className="text-xs font-bold text-white max-w-[120px] truncate">
-                      {user.user_metadata?.name || user.email?.split("@")[0]}
-                    </span>
-                    <span className="text-[9px] text-slate-400 truncate max-w-[120px]">
-                      {user.email}
-                    </span>
-                  </div>
-                </div>
-                <button
-                  onClick={signOut}
-                  className="text-slate-400 hover:text-red-400 transition-colors cursor-pointer"
-                  title="Sign Out"
-                >
+              <div className="flex items-center gap-3 rounded-full border border-white/10 bg-white/5 py-1 pl-1 pr-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#ff0033]/20 text-sm font-black text-white">
+                  {user.email?.charAt(0).toUpperCase()}
+                </span>
+                <span className="max-w-[120px] truncate text-xs font-bold text-white">
+                  {user.user_metadata?.name || user.email?.split("@")[0]}
+                </span>
+                <button onClick={signOut} className="text-neutral-500 transition hover:text-[#ff2d55]">
                   <LogOut size={16} />
                 </button>
               </div>
@@ -103,100 +208,92 @@ export const Header = () => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => openAuth("login")}
-                  className="px-4 py-2 text-sm font-bold text-slate-300 hover:text-white rounded-xl hover:bg-white/5 transition-all"
+                  className="rounded-full px-4 py-2 text-sm font-bold text-neutral-300 transition hover:bg-white/10 hover:text-white"
                 >
                   Login
                 </button>
                 <button
                   onClick={() => openAuth("signup")}
-                  className="px-4 py-2 text-sm font-extrabold text-white bg-gradient-to-r from-violet-600 to-cyan-600 rounded-xl shadow-[0_0_15px_rgba(139,92,246,0.3)] hover:shadow-[0_0_20px_rgba(139,92,246,0.5)] hover:scale-105 transition-all"
+                  className="rounded-full bg-gradient-to-r from-[#ff0033] to-[#ff2d55] px-4 py-2 text-sm font-black text-white shadow-[0_0_18px_rgba(255,0,51,0.4)] transition hover:shadow-[0_0_28px_rgba(255,0,51,0.6)]"
                 >
-                  Sign Up
+                  Join Crew
                 </button>
               </div>
             )}
           </div>
 
-          {/* Mobile Menu Toggle */}
-          <div className="xl:hidden flex items-center gap-4">
-            {user && (
-              <div className="md:hidden w-8 h-8 rounded-full bg-violet-600/30 flex items-center justify-center border border-violet-500/50 text-white font-bold text-sm">
-                {user.email?.charAt(0).toUpperCase()}
-              </div>
-            )}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="text-slate-300 hover:text-white transition-colors"
-            >
-              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-          </div>
+          <button
+            onClick={() => setMobileMenuOpen((o) => !o)}
+            className="rounded-full border border-white/10 bg-white/5 p-2 text-neutral-200 transition hover:bg-white/10 xl:hidden"
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
         </div>
       </header>
 
-      {/* Mobile Drawer menu */}
       <div
-        className={`fixed inset-0 z-30 bg-slate-950/95 backdrop-blur-md flex flex-col pt-24 px-8 pb-8 transition-transform duration-300 xl:hidden ${
+        className={`fixed inset-0 z-30 bg-[#060606]/97 px-6 pb-8 pt-24 backdrop-blur-2xl transition-transform duration-300 xl:hidden ${
           mobileMenuOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <nav className="flex flex-col gap-4 text-lg font-bold">
-          {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              onClick={() => setMobileMenuOpen(false)}
-              className="py-2 border-b border-white/5 text-slate-300 hover:text-white"
-            >
-              {link.name}
-            </a>
-          ))}
+        <nav className="grid gap-2 text-sm font-bold uppercase tracking-wide text-neutral-300">
+          <button
+            onClick={toggleAmbient}
+            className="mb-3 flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-xs text-white"
+          >
+            <Radio size={16} className={ambientPlaying ? "animate-pulse text-[#ff0033]" : ""} />
+            {ambientPlaying ? "Stream FX On" : "Stream FX Off"}
+          </button>
+          {visibleNav.map((link) => {
+            const active = activeSection === link.href.slice(1);
+            return (
+              <a
+                key={link.href}
+                href={link.href}
+                onClick={() => setMobileMenuOpen(false)}
+                className={`rounded-lg border px-4 py-3 transition ${
+                  active
+                    ? "border-[#ff0033] bg-[#ff0033]/10 text-white"
+                    : "border-white/10 bg-[#131313] hover:border-[#ff0033]/50"
+                }`}
+              >
+                {link.name}
+              </a>
+            );
+          })}
         </nav>
 
-        <div className="mt-auto space-y-4">
+        <div className="mt-8 border-t border-white/10 pt-6">
           {user ? (
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-3 bg-slate-900 border border-white/10 rounded-xl p-4">
-                <div className="w-10 h-10 rounded-full bg-violet-600/30 flex items-center justify-center border border-violet-500/50 text-white font-bold text-base">
-                  {user.email?.charAt(0).toUpperCase()}
-                </div>
-                <div className="flex flex-col text-left">
-                  <span className="text-sm font-bold text-white">
-                    {user.user_metadata?.name || user.email?.split("@")[0]}
-                  </span>
-                  <span className="text-xs text-slate-400">{user.email}</span>
-                </div>
-              </div>
-              <button
-                onClick={() => {
-                  signOut();
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full py-3 rounded-xl border border-red-500/20 text-red-400 font-bold hover:bg-red-500/10 transition-all flex items-center justify-center gap-2"
-              >
-                <LogOut size={16} /> Sign Out
-              </button>
-            </div>
+            <button
+              onClick={() => {
+                signOut();
+                setMobileMenuOpen(false);
+              }}
+              className="flex w-full items-center justify-center gap-2 rounded-full border border-[#ff0033]/40 px-4 py-3 text-sm font-black text-[#ff2d55] transition hover:bg-[#ff0033]/10"
+            >
+              <LogOut size={16} /> Sign Out
+            </button>
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className="grid gap-3">
               <button
                 onClick={() => openAuth("login")}
-                className="w-full py-3 rounded-xl border border-white/10 text-slate-300 hover:text-white font-bold hover:bg-white/5 transition-all"
+                className="rounded-full border border-white/10 px-4 py-3 text-sm font-bold text-neutral-200"
               >
                 Login
               </button>
               <button
                 onClick={() => openAuth("signup")}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-600 text-white font-bold transition-all shadow-md"
+                className="rounded-full bg-[#ff0033] px-4 py-3 text-sm font-black text-white shadow-[0_0_18px_rgba(255,0,51,0.4)]"
               >
-                Sign Up
+                Join the Crew
               </button>
             </div>
           )}
         </div>
       </div>
 
-      {/* Auth Modal */}
       <AuthModal
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}

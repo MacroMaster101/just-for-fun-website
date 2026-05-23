@@ -5,7 +5,10 @@ import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { Header } from "@/components/layout/Header";
 import { Hero } from "@/components/sections/Hero";
 import { About } from "@/components/sections/About";
+import { SquadRoster } from "@/components/sections/SquadRoster";
 import { LatestVideos } from "@/components/sections/LatestVideos";
+import { Soundboard } from "@/components/sections/Soundboard";
+import { ChallengeWheel } from "@/components/sections/ChallengeWheel";
 import { Schedule } from "@/components/sections/Schedule";
 import { Merch } from "@/components/sections/Merch";
 import { Socials } from "@/components/sections/Socials";
@@ -23,8 +26,11 @@ export default function Home() {
       <main className="flex-grow">
         <Hero />
         <About />
+        <SquadRoster />
         {user && <Profile />}
         <LatestVideos />
+        <Soundboard />
+        <ChallengeWheel />
         <Schedule />
         <Merch />
         <Socials />

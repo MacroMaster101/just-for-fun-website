@@ -74,28 +74,28 @@ const ProfileForm = ({ user }: ProfileFormProps) => {
     : "Recently";
 
   return (
-    <section id="profile" className="relative py-24 bg-slate-950 overflow-hidden">
+    <section id="profile" className="relative py-24 bg-[#060606] overflow-hidden">
       {/* Background Glow */}
-      <div className="absolute top-1/2 left-0 -translate-y-1/2 w-80 h-80 bg-violet-600/5 blur-[120px] pointer-events-none rounded-full" />
+      <div className="absolute top-1/2 left-0 -translate-y-1/2 w-80 h-80 bg-red-600/5 blur-[120px] pointer-events-none rounded-full" />
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
           <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-white tracking-tight flex items-center justify-center gap-3">
-            <span className="text-violet-500">👤</span> User Profile
+            <span className="text-red-500">👤</span> User Profile
           </h2>
-          <p className="text-slate-400 text-sm tracking-wider uppercase font-semibold">
+          <p className="text-neutral-400 text-sm tracking-wider uppercase font-semibold">
             Manage your gaming channel account and profile info
           </p>
-          <div className="w-12 h-1 bg-gradient-to-r from-violet-500 to-cyan-500 mx-auto rounded-full mt-4" />
+          <div className="w-12 h-1 bg-gradient-to-r from-red-500 to-orange-500 mx-auto rounded-full mt-4" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-5xl mx-auto">
           {/* Left Column: Avatar & Metadata */}
-          <div className="lg:col-span-5 space-y-6">
-            <Card className="p-8 border border-white/5 bg-slate-900/40 backdrop-blur-sm flex flex-col items-center text-center space-y-6">
+          <div className="lg:col-span-5 space-y-6 animate-fade-in-up">
+            <Card className="p-8 border border-white/5 bg-[#111111]/40 backdrop-blur-sm flex flex-col items-center text-center space-y-6">
               <div className="relative group">
-                <div className="w-24 h-24 rounded-full bg-violet-600/20 border-2 border-violet-500 flex items-center justify-center text-white text-3xl font-display font-black shadow-[0_0_15px_rgba(139,92,246,0.3)]">
+                <div className="w-24 h-24 rounded-full bg-red-600/20 border-2 border-red-500 flex items-center justify-center text-white text-3xl font-display font-black shadow-[0_0_15px_rgba(220,38,38,0.3)]">
                   {name ? name.charAt(0).toUpperCase() : user.email?.charAt(0).toUpperCase()}
                 </div>
               </div>
@@ -104,8 +104,8 @@ const ProfileForm = ({ user }: ProfileFormProps) => {
                 <h3 className="font-display font-bold text-white text-lg truncate">
                   {name || user.email?.split("@")[0]}
                 </h3>
-                <p className="text-xs text-slate-400 truncate">{user.email}</p>
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                <p className="text-xs text-neutral-400 truncate">{user.email}</p>
+                <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-wider">
                   Member Since: {memberSince}
                 </p>
               </div>
@@ -113,31 +113,31 @@ const ProfileForm = ({ user }: ProfileFormProps) => {
               {/* Achievements details */}
               <div className="w-full grid grid-cols-3 gap-2 border-t border-white/5 pt-6 text-center">
                 <div className="space-y-1">
-                  <div className="text-violet-400 flex justify-center">
+                  <div className="text-red-400 flex justify-center">
                     <Video size={16} />
                   </div>
                   <div className="text-white font-black text-sm">12</div>
-                  <div className="text-[9px] uppercase tracking-wider text-slate-500 font-bold">
+                  <div className="text-[9px] uppercase tracking-wider text-neutral-500 font-bold">
                     Watched
                   </div>
                 </div>
 
                 <div className="space-y-1 border-x border-white/5">
-                  <div className="text-pink-400 flex justify-center">
+                  <div className="text-orange-400 flex justify-center">
                     <Heart size={16} />
                   </div>
                   <div className="text-white font-black text-sm">4</div>
-                  <div className="text-[9px] uppercase tracking-wider text-slate-500 font-bold">
+                  <div className="text-[9px] uppercase tracking-wider text-neutral-500 font-bold">
                     Favorites
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <div className="text-cyan-400 flex justify-center">
+                  <div className="text-amber-500 flex justify-center">
                     <Trophy size={16} />
                   </div>
                   <div className="text-white font-black text-sm">Pro</div>
-                  <div className="text-[9px] uppercase tracking-wider text-slate-500 font-bold">
+                  <div className="text-[9px] uppercase tracking-wider text-neutral-500 font-bold">
                     Rank
                   </div>
                 </div>
@@ -147,10 +147,10 @@ const ProfileForm = ({ user }: ProfileFormProps) => {
 
           {/* Right Column: Edit Profile Form */}
           <div className="lg:col-span-7">
-            <Card className="p-8 border border-white/10 bg-slate-900/60 backdrop-blur-md">
+            <Card className="p-8 border border-white/10 bg-[#111111]/60 backdrop-blur-md">
               <form onSubmit={handleSave} className="space-y-5">
                 <h3 className="font-display font-bold text-white text-base tracking-wide flex items-center gap-2">
-                  <Edit2 size={16} className="text-violet-500" /> Edit Profile Details
+                  <Edit2 size={16} className="text-red-500" /> Edit Profile Details
                 </h3>
 
                 {success && (
@@ -182,7 +182,7 @@ const ProfileForm = ({ user }: ProfileFormProps) => {
                   onChange={(e) => setBio(e.target.value)}
                   maxLength={500}
                 />
-                <div className="text-right text-[10px] text-slate-500 font-semibold">
+                <div className="text-right text-[10px] text-neutral-500 font-semibold">
                   {bio.length}/500 characters
                 </div>
 
