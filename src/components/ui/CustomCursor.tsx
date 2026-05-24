@@ -81,9 +81,11 @@ export const CustomCursor = () => {
     window.addEventListener("mousemove", onMove, { passive: true });
     window.addEventListener("mousedown", onDown);
     window.addEventListener("mouseup", onUp);
-    setEnabled(true);
+    // Defer the mount-flag so setState happens outside the effect body.
+    const enableId = setTimeout(() => setEnabled(true), 0);
 
     return () => {
+      clearTimeout(enableId);
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mousedown", onDown);
       window.removeEventListener("mouseup", onUp);

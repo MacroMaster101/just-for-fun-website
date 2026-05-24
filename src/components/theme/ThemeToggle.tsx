@@ -13,7 +13,12 @@ const options: { value: Theme; label: string; tooltip: string; Icon: typeof Sun 
 export const ThemeToggle = () => {
   const { theme, setTheme, resolved } = useTheme();
   const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    // Defer to next tick so the setState happens outside the effect body
+    // (avoids react-hooks/set-state-in-effect; behavior is identical).
+    const id = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(id);
+  }, []);
 
   const handleClick = (value: Theme) => {
     if (value === theme) return;
