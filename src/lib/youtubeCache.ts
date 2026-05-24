@@ -17,6 +17,7 @@ const emptyPayload: YouTubePayload = {
   message: "Cache is empty. Run /api/youtube/refresh.",
   stats: fallbackStats,
   videos: [],
+  playlists: [],
 };
 
 let backgroundRefreshInFlight = false;

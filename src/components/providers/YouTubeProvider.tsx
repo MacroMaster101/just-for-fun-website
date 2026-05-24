@@ -20,6 +20,14 @@ export interface YTVideo {
   comments: string;
   url: string;
   isLive: boolean;
+  playlistIds?: string[];
+  gameTags?: string[];
+}
+
+export interface YTPlaylist {
+  id: string;
+  title: string;
+  itemCount: number;
 }
 
 export interface YTStats {
@@ -37,6 +45,7 @@ export interface YTStats {
 export interface YTData {
   stats: YTStats | null;
   videos: YTVideo[];
+  playlists: YTPlaylist[];
   source: "youtube" | "fallback";
   message: string;
   loading: boolean;
@@ -46,6 +55,7 @@ export interface YTData {
 const initial: YTData = {
   stats: null,
   videos: [],
+  playlists: [],
   source: "fallback",
   message: "",
   loading: true,
@@ -73,6 +83,7 @@ const fetchYouTube = (): Promise<YTData> => {
       (data): YTData => ({
         stats: data.stats ?? null,
         videos: Array.isArray(data.videos) ? data.videos : [],
+        playlists: Array.isArray(data.playlists) ? data.playlists : [],
         source: data.source === "youtube" ? "youtube" : "fallback",
         message: data.message || "",
         loading: false,

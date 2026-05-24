@@ -46,12 +46,28 @@ interface PlaylistItem {
     description?: string;
     thumbnails?: ThumbnailMap;
     resourceId?: { videoId?: string };
+    playlistId?: string;
   };
   contentDetails?: { videoId?: string; videoPublishedAt?: string };
 }
 
 interface PlaylistItemsResponse extends YouTubeErrorResponse {
   items?: PlaylistItem[];
+  nextPageToken?: string;
+}
+
+interface PlaylistListItem {
+  id: string;
+  snippet?: {
+    title?: string;
+    description?: string;
+  };
+  contentDetails?: { itemCount?: number };
+}
+
+interface PlaylistsResponse extends YouTubeErrorResponse {
+  items?: PlaylistListItem[];
+  nextPageToken?: string;
 }
 
 interface VideoDetailsItem {
@@ -92,6 +108,16 @@ export interface ApiVideo {
   comments: string;
   url: string;
   isLive: boolean;
+  /** YouTube playlist IDs this video belongs to. May be empty. */
+  playlistIds: string[];
+  /** Auto-detected game/category tags from the title. */
+  gameTags: string[];
+}
+
+export interface ApiPlaylist {
+  id: string;
+  title: string;
+  itemCount: number;
 }
 
 export interface YouTubePayload {
@@ -100,6 +126,7 @@ export interface YouTubePayload {
   message?: string;
   stats: typeof fallbackStats;
   videos: ApiVideo[];
+  playlists: ApiPlaylist[];
 }
 
 export const fallbackStats = {
@@ -138,11 +165,20 @@ export async function fetchFreshYouTubePayload(): Promise<YouTubePayload> {
       ? await getLatestUploadVideos(uploadsPlaylistId)
       : [];
 
+    // Fetch channel playlists + memberships, then enrich each video with its playlist ids.
+    const { playlists, membership } = await getChannelPlaylistsWithMembership(
+      channel.id
+    );
+    for (const video of videos) {
+      video.playlistIds = membership.get(video.id) || [];
+    }
+
     return {
       source: "youtube",
       fetchedAt: new Date().toISOString(),
       stats,
       videos,
+      playlists,
     };
   } catch (error) {
     const message =
@@ -177,39 +213,131 @@ async function getChannel() {
   return channel;
 }
 
+// Safety ceiling on a single refresh — prevents a runaway loop if the
+// channel grows huge or YouTube returns malformed pagination. At ~2KB per
+// video this still keeps the cached payload well under 4MB.
+const MAX_TOTAL_VIDEOS = 1000;
+const PAGE_SIZE = 50;
+
 async function getLatestUploadVideos(uploadsPlaylistId: string) {
-  const playlistItems = await fetchYouTube<PlaylistItemsResponse>(
-    "playlistItems",
-    {
-      part: "snippet,contentDetails",
-      playlistId: uploadsPlaylistId,
-      maxResults: "6",
-    }
+  const orderedIds = await collectPlaylistVideoIds(
+    uploadsPlaylistId,
+    MAX_TOTAL_VIDEOS
   );
-
-  const orderedIds =
-    playlistItems.items
-      ?.map(
-        (item) =>
-          item.contentDetails?.videoId || item.snippet?.resourceId?.videoId
-      )
-      .filter((id): id is string => Boolean(id)) || [];
-
   if (orderedIds.length === 0) return [];
 
-  const videoDetails = await fetchYouTube<VideosResponse>("videos", {
-    part: "snippet,contentDetails,statistics,liveStreamingDetails",
-    id: orderedIds.join(","),
-  });
-
-  const detailMap = new Map(
-    (videoDetails.items || []).map((item) => [item.id, item])
-  );
+  // The videos endpoint accepts up to 50 ids per request — batch them.
+  const detailMap = new Map<string, VideoDetailsItem>();
+  for (let i = 0; i < orderedIds.length; i += PAGE_SIZE) {
+    const batch = orderedIds.slice(i, i + PAGE_SIZE);
+    const videoDetails = await fetchYouTube<VideosResponse>("videos", {
+      part: "snippet,contentDetails,statistics,liveStreamingDetails",
+      id: batch.join(","),
+    });
+    for (const item of videoDetails.items || []) {
+      detailMap.set(item.id, item);
+    }
+  }
 
   return orderedIds
     .map((id) => detailMap.get(id))
     .filter((item): item is VideoDetailsItem => Boolean(item))
     .map(mapVideoDetails);
+}
+
+/**
+ * Walks every page of a playlist and returns the video ids in playlist order,
+ * up to `limit`. Stops early if YouTube stops returning a nextPageToken.
+ */
+async function collectPlaylistVideoIds(
+  playlistId: string,
+  limit: number
+): Promise<string[]> {
+  const ids: string[] = [];
+  let pageToken: string | undefined;
+
+  while (ids.length < limit) {
+    const resp: PlaylistItemsResponse = await fetchYouTube<PlaylistItemsResponse>(
+      "playlistItems",
+      {
+        part: "snippet,contentDetails",
+        playlistId,
+        maxResults: String(PAGE_SIZE),
+        pageToken,
+      }
+    );
+    for (const item of resp.items || []) {
+      const id =
+        item.contentDetails?.videoId || item.snippet?.resourceId?.videoId;
+      if (id) ids.push(id);
+      if (ids.length >= limit) break;
+    }
+    if (!resp.nextPageToken) break;
+    pageToken = resp.nextPageToken;
+  }
+
+  return ids;
+}
+
+/**
+ * Fetches every public playlist for the channel plus the full membership for
+ * each. Returns the playlist list and a Map keyed by video id giving the
+ * playlist ids that video belongs to. Pagination is followed end-to-end so
+ * a video sitting deep in a long playlist still resolves correctly.
+ */
+async function getChannelPlaylistsWithMembership(channelId: string): Promise<{
+  playlists: ApiPlaylist[];
+  membership: Map<string, string[]>;
+}> {
+  const membership = new Map<string, string[]>();
+  const playlists: ApiPlaylist[] = [];
+
+  let pageToken: string | undefined;
+  try {
+    do {
+      const resp: PlaylistsResponse = await fetchYouTube<PlaylistsResponse>(
+        "playlists",
+        {
+          part: "snippet,contentDetails",
+          channelId,
+          maxResults: String(PAGE_SIZE),
+          pageToken,
+        }
+      );
+      for (const p of resp.items || []) {
+        const title = (p.snippet?.title || "").trim();
+        if (!p.id || !title) continue;
+        playlists.push({
+          id: p.id,
+          title,
+          itemCount: p.contentDetails?.itemCount ?? 0,
+        });
+      }
+      pageToken = resp.nextPageToken;
+    } while (pageToken);
+  } catch (err) {
+    console.warn("Playlist fetch failed:", (err as Error).message);
+    return { playlists: [], membership };
+  }
+
+  // Safety ceiling per playlist mirrors the uploads ceiling.
+  for (const playlist of playlists) {
+    try {
+      const ids = await collectPlaylistVideoIds(playlist.id, MAX_TOTAL_VIDEOS);
+      for (const videoId of ids) {
+        const existing = membership.get(videoId);
+        if (existing) existing.push(playlist.id);
+        else membership.set(videoId, [playlist.id]);
+      }
+    } catch (err) {
+      console.warn(
+        `Playlist items fetch failed for ${playlist.id}:`,
+        (err as Error).message
+      );
+    }
+  }
+
+  return { playlists, membership };
 }
 
 async function fetchYouTube<T extends YouTubeErrorResponse>(
@@ -258,10 +386,12 @@ function mapChannelStats(channel: ChannelItem) {
 }
 
 function mapVideoDetails(item: VideoDetailsItem): ApiVideo {
+  const title = item.snippet?.title || "Untitled video";
+  const description = item.snippet?.description || "";
   return {
     id: item.id,
-    title: item.snippet?.title || "Untitled video",
-    description: item.snippet?.description || "",
+    title,
+    description,
     thumbnail: getBestThumbnail(item.snippet?.thumbnails),
     publishedAt:
       item.liveStreamingDetails?.actualStartTime ||
@@ -279,7 +409,44 @@ function mapVideoDetails(item: VideoDetailsItem): ApiVideo {
         item.liveStreamingDetails?.actualStartTime &&
           !item.liveStreamingDetails.actualEndTime
       ),
+    playlistIds: [],
+    gameTags: detectGameTags(`${title} ${description}`),
   };
+}
+
+/**
+ * Maps title/description text to a list of game/category tags via keyword
+ * matching. The keys are the canonical display labels; the values are the
+ * regex patterns that count as a match. Order does not matter — a video can
+ * carry multiple tags.
+ */
+const GAME_TAG_PATTERNS: Array<{ label: string; pattern: RegExp }> = [
+  { label: "GTA", pattern: /\bgta\b|grand theft auto/i },
+  { label: "Minecraft", pattern: /\bminecraft\b|\bmc\b/i },
+  { label: "Valorant", pattern: /\bvalorant\b|\bval\b/i },
+  { label: "Fortnite", pattern: /\bfortnite\b|\bfn\b/i },
+  { label: "PUBG", pattern: /\bpubg\b/i },
+  { label: "Call of Duty", pattern: /\bcod\b|call of duty|warzone/i },
+  { label: "CS:GO", pattern: /\bcs\s?:?\s?go\b|counter[-\s]?strike|\bcs2\b/i },
+  { label: "Apex Legends", pattern: /\bapex\b/i },
+  { label: "League of Legends", pattern: /\blol\b|league of legends/i },
+  { label: "Dota", pattern: /\bdota\b/i },
+  { label: "FIFA", pattern: /\bfifa\b|\bfc\s?\d+/i },
+  { label: "Roblox", pattern: /\broblox\b/i },
+  { label: "Among Us", pattern: /among us|\bamogus\b/i },
+  { label: "Free Fire", pattern: /free fire|\bff\b/i },
+  { label: "Rocket League", pattern: /rocket league/i },
+  { label: "Elden Ring", pattern: /elden ring/i },
+  { label: "Horror", pattern: /\bhorror\b|scary|phasmophobia/i },
+  { label: "Stream", pattern: /\bstream\b|live\b/i },
+];
+
+function detectGameTags(text: string): string[] {
+  const found: string[] = [];
+  for (const { label, pattern } of GAME_TAG_PATTERNS) {
+    if (pattern.test(text)) found.push(label);
+  }
+  return found;
 }
 
 function getBestThumbnail(thumbnails?: ThumbnailMap) {
@@ -341,13 +508,15 @@ async function getRssFallbackVideos(): Promise<ApiVideo[]> {
   const entries = xml.match(/<entry>[\s\S]*?<\/entry>/g) || [];
 
   return entries
-    .slice(0, 6)
+    .slice(0, MAX_TOTAL_VIDEOS)
     .map((entry): ApiVideo => {
       const id = decodeXml(extractTag(entry, "yt:videoId"));
+      const title = decodeXml(extractTag(entry, "title")) || "Untitled video";
+      const description = decodeXml(extractTag(entry, "media:description"));
       return {
         id,
-        title: decodeXml(extractTag(entry, "title")) || "Untitled video",
-        description: decodeXml(extractTag(entry, "media:description")),
+        title,
+        description,
         thumbnail:
           extractAttribute(entry, "media:thumbnail", "url") ||
           `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
@@ -358,6 +527,8 @@ async function getRssFallbackVideos(): Promise<ApiVideo[]> {
         comments: "--",
         url: `https://www.youtube.com/watch?v=${id}`,
         isLive: false,
+        playlistIds: [],
+        gameTags: detectGameTags(`${title} ${description}`),
       };
     })
     .filter((video) => Boolean(video.id));
@@ -403,5 +574,6 @@ async function fallbackPayload(message: string): Promise<YouTubePayload> {
     message,
     stats: fallbackStats,
     videos,
+    playlists: [],
   };
 }
