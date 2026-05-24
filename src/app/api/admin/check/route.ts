@@ -13,15 +13,20 @@ export async function GET() {
 
     const email = data.user.email.toLowerCase().trim();
 
-    // Auto-Bootstrapper: Seed the root administrator email dynamically if no admins exist yet
-    const adminCount = await prisma.adminEmail.count();
-    if (adminCount === 0) {
-      const rootAdminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase().trim();
-      if (rootAdminEmail) {
-        await prisma.adminEmail.create({
-          data: { email: rootAdminEmail },
+    // Check if they are the configured root admin email in environment variables
+    const rootAdminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase().trim();
+    if (rootAdminEmail && email === rootAdminEmail) {
+      // Proactively ensure they exist in the DB roster
+      try {
+        await prisma.adminEmail.upsert({
+          where: { email },
+          update: {},
+          create: { email },
         });
+      } catch (e) {
+        console.error("Failed to seed root admin on check:", e);
       }
+      return NextResponse.json({ isAdmin: true, email }, { status: 200 });
     }
 
     // Verify if the user's email exists in the AdminEmail table

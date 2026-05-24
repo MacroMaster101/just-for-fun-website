@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Heart, LogOut, UserCog } from "lucide-react";
+import { ChevronDown, Heart, LogOut, UserCog, ShieldAlert } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { ProfileModal } from "@/components/auth/ProfileModal";
 
@@ -21,11 +21,26 @@ export const UserMenu = ({
   const [modalTab, setModalTab] = useState<"profile" | "favorites">("profile");
   const [favCount, setFavCount] = useState<number | null>(null);
   const [avatarError, setAvatarError] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const anchorRef = useRef<HTMLDivElement | null>(null);
 
   // Reset avatar load error state when user changes (e.g. login/logout)
   useEffect(() => {
     setAvatarError(false);
+  }, [user]);
+
+  // Check dynamically if the active user holds administrator permissions
+  useEffect(() => {
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
+    fetch("/api/admin/check")
+      .then((r) => (r.ok ? r.json() : { isAdmin: false }))
+      .then((data) => {
+        setIsAdmin(data.isAdmin);
+      })
+      .catch(() => setIsAdmin(false));
   }, [user]);
 
   // Close dropdown on outside click / Escape.
@@ -196,6 +211,18 @@ export const UserMenu = ({
             >
               My favorites
             </MenuItem>
+
+            {isAdmin && (
+              <MenuItem
+                icon={<ShieldAlert size={14} />}
+                onClick={() => {
+                  window.location.href = "/admin";
+                  setOpen(false);
+                }}
+              >
+                Admin console
+              </MenuItem>
+            )}
 
             <div className="my-1 h-px bg-white/5" />
 
