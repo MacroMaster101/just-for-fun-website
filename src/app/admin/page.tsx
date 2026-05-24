@@ -49,6 +49,41 @@ interface MusicTrack {
   createdAt: string;
 }
 
+interface SquadMember {
+  id: string;
+  name: string;
+  role: string;
+  avatarUrl: string;
+  favoriteGames: string[];
+  signatureAgent: string;
+  twitchUrl: string | null;
+  cpu: string;
+  gpu: string;
+  ram: string;
+  monitor: string;
+  mouse: string;
+  bio: string;
+  combatStyle: string;
+  sortOrder: number;
+}
+
+const emptySquadMember: Omit<SquadMember, "id"> = {
+  name: "",
+  role: "",
+  avatarUrl: "",
+  favoriteGames: [],
+  signatureAgent: "",
+  twitchUrl: null,
+  cpu: "",
+  gpu: "",
+  ram: "",
+  monitor: "",
+  mouse: "",
+  bio: "",
+  combatStyle: "",
+  sortOrder: 0,
+};
+
 export default function AdminPage() {
   const { user } = useAuth();
   
@@ -58,10 +93,16 @@ export default function AdminPage() {
   const [countdown, setCountdown] = useState(5);
   
   // Dashboard states
-  const [activeTab, setActiveTab] = useState<"command" | "inbox" | "admins" | "cache" | "music">("command");
+  const [activeTab, setActiveTab] = useState<"command" | "inbox" | "admins" | "cache" | "music" | "squad">("command");
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [admins, setAdmins] = useState<AdminEmail[]>([]);
   const [tracks, setTracks] = useState<MusicTrack[]>([]);
+  const [squad, setSquad] = useState<SquadMember[]>([]);
+  const [editingMember, setEditingMember] = useState<SquadMember | null>(null);
+  const [creatingMember, setCreatingMember] = useState<Omit<SquadMember, "id"> | null>(null);
+  const [squadFormError, setSquadFormError] = useState<string | null>(null);
+  const [squadFormSuccess, setSquadFormSuccess] = useState<string | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
   
   // Message reading modal/drawer state
   const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
@@ -165,6 +206,99 @@ export default function AdminPage() {
     }
   };
 
+  const fetchSquad = async () => {
+    try {
+      const res = await fetch("/api/admin/squad");
+      if (res.ok) {
+        const data = await res.json();
+        setSquad(data.members);
+      }
+    } catch (err) {
+      console.error("Failed to fetch squad:", err);
+    }
+  };
+
+  const flashSquadSuccess = (msg: string) => {
+    setSquadFormSuccess(msg);
+    setSquadFormError(null);
+    setTimeout(() => setSquadFormSuccess(null), 2500);
+  };
+
+  const handleSaveMember = async (member: SquadMember | Omit<SquadMember, "id">, isNew: boolean) => {
+    setSquadFormError(null);
+    setSquadFormSuccess(null);
+    if (!member.name.trim() || !member.role.trim()) {
+      setSquadFormError("Name and role are required.");
+      return;
+    }
+    try {
+      const res = await fetch("/api/admin/squad", {
+        method: isNew ? "POST" : "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(member),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setSquadFormError(data.error || "Save failed.");
+        return;
+      }
+      flashSquadSuccess(isNew ? "Member added." : "Member updated.");
+      setEditingMember(null);
+      setCreatingMember(null);
+      await fetchSquad();
+    } catch (err) {
+      console.error("Failed to save squad member:", err);
+      setSquadFormError("Network error.");
+    }
+  };
+
+  const handleDeleteMember = async (id: string, name: string) => {
+    if (!confirm(`Remove ${name} from the squad?`)) return;
+    try {
+      const res = await fetch("/api/admin/squad", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (res.ok) {
+        flashSquadSuccess("Member removed.");
+        await fetchSquad();
+      }
+    } catch (err) {
+      console.error("Failed to delete squad member:", err);
+    }
+  };
+
+  const handleAvatarUpload = async (memberId: string, file: File) => {
+    setAvatarUploading(true);
+    setSquadFormError(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("memberId", memberId);
+      const res = await fetch("/api/admin/squad/avatar", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setSquadFormError(data.error || "Avatar upload failed.");
+        return;
+      }
+      flashSquadSuccess("Avatar updated.");
+      // Refresh the editing form with the new URL.
+      setEditingMember((prev) =>
+        prev && prev.id === memberId ? { ...prev, avatarUrl: data.avatarUrl } : prev
+      );
+      await fetchSquad();
+    } catch (err) {
+      console.error("Failed to upload avatar:", err);
+      setSquadFormError("Network error.");
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
   // Load active tab data. The fetch helpers update state from an async response —
   // a valid "external data → react state" sync pattern that the lint rule flags
   // because it can't see past the synchronous call.
@@ -178,6 +312,8 @@ export default function AdminPage() {
       fetchAdmins();
     } else if (activeTab === "music") {
       fetchTracks();
+    } else if (activeTab === "squad") {
+      fetchSquad();
     }
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [activeTab, isAdmin]);
@@ -452,6 +588,7 @@ export default function AdminPage() {
                 { id: "inbox", name: "Contact Inbox", icon: <MessageSquare size={16} /> },
                 { id: "admins", name: "Administration", icon: <Users size={16} /> },
                 { id: "music", name: "Music Stream", icon: <Radio size={16} /> },
+                { id: "squad", name: "Squad Roster", icon: <Users size={16} /> },
                 { id: "cache", name: "YouTube Cache", icon: <RefreshCw size={16} /> },
               ].map((tab) => (
                 <button
@@ -844,7 +981,120 @@ export default function AdminPage() {
                 </div>
               )}
 
-              {/* Tab 5: YouTube Cache controls */}
+              {/* Tab 5: Squad Roster CRUD */}
+              {activeTab === "squad" && (
+                <div className="space-y-6">
+                  <Card className="p-6 border-[var(--color-border)]">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+                      <div>
+                        <h3 className="font-display font-extrabold text-xl text-[var(--color-text)]">
+                          ⚔️ Squad Roster
+                        </h3>
+                        <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                          Edit the operators shown on the homepage <code className="bg-[var(--color-surface-2)] px-1.5 py-0.5 rounded text-[10px]">Meet the Squad</code> section.
+                        </p>
+                      </div>
+                      <Button
+                        onClick={() => {
+                          setCreatingMember({ ...emptySquadMember });
+                          setEditingMember(null);
+                          setSquadFormError(null);
+                          setSquadFormSuccess(null);
+                        }}
+                        className="gap-2"
+                      >
+                        <Plus size={14} /> Add Member
+                      </Button>
+                    </div>
+
+                    {squadFormError && (
+                      <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-xs font-bold text-red-500">
+                        <AlertTriangle size={14} /> {squadFormError}
+                      </div>
+                    )}
+                    {squadFormSuccess && (
+                      <div className="mb-4 flex items-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-xs font-bold text-green-500">
+                        <CheckCircle2 size={14} /> {squadFormSuccess}
+                      </div>
+                    )}
+
+                    {/* Roster list */}
+                    {squad.length === 0 ? (
+                      <div className="rounded-lg border border-dashed border-[var(--color-border)] p-8 text-center text-sm text-[var(--color-text-muted)]">
+                        No members yet. Click <strong>Add Member</strong> to create the first one — the homepage will fall back to the built-in default trio until then.
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {squad.map((m) => (
+                          <div
+                            key={m.id}
+                            className="flex items-center gap-4 p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]"
+                          >
+                            <div className="relative h-12 w-12 rounded-lg overflow-hidden border border-[var(--color-border)] bg-[var(--color-surface-2)] flex items-center justify-center shrink-0">
+                              {m.avatarUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={m.avatarUrl} alt={m.name} className="h-full w-full object-cover" />
+                              ) : (
+                                <span className="font-display font-black text-sm text-[var(--color-text)]">
+                                  {m.name.charAt(0).toUpperCase() || "?"}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-bold text-sm text-[var(--color-text)] truncate">{m.name}</p>
+                              <p className="text-xs text-[var(--color-text-muted)] truncate">{m.role}</p>
+                            </div>
+                            <div className="hidden sm:flex flex-wrap gap-1">
+                              {m.favoriteGames.slice(0, 2).map((g) => (
+                                <Badge key={g} variant="secondary" className="text-[9px]">{g}</Badge>
+                              ))}
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setEditingMember(m);
+                                setCreatingMember(null);
+                                setSquadFormError(null);
+                                setSquadFormSuccess(null);
+                              }}
+                              className="gap-1.5"
+                            >
+                              <UserCog size={12} /> Edit
+                            </Button>
+                            <button
+                              onClick={() => handleDeleteMember(m.id, m.name)}
+                              className="p-2 rounded-lg text-red-500 hover:bg-red-500/10 transition cursor-pointer"
+                              aria-label={`Delete ${m.name}`}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </Card>
+
+                  {/* Editor — single form rendered for either create or edit */}
+                  {(editingMember || creatingMember) && (
+                    <SquadMemberEditor
+                      key={editingMember?.id || "new"}
+                      initial={editingMember || (creatingMember as Omit<SquadMember, "id"> & { id?: string })}
+                      isNew={!editingMember}
+                      avatarUploading={avatarUploading}
+                      onAvatarUpload={handleAvatarUpload}
+                      onCancel={() => {
+                        setEditingMember(null);
+                        setCreatingMember(null);
+                        setSquadFormError(null);
+                      }}
+                      onSave={(member, isNew) => handleSaveMember(member, isNew)}
+                    />
+                  )}
+                </div>
+              )}
+
+              {/* Tab 6: YouTube Cache controls */}
               {activeTab === "cache" && (
                 <div className="space-y-6">
                   <Card className="p-8 border-[var(--color-border)] relative overflow-hidden">
@@ -972,3 +1222,193 @@ export default function AdminPage() {
     </>
   );
 }
+
+interface SquadMemberEditorProps {
+  initial: SquadMember | (Omit<SquadMember, "id"> & { id?: string });
+  isNew: boolean;
+  avatarUploading: boolean;
+  onAvatarUpload: (memberId: string, file: File) => void;
+  onCancel: () => void;
+  onSave: (member: SquadMember | Omit<SquadMember, "id">, isNew: boolean) => void;
+}
+
+const SquadMemberEditor = ({
+  initial,
+  isNew,
+  avatarUploading,
+  onAvatarUpload,
+  onCancel,
+  onSave,
+}: SquadMemberEditorProps) => {
+  const [form, setForm] = useState(initial);
+  const [gamesInput, setGamesInput] = useState((initial.favoriteGames || []).join(", "));
+
+  const update = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const submit = () => {
+    const games = gamesInput
+      .split(",")
+      .map((g) => g.trim())
+      .filter((g) => g.length > 0);
+    onSave({ ...form, favoriteGames: games }, isNew);
+  };
+
+  const onAvatarFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (isNew || !("id" in form) || !form.id) {
+      alert("Save the member first, then upload an avatar.");
+      return;
+    }
+    onAvatarUpload(form.id, file);
+  };
+
+  const memberId = "id" in form ? form.id : undefined;
+
+  return (
+    <Card className="p-6 border-[var(--color-border)]">
+      <div className="flex items-center justify-between mb-5">
+        <h4 className="font-display font-extrabold text-lg text-[var(--color-text)]">
+          {isNew ? "New Squad Member" : `Edit: ${form.name || "Unnamed"}`}
+        </h4>
+        <button
+          onClick={onCancel}
+          className="p-1.5 rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] cursor-pointer"
+          aria-label="Close editor"
+        >
+          <X size={16} />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Identity */}
+        <div className="md:col-span-2">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">
+            Avatar
+          </label>
+          <div className="mt-2 flex items-center gap-4">
+            <div className="h-20 w-20 rounded-xl overflow-hidden border border-[var(--color-border)] bg-[var(--color-surface-2)] flex items-center justify-center shrink-0">
+              {form.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={form.avatarUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <span className="font-display font-black text-xl text-[var(--color-text)]">
+                  {form.name.charAt(0).toUpperCase() || "?"}
+                </span>
+              )}
+            </div>
+            <div className="flex-1 space-y-2">
+              <Input
+                value={form.avatarUrl}
+                onChange={(e) => update("avatarUrl", e.target.value)}
+                placeholder="https://..."
+              />
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-bold text-[var(--color-text-muted)] cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    onChange={onAvatarFile}
+                    disabled={isNew || avatarUploading}
+                    className="hidden"
+                  />
+                  <span
+                    className={`inline-flex items-center gap-2 rounded-lg border border-[var(--color-border)] px-3 py-1.5 transition ${
+                      isNew || avatarUploading
+                        ? "opacity-50 cursor-not-allowed"
+                        : "hover:border-[#ff0033]/40 hover:text-[var(--color-text)]"
+                    }`}
+                  >
+                    <Plus size={12} />
+                    {avatarUploading ? "Uploading…" : isNew ? "Save first" : "Upload image"}
+                  </span>
+                </label>
+                {memberId && form.avatarUrl && (
+                  <span className="text-[10px] text-[var(--color-text-muted)] truncate">
+                    Saved to Supabase storage.
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Name *</label>
+          <Input value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="Kavisha (GGEZ)" className="mt-2" />
+        </div>
+        <div>
+          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Role *</label>
+          <Input value={form.role} onChange={(e) => update("role", e.target.value)} placeholder="Founder / Main Duelist" className="mt-2" />
+        </div>
+        <div>
+          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Signature Agent</label>
+          <Input value={form.signatureAgent} onChange={(e) => update("signatureAgent", e.target.value)} placeholder="Jett / Reyna" className="mt-2" />
+        </div>
+        <div>
+          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Combat Style</label>
+          <Input value={form.combatStyle} onChange={(e) => update("combatStyle", e.target.value)} placeholder="Aggressive / W-Key Warrior" className="mt-2" />
+        </div>
+        <div className="md:col-span-2">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Favorite Games (comma-separated)</label>
+          <Input value={gamesInput} onChange={(e) => setGamesInput(e.target.value)} placeholder="Valorant, Valheim, GTA V" className="mt-2" />
+        </div>
+        <div className="md:col-span-2">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Bio</label>
+          <textarea
+            value={form.bio}
+            onChange={(e) => update("bio", e.target.value)}
+            rows={3}
+            placeholder="Short bio shown in the operator details card."
+            className="mt-2 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:border-[#ff0033] focus:outline-none focus:ring-1 focus:ring-[#ff0033]/30"
+          />
+        </div>
+        <div className="md:col-span-2">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Twitch URL (optional)</label>
+          <Input value={form.twitchUrl ?? ""} onChange={(e) => update("twitchUrl", e.target.value || null)} placeholder="https://www.twitch.tv/..." className="mt-2" />
+        </div>
+
+        {/* Specs */}
+        <div className="md:col-span-2 pt-2 border-t border-[var(--color-border)]">
+          <h5 className="text-[10px] font-bold uppercase tracking-widest text-[#ff0033] mb-3">Hardware Specs</h5>
+        </div>
+        <div>
+          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">CPU</label>
+          <Input value={form.cpu} onChange={(e) => update("cpu", e.target.value)} className="mt-2" />
+        </div>
+        <div>
+          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">GPU</label>
+          <Input value={form.gpu} onChange={(e) => update("gpu", e.target.value)} className="mt-2" />
+        </div>
+        <div>
+          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">RAM</label>
+          <Input value={form.ram} onChange={(e) => update("ram", e.target.value)} className="mt-2" />
+        </div>
+        <div>
+          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Monitor</label>
+          <Input value={form.monitor} onChange={(e) => update("monitor", e.target.value)} className="mt-2" />
+        </div>
+        <div className="md:col-span-2">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Mouse</label>
+          <Input value={form.mouse} onChange={(e) => update("mouse", e.target.value)} className="mt-2" />
+        </div>
+        <div>
+          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Sort Order</label>
+          <Input
+            type="number"
+            value={String(form.sortOrder)}
+            onChange={(e) => update("sortOrder", Number(e.target.value) || 0)}
+            className="mt-2"
+          />
+        </div>
+      </div>
+
+      <div className="mt-6 flex justify-end gap-2">
+        <Button variant="ghost" onClick={onCancel}>Cancel</Button>
+        <Button onClick={submit}>{isNew ? "Add Member" : "Save Changes"}</Button>
+      </div>
+    </Card>
+  );
+};

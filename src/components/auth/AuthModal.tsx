@@ -9,6 +9,7 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialMode?: "login" | "signup";
+  initialError?: string | null;
 }
 
 type Provider = "google" | "facebook" | "discord";
@@ -35,6 +36,7 @@ export const AuthModal = ({
   isOpen,
   onClose,
   initialMode = "login",
+  initialError = null,
 }: AuthModalProps) => {
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [email, setEmail] = useState("");
@@ -51,7 +53,7 @@ export const AuthModal = ({
     if (!isOpen) return;
     const t = setTimeout(() => {
       setMode(initialMode);
-      setError(null);
+      setError(initialError || null);
       setInfo(null);
       setShowPassword(false);
       setIsSignedUp(false);
@@ -59,9 +61,10 @@ export const AuthModal = ({
       setPassword("");
       setName("");
       setRememberMe(true);
+      setBusy(false);
     }, 0);
     return () => clearTimeout(t);
-  }, [isOpen, initialMode]);
+  }, [isOpen, initialMode, initialError]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -104,15 +107,21 @@ export const AuthModal = ({
   const handleOAuth = async (provider: Provider) => {
     setBusy(true);
     setError(null);
-    const { error } = await supabase().auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-    if (error) {
+    try {
+      const { error } = await supabase().auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (error) {
+        setBusy(false);
+        setError(error.message);
+      }
+    } catch (err: any) {
       setBusy(false);
-      setError(error.message);
+      setError(err?.message || "An unexpected error occurred during OAuth sign in.");
+      console.error("OAuth error:", err);
     }
   };
 
@@ -128,41 +137,47 @@ export const AuthModal = ({
       return;
     }
 
-    const client = supabase();
-    if (mode === "login") {
-      const { error } = await client.auth.signInWithPassword({ email, password });
-      if (error) {
-        if (error.message.toLowerCase().includes("email not confirmed")) {
-          setError("Your email address is not verified yet. Please check your inbox for the confirmation link.");
+    try {
+      const client = supabase();
+      if (mode === "login") {
+        const { error } = await client.auth.signInWithPassword({ email, password });
+        if (error) {
+          if (error.message.toLowerCase().includes("email not confirmed")) {
+            setError("Your email address is not verified yet. Please check your inbox for the confirmation link.");
+          } else {
+            setError(error.message);
+          }
         } else {
-          setError(error.message);
+          onClose();
         }
       } else {
-        onClose();
-      }
-    } else {
-      if (!isPasswordStrong) {
-        setError("Password does not meet security standards.");
-        setBusy(false);
-        return;
-      }
+        if (!isPasswordStrong) {
+          setError("Password does not meet security standards.");
+          setBusy(false);
+          return;
+        }
 
-      const { error } = await client.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { name: name || undefined },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
+        const { error } = await client.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { name: name || undefined },
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
+          },
+        });
 
-      if (error) {
-        setError(error.message);
-      } else {
-        setIsSignedUp(true);
+        if (error) {
+          setError(error.message);
+        } else {
+          setIsSignedUp(true);
+        }
       }
+    } catch (err: any) {
+      setError(err?.message || "An unexpected error occurred.");
+      console.error("Email submit error:", err);
+    } finally {
+      setBusy(false);
     }
-    setBusy(false);
   };
 
   const handleMagicLink = async () => {
@@ -173,13 +188,19 @@ export const AuthModal = ({
     setBusy(true);
     setError(null);
     setInfo(null);
-    const { error } = await supabase().auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
-    });
-    setBusy(false);
-    if (error) setError(error.message);
-    else setInfo("Magic link sent. Check your inbox.");
+    try {
+      const { error } = await supabase().auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      });
+      if (error) setError(error.message);
+      else setInfo("Magic link sent. Check your inbox.");
+    } catch (err: any) {
+      setError(err?.message || "An unexpected error occurred sending the magic link.");
+      console.error("Magic link error:", err);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handleForgotPassword = async () => {
@@ -190,15 +211,21 @@ export const AuthModal = ({
     setBusy(true);
     setError(null);
     setInfo(null);
-    const { error } = await supabase().auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password`,
-    });
-    setBusy(false);
-    if (error) setError(error.message);
-    else
-      setInfo(
-        "Password reset link sent. Check your inbox and follow the link to set a new password."
-      );
+    try {
+      const { error } = await supabase().auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      });
+      if (error) setError(error.message);
+      else
+        setInfo(
+          "Password reset link sent. Check your inbox and follow the link to set a new password."
+        );
+    } catch (err: any) {
+      setError(err?.message || "An unexpected error occurred sending the reset link.");
+      console.error("Forgot password error:", err);
+    } finally {
+      setBusy(false);
+    }
   };
 
   return createPortal(

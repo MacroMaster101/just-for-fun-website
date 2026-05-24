@@ -1,5 +1,5 @@
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
 }
 
 generator client {
@@ -68,5 +68,26 @@ model MusicTrack {
   youtubeId String   @unique
   isActive  Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+model SquadMember {
+  id              String   @id @default(uuid())
+  name            String
+  role            String
+  avatarUrl       String   @default("")
+  favoriteGames   String[] @default([])
+  signatureAgent  String   @default("")
+  twitchUrl       String?
+  cpu             String   @default("")
+  gpu             String   @default("")
+  ram             String   @default("")
+  monitor         String   @default("")
+  mouse           String   @default("")
+  bio             String   @default("")
+  combatStyle     String   @default("")
+  /// Manual ordering — lower = earlier in roster. Defaults to creation time.
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 

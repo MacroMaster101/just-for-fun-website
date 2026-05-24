@@ -32,6 +32,7 @@ export const Header = () => {
   const [ambientPlaying, setAmbientPlaying] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
+  const [authError, setAuthError] = useState<string | null>(null);
   
   const pathname = usePathname();
   const isAdminPage = pathname?.startsWith("/admin");
@@ -53,11 +54,28 @@ export const Header = () => {
   const prevUserRef = useRef<typeof user>(null);
   const hasSetBaselineRef = useRef(false);
 
-  const openAuth = (mode: "login" | "signup") => {
+  const openAuth = (mode: "login" | "signup", err: string | null = null) => {
     setAuthMode(mode);
+    setAuthError(err);
     setAuthOpen(true);
     setMobileMenuOpen(false);
   };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const errorMsg =
+      params.get("auth_error") ||
+      params.get("error_description") ||
+      hashParams.get("error_description");
+    if (errorMsg) {
+      openAuth("login", errorMsg);
+      // Clean up the URL query params so they don't persist on reload
+      const cleanUrl = window.location.pathname + window.location.hash;
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
+  }, []);
 
   useEffect(() => {
     const onScroll = () => {
@@ -272,8 +290,12 @@ export const Header = () => {
 
       <AuthModal
         isOpen={authOpen}
-        onClose={() => setAuthOpen(false)}
+        onClose={() => {
+          setAuthOpen(false);
+          setAuthError(null);
+        }}
         initialMode={authMode}
+        initialError={authError}
       />
 
       {/* Floating Ambient Music Controller (Music Disc style) */}
