@@ -5,6 +5,22 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
+    // Auto-Bootstrapper: Seed the default music track if no tracks exist yet
+    const trackCount = await prisma.musicTrack.count();
+    if (trackCount === 0) {
+      try {
+        await prisma.musicTrack.create({
+          data: {
+            title: "Default Synthwave Theme",
+            youtubeId: "h7MYJghRWt0",
+            isActive: true,
+          },
+        });
+      } catch (e) {
+        console.error("Failed to seed default music track:", e);
+      }
+    }
+
     const activeTrack = await prisma.musicTrack.findFirst({
       where: { isActive: true },
     });

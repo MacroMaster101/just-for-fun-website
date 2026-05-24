@@ -26,6 +26,22 @@ export async function GET() {
       return NextResponse.json({ error: "Access Denied" }, { status: 403 });
     }
 
+    // Auto-Bootstrapper: Seed the default music track if no tracks exist yet
+    const trackCount = await prisma.musicTrack.count();
+    if (trackCount === 0) {
+      try {
+        await prisma.musicTrack.create({
+          data: {
+            title: "Default Synthwave Theme",
+            youtubeId: "h7MYJghRWt0",
+            isActive: true,
+          },
+        });
+      } catch (e) {
+        console.error("Failed to seed default music track:", e);
+      }
+    }
+
     const tracks = await prisma.musicTrack.findMany({
       orderBy: { createdAt: "desc" },
     });
