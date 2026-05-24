@@ -957,10 +957,10 @@ export default function AdminPage() {
                         />
 
                         <Input
-                          label="YouTube Video ID"
+                          label="YouTube Video ID or URL"
                           type="text"
                           required
-                          placeholder="e.g. h7MYJghRWt0"
+                          placeholder="h7MYJghRWt0 or https://youtu.be/h7MYJghRWt0"
                           value={newTrackYoutubeId}
                           onChange={(e) => setNewTrackYoutubeId(e.target.value)}
                         />

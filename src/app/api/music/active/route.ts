@@ -24,11 +24,11 @@ export async function GET() {
     const activeTrack = await prisma.musicTrack.findFirst({
       where: { isActive: true },
     });
-    
+
     if (activeTrack) {
       return NextResponse.json({ youtubeId: activeTrack.youtubeId, title: activeTrack.title }, { status: 200 });
     }
-    
+
     // Default fallback if no tracks are registered/active
     return NextResponse.json({ youtubeId: "h7MYJghRWt0", title: "Default Synthwave Theme" }, { status: 200 });
   } catch (error) {

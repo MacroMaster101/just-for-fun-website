@@ -118,9 +118,9 @@ export const AuthModal = ({
         setBusy(false);
         setError(error.message);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setBusy(false);
-      setError(err?.message || "An unexpected error occurred during OAuth sign in.");
+      setError(err instanceof Error ? err.message : "An unexpected error occurred during OAuth sign in.");
       console.error("OAuth error:", err);
     }
   };
@@ -172,8 +172,8 @@ export const AuthModal = ({
           setIsSignedUp(true);
         }
       }
-    } catch (err: any) {
-      setError(err?.message || "An unexpected error occurred.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "An unexpected error occurred.");
       console.error("Email submit error:", err);
     } finally {
       setBusy(false);
@@ -195,8 +195,8 @@ export const AuthModal = ({
       });
       if (error) setError(error.message);
       else setInfo("Magic link sent. Check your inbox.");
-    } catch (err: any) {
-      setError(err?.message || "An unexpected error occurred sending the magic link.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "An unexpected error occurred sending the magic link.");
       console.error("Magic link error:", err);
     } finally {
       setBusy(false);
@@ -220,8 +220,8 @@ export const AuthModal = ({
         setInfo(
           "Password reset link sent. Check your inbox and follow the link to set a new password."
         );
-    } catch (err: any) {
-      setError(err?.message || "An unexpected error occurred sending the reset link.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "An unexpected error occurred sending the reset link.");
       console.error("Forgot password error:", err);
     } finally {
       setBusy(false);

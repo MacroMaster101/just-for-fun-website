@@ -37,16 +37,95 @@ export const Header = () => {
   const pathname = usePathname();
   const isAdminPage = pathname?.startsWith("/admin");
   const [activeYoutubeId, setActiveYoutubeId] = useState("h7MYJghRWt0");
+  // First-visit autoplay: when localStorage has no flag, mount the iframe
+  // with autoplay=1&mute=1 (browsers permit muted autoplay) so the track
+  // begins immediately. On the user's first interaction we unmute it.
+  const [isFirstVisit, setIsFirstVisit] = useState(false);
+  const [showFirstVisitTooltips, setShowFirstVisitTooltips] = useState(false);
+  const firstVisitDecidedRef = useRef(false);
 
   useEffect(() => {
-    fetch("/api/music/active")
-      .then((r) => (r.ok ? r.json() : { youtubeId: "h7MYJghRWt0" }))
-      .then((data) => {
-        if (data.youtubeId) {
-          setActiveYoutubeId(data.youtubeId);
-        }
-      })
-      .catch(() => setActiveYoutubeId("h7MYJghRWt0"));
+    if (firstVisitDecidedRef.current) return;
+    firstVisitDecidedRef.current = true;
+    if (typeof window === "undefined") return;
+    let firstVisit = false;
+    try {
+      firstVisit = !window.localStorage.getItem("jff:visited");
+      if (firstVisit) window.localStorage.setItem("jff:visited", "1");
+    } catch {
+      // localStorage blocked (private mode, etc.) — treat as first visit
+      // so we still try the autoplay; worst case the browser blocks it.
+      firstVisit = true;
+    }
+    if (firstVisit) {
+      // One-shot sync from localStorage (external state) into React state —
+      // intentional and runs exactly once per browser, not a render cascade.
+      /* eslint-disable react-hooks/set-state-in-effect */
+      setIsFirstVisit(true);
+      setShowFirstVisitTooltips(true);
+      setAmbientPlaying(true);
+      /* eslint-enable react-hooks/set-state-in-effect */
+    }
+  }, []);
+
+  // Auto-hide the first-visit hint tooltips after 10s.
+  useEffect(() => {
+    if (!showFirstVisitTooltips) return;
+    const t = setTimeout(() => setShowFirstVisitTooltips(false), 10_000);
+    return () => clearTimeout(t);
+  }, [showFirstVisitTooltips]);
+
+  // First user interaction → unmute the iframe so they can actually hear it.
+  useEffect(() => {
+    if (!isFirstVisit) return;
+    const onInteract = () => {
+      const iframe = document.getElementById("youtube-ambient-player") as HTMLIFrameElement | null;
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage(
+          JSON.stringify({ event: "command", func: "unMute", args: "" }),
+          "*"
+        );
+        iframe.contentWindow.postMessage(
+          JSON.stringify({ event: "command", func: "setVolume", args: [35] }),
+          "*"
+        );
+      }
+      window.removeEventListener("pointerdown", onInteract);
+      window.removeEventListener("keydown", onInteract);
+    };
+    window.addEventListener("pointerdown", onInteract, { once: true });
+    window.addEventListener("keydown", onInteract, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", onInteract);
+      window.removeEventListener("keydown", onInteract);
+    };
+  }, [isFirstVisit]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const refresh = () => {
+      fetch("/api/music/active")
+        .then((r) => (r.ok ? r.json() : { youtubeId: "h7MYJghRWt0" }))
+        .then((data) => {
+          if (cancelled) return;
+          if (data.youtubeId) {
+            // Functional update so we only re-render (and swap the iframe src)
+            // when the active track actually changed.
+            setActiveYoutubeId((prev) => (prev === data.youtubeId ? prev : data.youtubeId));
+          }
+        })
+        .catch(() => {
+          if (!cancelled) setActiveYoutubeId((prev) => prev || "h7MYJghRWt0");
+        });
+    };
+    refresh();
+    // Poll every 60s so an admin-side activation propagates to listeners
+    // without requiring a hard reload of the homepage.
+    const interval = setInterval(refresh, 60_000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, []);
   
   // Track explicit user login transitions to trigger autoplay.
@@ -70,6 +149,10 @@ export const Header = () => {
       params.get("error_description") ||
       hashParams.get("error_description");
     if (errorMsg) {
+      // One-shot auth error surfaced from an OAuth callback redirect — opening
+      // the modal here is intentional state sync from URL params, not a
+      // cascading render loop.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       openAuth("login", errorMsg);
       // Clean up the URL query params so they don't persist on reload
       const cleanUrl = window.location.pathname + window.location.hash;
@@ -203,7 +286,7 @@ export const Header = () => {
           )}
           {/* Right cluster */}
           <div className="hidden items-center gap-2 md:flex">
-            <ThemeToggle />
+            <ThemeToggle showHint={showFirstVisitTooltips} />
             {user ? (
               <UserMenu variant="desktop" />
             ) : (
@@ -241,7 +324,7 @@ export const Header = () => {
       >
         <nav className="grid gap-2 text-sm font-bold uppercase tracking-wide text-neutral-300">
           <div className="mb-3 flex justify-center">
-            <ThemeToggle />
+            <ThemeToggle showHint={showFirstVisitTooltips} />
           </div>
 
           {!isAdminPage && navLinks.map((link) => {
@@ -311,9 +394,19 @@ export const Header = () => {
           .animate-wave-3 { animation: musicWaveBounce 1.0s ease-in-out infinite; }
         `}} />
 
-        {/* Tooltip */}
-        <div className="absolute bottom-full left-0 mb-4 px-3 py-1.5 bg-[#0c0c0c]/95 border border-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-lg shadow-2xl opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-300 transform translate-y-1 group-hover:translate-y-0 whitespace-nowrap z-50">
-          {ambientPlaying ? "Pause Synthwave Theme" : "Play Synthwave Theme"}
+        {/* Tooltip — hover, with a first-visit auto-show for the first 10s. */}
+        <div
+          className={`absolute bottom-full left-0 mb-4 px-3 py-1.5 bg-[#0c0c0c]/95 border border-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-lg shadow-2xl pointer-events-none transition-all duration-300 whitespace-nowrap z-50 group-hover:opacity-100 group-hover:translate-y-0 ${
+            showFirstVisitTooltips
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-1"
+          }`}
+        >
+          {showFirstVisitTooltips
+            ? "🎵 Synthwave is playing — click to pause"
+            : ambientPlaying
+              ? "Pause Synthwave Theme"
+              : "Play Synthwave Theme"}
           {/* Tooltip Arrow (centered on w-14 button at left-6) */}
           <div className="absolute top-full left-6 border-4 border-transparent border-t-[#0c0c0c] filter drop-shadow-[0_1px_0_rgba(255,255,255,0.08)]"></div>
         </div>
@@ -396,10 +489,13 @@ export const Header = () => {
         </div>
       </div>
 
-      {/* Hidden YouTube Ambient Audio Player */}
+      {/* Hidden YouTube Ambient Audio Player.
+          For first-time visitors we boot the iframe muted with autoplay=1 so
+          browsers permit it; the first user interaction (handled above) sends
+          an unMute command. Returning visitors get the normal paused-on-load. */}
       <iframe
         id="youtube-ambient-player"
-        src={`https://www.youtube.com/embed/${activeYoutubeId}?enablejsapi=1&autoplay=0&controls=0&disablekb=1&fs=0&loop=1&playlist=${activeYoutubeId}&modestbranding=1&rel=0&iv_load_policy=3`}
+        src={`https://www.youtube.com/embed/${activeYoutubeId}?enablejsapi=1&autoplay=${isFirstVisit ? 1 : 0}&mute=${isFirstVisit ? 1 : 0}&controls=0&disablekb=1&fs=0&loop=1&playlist=${activeYoutubeId}&modestbranding=1&rel=0&iv_load_policy=3`}
         allow="autoplay"
         className="pointer-events-none absolute -left-[9999px] -top-[9999px] h-1 w-1 opacity-0"
         tabIndex={-1}

@@ -65,8 +65,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Title and YouTube Video ID are required." }, { status: 400 });
     }
 
-    const cleanYoutubeId = youtubeId.trim();
-    const cleanTitle = title.trim();
+    const cleanYoutubeId = extractYoutubeId(String(youtubeId).trim());
+    if (!cleanYoutubeId) {
+      return NextResponse.json(
+        { error: "Could not parse a YouTube video ID. Paste a youtube.com/watch?v=… URL, a youtu.be/… URL, or just the 11-character ID." },
+        { status: 400 }
+      );
+    }
+    const cleanTitle = String(title).trim();
 
     // Check if video ID already exists
     const existing = await prisma.musicTrack.findUnique({
@@ -169,4 +175,45 @@ export async function DELETE(request: Request) {
     console.error("DELETE Music Track Error:", error);
     return NextResponse.json({ error: "Failed to delete music track" }, { status: 500 });
   }
+}
+
+/**
+ * Extracts a YouTube video id from any common input format:
+ *   - 11-char id as-is (aHGSiXwiA-g)
+ *   - youtu.be short link (https://youtu.be/aHGSiXwiA-g?si=...)
+ *   - youtube.com/watch?v=... (with or without extra params)
+ *   - youtube.com/embed/... or youtube.com/shorts/...
+ * Returns null if no valid id can be parsed.
+ */
+function extractYoutubeId(input: string): string | null {
+  if (!input) return null;
+  const trimmed = input.trim();
+  // Already an id?
+  if (/^[A-Za-z0-9_-]{11}$/.test(trimmed)) return trimmed;
+
+  // Try URL parsing.
+  try {
+    const url = new URL(trimmed);
+    const host = url.hostname.replace(/^www\./, "");
+
+    if (host === "youtu.be") {
+      const id = url.pathname.replace(/^\//, "").split("/")[0];
+      return /^[A-Za-z0-9_-]{11}$/.test(id) ? id : null;
+    }
+
+    if (host === "youtube.com" || host === "m.youtube.com" || host === "music.youtube.com") {
+      const vParam = url.searchParams.get("v");
+      if (vParam && /^[A-Za-z0-9_-]{11}$/.test(vParam)) return vParam;
+
+      // /embed/ID or /shorts/ID or /live/ID
+      const match = url.pathname.match(/\/(?:embed|shorts|live)\/([A-Za-z0-9_-]{11})/);
+      if (match) return match[1];
+    }
+  } catch {
+    // Not a URL — fall through.
+  }
+
+  // Last resort: find an 11-char id anywhere in the string.
+  const loose = trimmed.match(/[A-Za-z0-9_-]{11}/);
+  return loose ? loose[0] : null;
 }

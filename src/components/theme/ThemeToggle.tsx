@@ -10,7 +10,12 @@ const options: { value: Theme; label: string; tooltip: string; Icon: typeof Sun 
   { value: "dark", label: "Dark", tooltip: "Try Dark mode", Icon: Moon },
 ];
 
-export const ThemeToggle = () => {
+interface ThemeToggleProps {
+  /** When true, the active option's tooltip is shown automatically (first-visit hint). */
+  showHint?: boolean;
+}
+
+export const ThemeToggle = ({ showHint = false }: ThemeToggleProps = {}) => {
   const { theme, setTheme, resolved } = useTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -79,7 +84,11 @@ export const ThemeToggle = () => {
             <span
               role="tooltip"
               suppressHydrationWarning
-              className="pointer-events-none absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2 translate-y-1 whitespace-nowrap rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[var(--color-text)] opacity-0 shadow-lg transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100"
+              className={`pointer-events-none absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2 whitespace-nowrap rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[var(--color-text)] shadow-lg transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100 ${
+                showHint && active
+                  ? "translate-y-0 opacity-100"
+                  : "translate-y-1 opacity-0"
+              }`}
             >
               {tipText}
             </span>
