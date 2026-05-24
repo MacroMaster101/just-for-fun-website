@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { Header } from "@/components/layout/Header";
@@ -18,25 +19,30 @@ import { Footer } from "@/components/layout/Footer";
 
 export default function Home() {
   const { user } = useAuth();
+  const [ready, setReady] = useState(false);
 
   return (
     <>
-      <LoadingScreen />
-      <Header />
-      <main className="flex-grow">
-        <Hero />
-        <About />
-        <SquadRoster />
-        {user && <Profile />}
-        <LatestVideos />
-        <Soundboard />
-        <ChallengeWheel />
-        <Schedule />
-        <Merch />
-        <Socials />
-        <Contact />
-      </main>
-      <Footer />
+      <LoadingScreen onDone={() => setReady(true)} />
+      {ready && (
+        <>
+          <Header />
+          <main className="flex-grow">
+            <Hero />
+            <About />
+            <SquadRoster />
+            {user && <Profile />}
+            <LatestVideos />
+            <Soundboard />
+            <ChallengeWheel />
+            <Schedule />
+            <Merch />
+            <Socials />
+            <Contact />
+          </main>
+          <Footer />
+        </>
+      )}
     </>
   );
 }

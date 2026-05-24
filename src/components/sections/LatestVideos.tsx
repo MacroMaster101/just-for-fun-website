@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   AlertCircle,
   Calendar,
@@ -17,50 +17,19 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { CursorSpotlight } from "@/components/ui/CursorSpotlight";
+import { useYouTube, type YTVideo } from "@/components/providers/YouTubeProvider";
 
-interface VideoItem {
-  id: string;
-  title: string;
-  description: string;
-  thumbnail: string;
-  publishedAt: string;
-  duration: string;
-  views: string;
-  likes: string;
-  comments: string;
-  url: string;
-  isLive: boolean;
-}
+type VideoItem = YTVideo;
 
 export const LatestVideos = () => {
-  const [videos, setVideos] = useState<VideoItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [message, setMessage] = useState("");
-  const [source, setSource] = useState<"youtube" | "fallback">("fallback");
+  const yt = useYouTube();
+  const videos = yt.videos;
+  const loading = yt.loading;
+  const error = yt.error;
+  const message = yt.message;
+  const source = yt.source;
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(null);
-
-  useEffect(() => {
-    const fetchVideos = async () => {
-      try {
-        const res = await fetch("/api/youtube");
-        if (!res.ok) throw new Error("Failed to fetch YouTube data.");
-
-        const data = await res.json();
-        setVideos(Array.isArray(data.videos) ? data.videos : []);
-        setMessage(data.message || "");
-        setSource(data.source === "youtube" ? "youtube" : "fallback");
-      } catch (err) {
-        console.error("Error loading videos:", err);
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchVideos();
-  }, []);
 
   const filteredVideos = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();

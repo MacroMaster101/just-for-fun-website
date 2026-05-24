@@ -41,6 +41,24 @@ const readStoredTheme = (): Theme => {
   return (localStorage.getItem(STORAGE_KEY) as Theme | null) ?? "system";
 };
 
+// Apply theme synchronously when this client module loads — runs before
+// the first React render, so the page paints with the correct theme class
+// already on <html>. Avoids the inline <script> tag that React 19 rejects.
+if (typeof document !== "undefined") {
+  try {
+    const stored = readStoredTheme();
+    const r = resolve(stored);
+    const root = document.documentElement;
+    if (!root.classList.contains(r)) {
+      root.classList.remove("light", "dark");
+      root.classList.add(r);
+      root.style.colorScheme = r;
+    }
+  } catch {
+    document.documentElement.classList.add("dark");
+  }
+}
+
 const computeInitialResolved = (t: Theme): Resolved => {
   if (typeof window === "undefined") return "dark";
   return resolve(t);

@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import { Bell, Eye, Play, Radio, Sparkles, Users, Video } from "lucide-react";
 import Image from "next/image";
 import { Youtube } from "@/components/ui/Icons";
 import { Button } from "@/components/ui/Button";
 import { SplineRobot } from "@/components/ui/SplineRobot";
 import { CursorSpotlight } from "@/components/ui/CursorSpotlight";
+import { useYouTube } from "@/components/providers/YouTubeProvider";
 
 interface StatsItem {
   subscribers: string;
@@ -34,36 +35,56 @@ const fallbackStats: StatsItem = {
 };
 
 export const Hero = () => {
-  const [stats, setStats] = useState<StatsItem>(fallbackStats);
-  const [loading, setLoading] = useState(true);
-  const [source, setSource] = useState<"youtube" | "fallback">("fallback");
+  const yt = useYouTube();
+  const loading = yt.loading;
+  const source = yt.source;
+  const stats: StatsItem = { ...fallbackStats, ...(yt.stats || {}) };
   const ref = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    fetch("/api/youtube")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.stats) {
-          setStats({ ...fallbackStats, ...data.stats });
-          setSource(data.source === "youtube" ? "youtube" : "fallback");
-        }
-      })
-      .catch((e) => console.error("Hero YT fetch:", e))
-      .finally(() => setLoading(false));
-  }, []);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return;
+    }
+
+    let raf = 0;
+    let nextPx = 0;
+    let nextPy = 0;
+    let pending = false;
+
+    const apply = () => {
+      pending = false;
+      el.style.setProperty("--px", nextPx.toString());
+      el.style.setProperty("--py", nextPy.toString());
+    };
+
     const onMove = (e: MouseEvent) => {
       const rect = el.getBoundingClientRect();
-      const px = (e.clientX - rect.left) / rect.width - 0.5;
-      const py = (e.clientY - rect.top) / rect.height - 0.5;
-      el.style.setProperty("--px", px.toString());
-      el.style.setProperty("--py", py.toString());
+      // Only track when pointer is over the hero section
+      if (
+        e.clientY < rect.top ||
+        e.clientY > rect.bottom ||
+        e.clientX < rect.left ||
+        e.clientX > rect.right
+      ) {
+        return;
+      }
+      nextPx = (e.clientX - rect.left) / rect.width - 0.5;
+      nextPy = (e.clientY - rect.top) / rect.height - 0.5;
+      if (!pending) {
+        pending = true;
+        raf = requestAnimationFrame(apply);
+      }
     };
-    window.addEventListener("mousemove", onMove);
-    return () => window.removeEventListener("mousemove", onMove);
+    window.addEventListener("mousemove", onMove, { passive: true });
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      if (raf) cancelAnimationFrame(raf);
+    };
   }, []);
 
   const channelUrl = stats.channelUrl || fallbackStats.channelUrl;

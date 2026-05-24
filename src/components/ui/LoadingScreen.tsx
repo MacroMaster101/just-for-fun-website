@@ -1,106 +1,232 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-
-const PARTICLES = [
-  { width: "15px", height: "15px", left: "10%", top: "20%", delay: "0s", duration: "7s", color: "bg-[#ff0033]/20 shadow-[0_0_10px_rgba(255,0,51,0.2)]" },
-  { width: "25px", height: "25px", left: "75%", top: "15%", delay: "0.7s", duration: "9s", color: "bg-[#ffffff]/20 shadow-[0_0_12px_rgba(255,255,255,0.2)]" },
-  { width: "12px", height: "12px", left: "45%", top: "80%", delay: "1.4s", duration: "6s", color: "bg-[#ff4b5f]/20 shadow-[0_0_8px_rgba(255,75,95,0.2)]" },
-  { width: "20px", height: "20px", left: "85%", top: "65%", delay: "2.1s", duration: "8s", color: "bg-[#ff0033]/20 shadow-[0_0_10px_rgba(255,0,51,0.2)]" },
-  { width: "18px", height: "18px", left: "20%", top: "70%", delay: "2.8s", duration: "5s", color: "bg-[#ffffff]/20 shadow-[0_0_10px_rgba(255,255,255,0.2)]" },
-  { width: "22px", height: "22px", left: "60%", top: "40%", delay: "3.5s", duration: "10s", color: "bg-[#ff4b5f]/20 shadow-[0_0_12px_rgba(255,75,95,0.2)]" },
-  { width: "14px", height: "14px", left: "30%", top: "10%", delay: "4.2s", duration: "7s", color: "bg-[#ff0033]/20 shadow-[0_0_8px_rgba(255,0,51,0.2)]" },
-  { width: "28px", height: "28px", left: "90%", top: "30%", delay: "4.9s", duration: "8s", color: "bg-[#ffffff]/20 shadow-[0_0_15px_rgba(255,255,255,0.2)]" },
-];
+import React, { useEffect, useRef, useState } from "react";
 
 const LOADING_TEXTS = [
-  "CONNECTING TO NEURAL NET...",
-  "LOADING SQUAD DATABASES...",
-  "CHARGING THE WHEEL...",
-  "PREPARING SOUNDS...",
-  "READY FOR ACTION!"
+  "BOOTING SYSTEMS",
+  "LOADING SQUAD",
+  "SYNCING STREAMS",
+  "CALIBRATING HUD",
+  "READY",
 ];
 
-export const LoadingScreen = () => {
-  const [progress, setProgress] = useState(0);
+const RING_R = 54;
+const CIRCUMFERENCE = 2 * Math.PI * RING_R;
+
+interface LoadingScreenProps {
+  onDone?: () => void;
+  /** Total animated duration in ms (default 1600) */
+  duration?: number;
+}
+
+export const LoadingScreen = ({
+  onDone,
+  duration = 1600,
+}: LoadingScreenProps) => {
+  const [textBucket, setTextBucket] = useState(0);
   const [visible, setVisible] = useState(true);
-  const textIndex = Math.min(Math.floor(progress / 20), LOADING_TEXTS.length - 1);
-  const statusText = LOADING_TEXTS[textIndex];
+  const [fading, setFading] = useState(false);
+
+  const barRef = useRef<HTMLDivElement | null>(null);
+  const scanlineRef = useRef<HTMLDivElement | null>(null);
+  const ringRef = useRef<SVGCircleElement | null>(null);
+  const pctTextRef = useRef<HTMLSpanElement | null>(null);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setTimeout(() => setVisible(false), 600); // fade out duration
-          return 100;
-        }
-        return prev + Math.floor(Math.random() * 12) + 6;
-      });
-    }, 100);
+    let raf = 0;
+    const start = performance.now();
+    let lastBucket = 0;
+    let lastPctInt = 0;
+    let frame = 0;
 
-    return () => clearInterval(interval);
-  }, []);
+    const tick = (now: number) => {
+      const t = Math.min((now - start) / duration, 1);
+      // Ease-out cubic
+      const eased = 1 - Math.pow(1 - t, 3);
+      const pct = eased * 100;
+
+      if (barRef.current) barRef.current.style.width = pct + "%";
+      if (scanlineRef.current) scanlineRef.current.style.top = pct + "%";
+      if (ringRef.current) {
+        ringRef.current.style.strokeDashoffset = String(
+          CIRCUMFERENCE * (1 - pct / 100)
+        );
+      }
+
+      frame++;
+      if (frame % 4 === 0 && pctTextRef.current) {
+        const pctInt = Math.floor(pct);
+        if (pctInt !== lastPctInt) {
+          lastPctInt = pctInt;
+          pctTextRef.current.textContent =
+            String(pctInt).padStart(3, "0") + "%";
+        }
+      }
+
+      const bucket = Math.min(Math.floor(pct / 20), LOADING_TEXTS.length - 1);
+      if (bucket !== lastBucket) {
+        lastBucket = bucket;
+        setTextBucket(bucket);
+      }
+
+      if (t >= 1) {
+        if (pctTextRef.current) pctTextRef.current.textContent = "100%";
+        // Tell parent to mount the page now (behind the fading overlay)
+        onDone?.();
+        setFading(true);
+        setTimeout(() => setVisible(false), 450);
+        return;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [duration, onDone]);
 
   if (!visible) return null;
 
+  const statusText = LOADING_TEXTS[textBucket];
+
   return (
     <div
-      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0a0a0a] transition-opacity duration-600 ${
-        progress === 100 ? "opacity-0 pointer-events-none" : "opacity-100"
+      className={`fixed inset-0 z-[100] flex items-center justify-center bg-[#060606] transition-opacity duration-[450ms] ease-out ${
+        fading ? "opacity-0 pointer-events-none" : "opacity-100"
       }`}
+      aria-hidden={fading}
+      role="status"
     >
-      {/* Background Animated Particles */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-60">
-        {PARTICLES.map((particle, i) => (
-          <div
-            key={i}
-            className={`absolute rounded-full blur-sm animate-float ${particle.color}`}
-            style={{
-              width: particle.width,
-              height: particle.height,
-              left: particle.left,
-              top: particle.top,
-              animationDelay: particle.delay,
-              animationDuration: particle.duration,
-            }}
-          />
-        ))}
-      </div>
+      {/* Static grid (paints once, no mask -> cheaper) */}
+      <div
+        className="absolute inset-0 opacity-[0.1]"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(255,0,51,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,0,51,0.5) 1px, transparent 1px)",
+          backgroundSize: "44px 44px",
+        }}
+      />
+      {/* Vignette via single radial gradient — composited once */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,0,51,0.12),transparent_55%)]" />
 
-      {/* Loading Content */}
-      <div className="relative z-10 flex flex-col items-center max-w-sm w-full px-6 text-center">
-        {/* Liquid Morphing Blob */}
-        <div className="relative w-36 h-36 flex items-center justify-center mb-10">
-          <div className="absolute inset-0 bg-gradient-to-tr from-[#ff0033] via-[#ffffff] to-[#ff4b5f] rounded-[60%_40%_30%_70%/60%_30%_70%_40%] animate-blob-morph opacity-60 blur-md" />
-          <div className="absolute inset-2 bg-gradient-to-bl from-[#ff4b5f] via-[#ff0033] to-[#ffffff] rounded-[50%_60%_30%_60%/30%_60%_70%_40%] animate-blob-morph [animation-delay:2s] opacity-75 blur-xs" />
-          <div className="absolute inset-4 bg-[#0f0f0f] rounded-full flex items-center justify-center border border-white/10 shadow-[inset_0_0_15px_rgba(255,0,51,0.3)]">
-            <div className="text-5xl drop-shadow-[0_0_15px_rgba(255,255,255,0.6)] animate-pulse">
-              🎮
-            </div>
+      {/* Horizontal scanline — animated via ref */}
+      <div
+        ref={scanlineRef}
+        className="pointer-events-none absolute inset-x-0 h-px bg-[#ff0033]"
+        style={{
+          top: "0%",
+          opacity: 0.6,
+          willChange: "top",
+        }}
+      />
+
+      {/* Center stack */}
+      <div className="relative z-10 flex w-full max-w-md flex-col items-center px-6 text-center">
+        {/* Logo + ring */}
+        <div className="relative mb-10 h-32 w-32">
+          {/* Rotating outer ring */}
+          <svg
+            className="absolute inset-0 h-full w-full animate-spin"
+            style={{ animationDuration: "10s", willChange: "transform" }}
+            viewBox="0 0 120 120"
+            fill="none"
+          >
+            <circle
+              cx="60"
+              cy="60"
+              r="58"
+              stroke="rgba(255,255,255,0.06)"
+              strokeWidth="1"
+              strokeDasharray="2 6"
+            />
+          </svg>
+
+          {/* Progress ring */}
+          <svg
+            className="absolute inset-0 h-full w-full -rotate-90"
+            viewBox="0 0 120 120"
+            fill="none"
+          >
+            <circle
+              cx="60"
+              cy="60"
+              r={RING_R}
+              stroke="rgba(255,255,255,0.06)"
+              strokeWidth="2"
+            />
+            <circle
+              ref={ringRef}
+              cx="60"
+              cy="60"
+              r={RING_R}
+              stroke="#ff0033"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeDasharray={CIRCUMFERENCE}
+              strokeDashoffset={CIRCUMFERENCE}
+            />
+          </svg>
+
+          {/* Inner mark */}
+          <div className="absolute inset-4 flex items-center justify-center rounded-full border border-white/10 bg-[#0a0a0a]">
+            <span className="font-display text-2xl font-black tracking-tight text-white">
+              JFF
+            </span>
+          </div>
+
+          {/* Corner brackets */}
+          {[
+            "left-0 top-0 border-l border-t",
+            "right-0 top-0 border-r border-t",
+            "left-0 bottom-0 border-l border-b",
+            "right-0 bottom-0 border-r border-b",
+          ].map((cls, i) => (
+            <span
+              key={i}
+              className={`absolute h-3 w-3 border-[#ff0033] ${cls}`}
+            />
+          ))}
+        </div>
+
+        {/* Wordmark */}
+        <h1 className="font-display text-3xl font-black uppercase tracking-[0.18em] text-white sm:text-4xl">
+          Just For <span className="text-[#ff0033]">Fun</span>
+        </h1>
+        <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.4em] text-neutral-500">
+          Gaming · Live · BoYs
+        </p>
+
+        {/* Progress bar */}
+        <div className="mt-10 w-full">
+          <div className="relative h-[6px] w-full overflow-hidden rounded-full bg-white/[0.04] ring-1 ring-inset ring-white/5">
+            <div
+              ref={barRef}
+              className="h-full rounded-full bg-[#ff0033]"
+              style={{
+                width: "0%",
+                willChange: "width",
+              }}
+            />
+          </div>
+
+          {/* Status row */}
+          <div className="mt-4 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.3em]">
+            <span className="flex items-center gap-2 text-[#ff4b5f]">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inset-0 animate-ping rounded-full bg-[#ff0033] opacity-75" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#ff0033]" />
+              </span>
+              {statusText}
+            </span>
+            <span ref={pctTextRef} className="text-white/70 tabular-nums">
+              000%
+            </span>
           </div>
         </div>
+      </div>
 
-        {/* Text */}
-        <h1 className="font-display font-extrabold text-4xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-[#ff0033] via-[#ffffff] to-[#ff4b5f] animate-aurora-shift bg-[length:200%_auto] filter drop-shadow-[0_0_10px_rgba(255,0,51,0.3)]">
-          JUST FOR FUN
-        </h1>
-        <p className="text-[#ffffff] text-xs font-bold tracking-widest uppercase mt-2 opacity-80">
-          Gaming Channel
-        </p>
-
-        {/* Progress Bar */}
-        <div className="w-full bg-[#181818] rounded-full h-2 mt-8 border border-white/10 overflow-hidden shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)] p-[1px]">
-          <div
-            className="bg-gradient-to-r from-[#ff0033] via-[#ffffff] to-[#ff4b5f] bg-[length:200%_auto] h-full rounded-full transition-all duration-100 ease-out shadow-[0_0_12px_rgba(255,255,255,0.7)] animate-aurora-shift"
-            style={{ width: `${Math.min(progress, 100)}%` }}
-          />
-        </div>
-
-        {/* Status */}
-        <p className="text-xs font-mono text-[#ff0033] tracking-widest mt-4">
-          {statusText} <span className="animate-ping font-sans">|</span>
-        </p>
+      {/* Bottom signature */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 font-mono text-[10px] uppercase tracking-[0.5em] text-neutral-600">
+        v4 · Crimson Build
       </div>
     </div>
   );

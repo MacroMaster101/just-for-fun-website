@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme, type Theme } from "./ThemeProvider";
 
@@ -11,6 +12,8 @@ const options: { value: Theme; label: string; tooltip: string; Icon: typeof Sun 
 
 export const ThemeToggle = () => {
   const { theme, setTheme, resolved } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const handleClick = (value: Theme) => {
     if (value === theme) return;
@@ -47,9 +50,11 @@ export const ThemeToggle = () => {
       className="inline-flex items-center gap-0.5 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)]/70 p-0.5 backdrop-blur"
     >
       {options.map(({ value, label, tooltip, Icon }) => {
-        const active = theme === value;
+        const active = mounted && theme === value;
         const tipText =
-          active && value === "system" ? `System (${resolved})` : tooltip;
+          mounted && active && value === "system"
+            ? `System (${resolved})`
+            : tooltip;
         return (
           <button
             key={value}
@@ -57,6 +62,7 @@ export const ThemeToggle = () => {
             role="radio"
             aria-checked={active}
             aria-label={label}
+            suppressHydrationWarning
             onClick={() => handleClick(value)}
             className={`group relative flex h-7 w-7 items-center justify-center rounded-full transition ${
               active
@@ -67,6 +73,7 @@ export const ThemeToggle = () => {
             <Icon size={14} />
             <span
               role="tooltip"
+              suppressHydrationWarning
               className="pointer-events-none absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2 translate-y-1 whitespace-nowrap rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[var(--color-text)] opacity-0 shadow-lg transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100"
             >
               {tipText}

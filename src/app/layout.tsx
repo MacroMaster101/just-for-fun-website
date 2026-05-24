@@ -3,9 +3,8 @@ import { Orbitron, Inter, Space_Grotesk } from "next/font/google";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { CustomCursor } from "@/components/ui/CustomCursor";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { YouTubeProvider } from "@/components/providers/YouTubeProvider";
 import "./globals.css";
-
-const themeInitScript = `(function(){try{var s=localStorage.getItem('jff-theme')||'system';var r=s==='system'?(window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'):s;var h=document.documentElement;h.classList.add(r);h.style.colorScheme=r;}catch(e){document.documentElement.classList.add('dark');}})();`;
 
 const orbitron = Orbitron({
   variable: "--font-orbitron",
@@ -42,14 +41,13 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${orbitron.variable} ${inter.variable} ${spaceGrotesk.variable} h-full`}
     >
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-      </head>
       <body className="min-h-full bg-[var(--color-bg)] text-[var(--color-text)] font-sans flex flex-col antialiased">
         <ThemeProvider>
           <AuthProvider>
-            <CustomCursor />
-            {children}
+            <YouTubeProvider>
+              <CustomCursor />
+              {children}
+            </YouTubeProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

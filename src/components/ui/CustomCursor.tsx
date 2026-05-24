@@ -22,12 +22,14 @@ export const CustomCursor = () => {
     const ring = { x: pos.x, y: pos.y };
     const glow = { x: pos.x, y: pos.y };
     let raf = 0;
+    let active = false;
+    let lastHoverCheck = 0;
 
     const tick = () => {
-      ring.x += (pos.x - ring.x) * 0.18;
-      ring.y += (pos.y - ring.y) * 0.18;
-      glow.x += (pos.x - glow.x) * 0.08;
-      glow.y += (pos.y - glow.y) * 0.08;
+      ring.x += (pos.x - ring.x) * 0.22;
+      ring.y += (pos.y - ring.y) * 0.22;
+      glow.x += (pos.x - glow.x) * 0.1;
+      glow.y += (pos.y - glow.y) * 0.1;
 
       if (dotRef.current) {
         dotRef.current.style.transform = `translate3d(${pos.x}px, ${pos.y}px, 0) translate(-50%, -50%)`;
@@ -38,37 +40,54 @@ export const CustomCursor = () => {
       if (glowRef.current) {
         glowRef.current.style.transform = `translate3d(${glow.x}px, ${glow.y}px, 0) translate(-50%, -50%)`;
       }
+
+      const dx = Math.abs(pos.x - ring.x) + Math.abs(pos.x - glow.x);
+      const dy = Math.abs(pos.y - ring.y) + Math.abs(pos.y - glow.y);
+      if (dx < 0.4 && dy < 0.4) {
+        active = false;
+        raf = 0;
+        return;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+
+    const start = () => {
+      if (active) return;
+      active = true;
       raf = requestAnimationFrame(tick);
     };
 
     const onMove = (e: MouseEvent) => {
       pos.x = e.clientX;
       pos.y = e.clientY;
-      const target = e.target as HTMLElement | null;
-      const isInteractive =
-        !!target &&
-        !!target.closest(
-          'a, button, [role="button"], input, textarea, select, [data-cursor="hover"]'
-        );
-      setHovering(isInteractive);
+      // Throttle interactive-element lookup to ~60ms
+      const now = e.timeStamp;
+      if (now - lastHoverCheck > 60) {
+        lastHoverCheck = now;
+        const target = e.target as HTMLElement | null;
+        const isInteractive =
+          !!target &&
+          !!target.closest(
+            'a, button, [role="button"], input, textarea, select, [data-cursor="hover"]'
+          );
+        setHovering((prev) => (prev === isInteractive ? prev : isInteractive));
+      }
+      start();
     };
 
     const onDown = () => setClicking(true);
     const onUp = () => setClicking(false);
 
-    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mousemove", onMove, { passive: true });
     window.addEventListener("mousedown", onDown);
     window.addEventListener("mouseup", onUp);
-    raf = requestAnimationFrame(() => {
-      setEnabled(true);
-      tick();
-    });
+    setEnabled(true);
 
     return () => {
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mousedown", onDown);
       window.removeEventListener("mouseup", onUp);
-      cancelAnimationFrame(raf);
+      if (raf) cancelAnimationFrame(raf);
     };
   }, []);
 

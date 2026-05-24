@@ -32,3 +32,9 @@ model Video {
   description String?
   cachedAt    DateTime @default(now())
 }
+
+model YouTubeCache {
+  key       String   @id
+  payload   Json
+  updatedAt DateTime @updatedAt
+}
