@@ -23,9 +23,13 @@ export const useFavorites = () => {
   const [ready, setReady] = useState(false);
   const inflight = useRef<Set<string>>(new Set());
 
+  // Depend on user id, not the user object — Supabase emits a new user
+  // reference on every token refresh, which would otherwise re-fire this
+  // /api/favorites fetch repeatedly.
+  const userId = user?.id ?? null;
   useEffect(() => {
     let cancelled = false;
-    if (!user) {
+    if (!userId) {
       // Defer to next tick so setState happens outside the effect body.
       const t = setTimeout(() => {
         if (cancelled) return;
@@ -50,7 +54,7 @@ export const useFavorites = () => {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [userId]);
 
   const isFavorited = useCallback(
     (kind: FavoriteKind, itemId: string) => keys.has(`${kind}:${itemId}`),

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Heart, LogOut, UserCog, ShieldAlert } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { ProfileModal } from "@/components/auth/ProfileModal";
 
@@ -16,6 +17,7 @@ export const UserMenu = ({
   onAfterAction,
 }: UserMenuProps) => {
   const { user, signOut } = useAuth();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTab, setModalTab] = useState<"profile" | "favorites">("profile");
@@ -29,12 +31,17 @@ export const UserMenu = ({
   if (prevUserId !== (user?.id ?? null)) {
     setPrevUserId(user?.id ?? null);
     setAvatarError(false);
-    if (!user) setIsAdmin(false);
+    if (!user) {
+      setIsAdmin(false);
+    }
   }
 
-  // Check dynamically if the active user holds administrator permissions
+  // Check dynamically if the active user holds administrator permissions.
+  // Depend on user id (not the user object) so a token refresh emitting a
+  // new-but-equivalent user reference doesn't re-fire the admin check.
+  const userId = user?.id ?? null;
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
     let cancelled = false;
     fetch("/api/admin/check")
       .then((r) => (r.ok ? r.json() : { isAdmin: false }))
@@ -47,7 +54,7 @@ export const UserMenu = ({
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [userId]);
 
   // Close dropdown on outside click / Escape.
   useEffect(() => {
@@ -83,6 +90,7 @@ export const UserMenu = ({
       cancelled = true;
     };
   }, [open, favCount]);
+
 
   if (!user) return null;
 
@@ -199,8 +207,6 @@ export const UserMenu = ({
               </div>
             </div>
 
-            <div className="my-1 h-px bg-white/5" />
-
             <MenuItem icon={<UserCog size={14} />} onClick={() => openModal("profile")}>
               Edit profile
             </MenuItem>
@@ -222,7 +228,7 @@ export const UserMenu = ({
               <MenuItem
                 icon={<ShieldAlert size={14} />}
                 onClick={() => {
-                  window.location.href = "/admin";
+                  router.push("/admin");
                   setOpen(false);
                 }}
               >

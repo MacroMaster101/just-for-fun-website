@@ -61,12 +61,86 @@ function normalizeInput(raw: SquadMemberInput) {
   };
 }
 
+/**
+ * Hardcoded fallback trio that originally lived in SquadRoster.tsx. Seeded
+ * into the DB the first time an admin opens the Squad tab so editors have
+ * something to edit instead of starting from an empty roster.
+ */
+const DEFAULT_SQUAD: Array<Omit<
+  Parameters<typeof prisma.squadMember.create>[0]["data"],
+  "id"
+>> = [
+  {
+    name: "Kavisha (GGEZ)",
+    role: "Founder / Main Duelist",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1566492031773-4f4e44671857?auto=format&fit=crop&w=400&q=80",
+    favoriteGames: ["Valorant", "Valheim", "GTA V"],
+    signatureAgent: "Jett / Reyna",
+    twitchUrl: "https://www.twitch.tv/justforfunggez",
+    cpu: "AMD Ryzen 7 7800X3D",
+    gpu: "NVIDIA RTX 4070 Ti Super",
+    ram: "32GB DDR5 6000MHz",
+    monitor: "ASUS ROG 240Hz IPS",
+    mouse: "Logitech G Pro X Superlight 2",
+    bio: "Started Just For Fun to capture hilarious gaming sessions with the crew. Always clutching the 1v5 or dying in the first 5 seconds. No in-between.",
+    combatStyle: "Aggressive / W-Key Warrior",
+    sortOrder: 0,
+  },
+  {
+    name: "Chathu (Sniper)",
+    role: "Co-Founder / Main Sentinel",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80",
+    favoriteGames: ["Valorant", "Battlefield V", "Rust"],
+    signatureAgent: "Chamber / Cypher",
+    twitchUrl: null,
+    cpu: "Intel Core i7-14700K",
+    gpu: "NVIDIA RTX 4070",
+    ram: "32GB DDR5 5600MHz",
+    monitor: "BenQ ZOWIE 240Hz",
+    mouse: "Razer DeathAdder V3 Pro",
+    bio: "The calm mastermind of the squad. Can hit cross-map sniper shots but will somehow get lost in a straight hallway. Holds down sites like a fortress.",
+    combatStyle: "Calculated / Tactical",
+    sortOrder: 1,
+  },
+  {
+    name: "Prabhash (Survival)",
+    role: "Co-Builder / Survival Specialist",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=400&q=80",
+    favoriteGames: ["Valheim", "Minecraft", "GTA V"],
+    signatureAgent: "Omen / Sage",
+    twitchUrl: null,
+    cpu: "AMD Ryzen 5 7600X",
+    gpu: "NVIDIA RTX 4060 Ti",
+    ram: "16GB DDR5 5200MHz",
+    monitor: "MSI Optix 144Hz Curved",
+    mouse: "HyperX Pulsefire Haste",
+    bio: "Architect of our epic Valheim fortresses. Spends 20 hours building a perfect house only for it to be smashed by a troll. Best support gamer ever.",
+    combatStyle: "Defensive / Architect",
+    sortOrder: 2,
+  },
+];
+
 export async function GET() {
   try {
     const isAdmin = await verifyAdmin();
     if (!isAdmin) {
       return NextResponse.json({ error: "Access Denied" }, { status: 403 });
     }
+
+    // Auto-seed: if the roster is empty, drop in the built-in trio so the
+    // editor doesn't open to a blank page. Mirrors the music auto-bootstrapper.
+    const count = await prisma.squadMember.count();
+    if (count === 0) {
+      try {
+        await prisma.squadMember.createMany({ data: DEFAULT_SQUAD });
+      } catch (e) {
+        console.error("Failed to seed default squad:", e);
+      }
+    }
+
     const members = await prisma.squadMember.findMany({
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     });

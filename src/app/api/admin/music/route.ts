@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { supabaseServer } from "@/lib/supabase/server";
 
+// Admin reads are user-specific and write-heavy; never serve a cached response.
+export const dynamic = "force-dynamic";
+
 // Helper function to verify administrator permission
 async function verifyAdmin() {
   const supabase = await supabaseServer();
@@ -114,18 +117,18 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Track ID is required." }, { status: 400 });
     }
 
-    // Set all tracks to inactive
-    await prisma.musicTrack.updateMany({
-      data: { isActive: false },
+    // Atomic switch: clear all `isActive` flags and set the target row in a
+    // single transaction so a concurrent reader can't see an intermediate
+    // state where zero rows are active. Also returns the fresh list so the
+    // client can render the new state without a second GET round-trip
+    // (which previously raced the pooled-connection commit on Supabase).
+    const tracks = await prisma.$transaction(async (tx) => {
+      await tx.musicTrack.updateMany({ data: { isActive: false } });
+      await tx.musicTrack.update({ where: { id }, data: { isActive: true } });
+      return tx.musicTrack.findMany({ orderBy: { createdAt: "desc" } });
     });
 
-    // Set the selected track to active
-    const activeTrack = await prisma.musicTrack.update({
-      where: { id },
-      data: { isActive: true },
-    });
-
-    return NextResponse.json({ success: true, track: activeTrack }, { status: 200 });
+    return NextResponse.json({ success: true, tracks }, { status: 200 });
   } catch (error) {
     console.error("PATCH Music Track Error:", error);
     return NextResponse.json({ error: "Failed to activate music track" }, { status: 500 });

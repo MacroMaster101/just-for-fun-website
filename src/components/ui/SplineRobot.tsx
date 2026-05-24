@@ -1,16 +1,21 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 
 const Spline = dynamic(() => import("@splinetool/react-spline"), {
   ssr: false,
   loading: () => <RobotPlaceholder />,
 });
 
+/** Built-in default. Overridden at runtime by Hero passing the value from
+ *  the `hero.splineScene` SiteSetting row, so admins can swap the model
+ *  without a redeploy. The default keeps the site working on a fresh DB. */
 const ROBOT_SCENE = "https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode";
 
 interface SplineRobotProps {
+  /** Spline scene URL ending in `.splinecode`. Falls back to the built-in
+   *  default when undefined/empty. */
   scene?: string;
   className?: string;
   /** Extra delay (ms) after idle before mounting. Defaults to 400. */
@@ -24,18 +29,54 @@ type WindowWithIdle = Window & {
 };
 
 export const SplineRobot = ({
-  scene = ROBOT_SCENE,
+  scene,
   className = "",
   delay = 400,
 }: SplineRobotProps) => {
+  // Treat empty string and undefined identically — both fall back to default.
+  const resolvedScene = scene && scene.trim() ? scene : ROBOT_SCENE;
+  // 3-step gating to keep the page snappy:
+  //   1. inView  — true once the robot container actually scrolls into view
+  //   2. mountScene — true once we've also waited for idle + delay after #1
+  // The user can never see Spline before #1 anyway, so loading the ~3MB
+  // WebGL bundle before that is wasted bandwidth + a parser stall.
+  const [inView, setInView] = useState(false);
   const [mountScene, setMountScene] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // IntersectionObserver: trip `inView` the first time the container
+  // enters the viewport (with 200px margin so it warms up just before
+  // it's actually visible). Then disconnect — we don't need to track
+  // exits, the iframe stays mounted once shown.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || typeof window === "undefined") return;
+    if (typeof IntersectionObserver === "undefined") {
+      // Old browser fallback — skip the gating, treat as in view immediately.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setInView(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setInView(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
+    if (!inView) return;
     if (typeof window === "undefined") return;
     const w = window as WindowWithIdle;
 
-    // Still skip on truly low-memory devices — Spline can crash there.
+    // Skip on truly low-memory devices — Spline can crash there.
     const lowMem =
       "deviceMemory" in navigator &&
       (navigator as Navigator & { deviceMemory?: number }).deviceMemory! < 2;
@@ -65,10 +106,10 @@ export const SplineRobot = ({
         w.cancelIdleCallback(idleHandle);
       if (timeoutHandle) clearTimeout(timeoutHandle);
     };
-  }, [delay]);
+  }, [delay, inView]);
 
   return (
-    <div className={`relative h-full w-full ${className}`}>
+    <div ref={containerRef} className={`relative h-full w-full ${className}`}>
       {/* Placeholder is always rendered underneath. Once Spline loads,
           it fades in on top — placeholder fades out via opacity. */}
       <div
@@ -86,7 +127,7 @@ export const SplineRobot = ({
               loaded ? "opacity-100" : "opacity-0"
             }`}
           >
-            <Spline scene={scene} onLoad={() => setLoaded(true)} />
+            <Spline scene={resolvedScene} onLoad={() => setLoaded(true)} />
           </div>
         </Suspense>
       )}

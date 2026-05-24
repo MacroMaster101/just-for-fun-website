@@ -4,6 +4,7 @@ import { CustomCursor } from "@/components/ui/CustomCursor";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { YouTubeProvider } from "@/components/providers/YouTubeProvider";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { AmbientPlayer } from "@/components/layout/AmbientPlayer";
 import "./globals.css";
 
 const orbitron = Orbitron({
@@ -47,6 +48,7 @@ export default function RootLayout({
             <YouTubeProvider>
               <CustomCursor />
               {children}
+              <AmbientPlayer />
             </YouTubeProvider>
           </AuthProvider>
         </ThemeProvider>

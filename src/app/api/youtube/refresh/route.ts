@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { refreshYouTubeCache } from "@/lib/youtubeCache";
 import { prisma } from "@/lib/prisma";
+import { supabaseServer } from "@/lib/supabase/server";
 
 // Don't cache the refresh endpoint itself — it must always run.
 export const dynamic = "force-dynamic";
@@ -10,7 +11,7 @@ const CRON_SECRET = process.env.CRON_SECRET?.trim();
 // frequent returns the existing cached payload without spending quota.
 const MIN_REFRESH_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
 
-function isAuthorized(req: NextRequest): boolean {
+function isCronSecretMatch(req: NextRequest): boolean {
   if (!CRON_SECRET) {
     // If no secret is configured, refuse in production.
     return process.env.NODE_ENV !== "production";
@@ -32,8 +33,33 @@ function isAuthorized(req: NextRequest): boolean {
   return false;
 }
 
+/**
+ * Confirms the caller is an authenticated admin via the Supabase session
+ * cookie. Used so the in-app admin dashboard can trigger a refresh without
+ * shipping the CRON_SECRET to the browser bundle.
+ */
+async function isAuthorizedAdmin(): Promise<boolean> {
+  try {
+    const supabase = await supabaseServer();
+    const { data } = await supabase.auth.getUser();
+    if (!data.user?.email) return false;
+    const email = data.user.email.toLowerCase().trim();
+    const root = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase().trim();
+    if (root && email === root) return true;
+    const match = await prisma.adminEmail.findUnique({ where: { email } });
+    return !!match;
+  } catch {
+    return false;
+  }
+}
+
+async function isAuthorized(req: NextRequest): Promise<boolean> {
+  if (isCronSecretMatch(req)) return true;
+  return await isAuthorizedAdmin();
+}
+
 async function handle(req: NextRequest) {
-  if (!isAuthorized(req)) {
+  if (!(await isAuthorized(req))) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 

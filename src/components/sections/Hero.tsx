@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Bell, Eye, Play, Radio, Sparkles, Users, Video } from "lucide-react";
 import Image from "next/image";
 import { Youtube } from "@/components/ui/Icons";
@@ -40,14 +40,37 @@ export const Hero = () => {
   const source = yt.source;
   const stats: StatsItem = { ...fallbackStats, ...(yt.stats || {}) };
   const ref = useRef<HTMLDivElement | null>(null);
+  // Robot Spline scene URL — read from /api/settings so admins can swap
+  // the model without a redeploy. Undefined falls back to the SplineRobot
+  // component's own default so the site never breaks on a fresh DB.
+  const [splineScene, setSplineScene] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/settings")
+      .then((r) => (r.ok ? r.json() : { settings: {} }))
+      .then((data: { settings?: Record<string, string> }) => {
+        if (cancelled) return;
+        const v = data.settings?.["hero.splineScene"];
+        if (typeof v === "string" && v) setSplineScene(v);
+      })
+      .catch(() => {
+        // ignore — fallback default in SplineRobot handles it.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     if (
       typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      (window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+        !window.matchMedia("(pointer: fine)").matches)
     ) {
+      // Skip the parallax effect on touch devices and reduced-motion users.
       return;
     }
 
@@ -56,6 +79,18 @@ export const Hero = () => {
     let nextPy = 0;
     let pending = false;
 
+    // Cache the bounding rect — recomputing it on every mousemove forces a
+    // synchronous layout. We refresh the cache only on scroll/resize, when
+    // it can actually change. ResizeObserver also catches font-load shifts.
+    let rect = el.getBoundingClientRect();
+    const refreshRect = () => {
+      rect = el.getBoundingClientRect();
+    };
+    window.addEventListener("scroll", refreshRect, { passive: true });
+    window.addEventListener("resize", refreshRect);
+    const ro = new ResizeObserver(refreshRect);
+    ro.observe(el);
+
     const apply = () => {
       pending = false;
       el.style.setProperty("--px", nextPx.toString());
@@ -63,8 +98,7 @@ export const Hero = () => {
     };
 
     const onMove = (e: MouseEvent) => {
-      const rect = el.getBoundingClientRect();
-      // Only track when pointer is over the hero section
+      // Use cached rect — no layout read per event.
       if (
         e.clientY < rect.top ||
         e.clientY > rect.bottom ||
@@ -83,6 +117,9 @@ export const Hero = () => {
     window.addEventListener("mousemove", onMove, { passive: true });
     return () => {
       window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("scroll", refreshRect);
+      window.removeEventListener("resize", refreshRect);
+      ro.disconnect();
       if (raf) cancelAnimationFrame(raf);
     };
   }, []);
@@ -236,7 +273,7 @@ export const Hero = () => {
               />
             </div>
 
-            <SplineRobot className="relative z-10" />
+            <SplineRobot scene={splineScene} className="relative z-10" />
           </div>
 
           {/* HUD callouts */}
