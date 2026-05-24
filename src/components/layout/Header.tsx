@@ -164,7 +164,7 @@ export const Header = () => {
 
           {/* Pill nav */}
           {!isAdminPage && (
-            <nav className="hidden items-center gap-1 rounded-full border border-white/10 bg-[#0c0c0c]/80 p-1 backdrop-blur xl:flex">
+            <nav className="hidden items-center gap-1 rounded-full border border-white/10 bg-[#0c0c0c]/80 p-1 backdrop-blur lg:flex">
               {navLinks.map((link) => {
                 const active = activeSection === link.href.slice(1);
                 return (
@@ -208,7 +208,7 @@ export const Header = () => {
 
           <button
             onClick={() => setMobileMenuOpen((o) => !o)}
-            className="rounded-full border border-white/10 bg-white/5 p-2 text-neutral-200 transition hover:bg-white/10 xl:hidden"
+            className="rounded-full border border-white/10 bg-white/5 p-2 text-neutral-200 transition hover:bg-white/10 lg:hidden"
             aria-label="Toggle menu"
           >
             {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
@@ -217,7 +217,7 @@ export const Header = () => {
       </header>
 
       <div
-        className={`fixed inset-0 z-30 bg-[#060606]/97 px-6 pb-8 pt-24 backdrop-blur-2xl transition-transform duration-300 xl:hidden ${
+        className={`fixed inset-0 z-30 overflow-y-auto bg-[#060606]/97 px-6 pb-8 pt-24 backdrop-blur-2xl transition-transform duration-300 lg:hidden ${
           mobileMenuOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -277,7 +277,7 @@ export const Header = () => {
       />
 
       {/* Floating Ambient Music Controller (Music Disc style) */}
-      <div className="fixed bottom-4 left-4 z-[100] group flex items-center">
+      <div className="fixed bottom-3 left-3 z-[100] group flex items-center scale-90 origin-bottom-left sm:scale-100 sm:bottom-4 sm:left-4">
         {/* Style Tag for Audio Visualizer Bars & Hover Animations */}
         <style dangerouslySetInnerHTML={{ __html: `
           @keyframes musicWaveBounce {

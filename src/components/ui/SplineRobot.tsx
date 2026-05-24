@@ -32,27 +32,32 @@ export const SplineRobot = ({
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    // Skip the 3D scene entirely on very small viewports or low-end devices.
     if (typeof window === "undefined") return;
     const w = window as WindowWithIdle;
-    const isSmall = window.matchMedia("(max-width: 640px)").matches;
+
+    // Still skip on truly low-memory devices — Spline can crash there.
     const lowMem =
       "deviceMemory" in navigator &&
-      (navigator as Navigator & { deviceMemory?: number }).deviceMemory! < 4;
-    if (isSmall || lowMem) return;
+      (navigator as Navigator & { deviceMemory?: number }).deviceMemory! < 2;
+    if (lowMem) return;
+
+    // Mobile gets a longer mount delay so the rest of the page is interactive
+    // before the WebGL scene kicks in.
+    const isSmall = window.matchMedia("(max-width: 640px)").matches;
+    const mountDelay = isSmall ? delay + 800 : delay;
 
     let idleHandle: IdleHandle | null = null;
     let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
 
     const schedule = () => {
-      timeoutHandle = setTimeout(() => setMountScene(true), delay);
+      timeoutHandle = setTimeout(() => setMountScene(true), mountDelay);
     };
 
     if (typeof w.requestIdleCallback === "function") {
-      idleHandle = w.requestIdleCallback(schedule, { timeout: 2000 });
+      idleHandle = w.requestIdleCallback(schedule, { timeout: 2500 });
     } else {
       // Fallback: wait for first paint + delay
-      timeoutHandle = setTimeout(() => setMountScene(true), delay + 600);
+      timeoutHandle = setTimeout(() => setMountScene(true), mountDelay + 600);
     }
 
     return () => {

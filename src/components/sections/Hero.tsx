@@ -145,7 +145,7 @@ export const Hero = () => {
             </div>
           </div>
 
-          <h1 className="font-display text-5xl font-black uppercase leading-[0.9] tracking-tight text-white animate-fade-in-up [animation-delay:0.1s] sm:text-6xl lg:text-7xl">
+          <h1 className="font-display text-4xl font-black uppercase leading-[0.9] tracking-tight text-white animate-fade-in-up [animation-delay:0.1s] sm:text-6xl lg:text-7xl">
             <span className="block">Just For</span>
             <span className="block text-gradient-animated text-glow-red">Fun</span>
           </h1>
@@ -187,24 +187,25 @@ export const Hero = () => {
               return (
                 <div
                   key={item.label}
-                  className="group relative overflow-hidden rounded-xl border border-white/10 bg-[#131313]/70 p-4 backdrop-blur-xl glass-hover"
+                  className="group relative overflow-hidden rounded-xl border border-white/10 bg-[#131313]/70 p-3 backdrop-blur-xl glass-hover sm:p-4"
                   style={{
                     transform: `perspective(900px) rotateX(calc(var(--py) * ${4 + idx * 2}deg)) rotateY(calc(var(--px) * ${-4 - idx * 2}deg))`,
                   }}
                 >
                   <div className="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-[#ff0033]/12 blur-2xl transition-opacity group-hover:opacity-100" />
                   <div className="relative">
-                    <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-[#ff0033]/15 text-[#ff2d55]">
-                      <Icon size={17} />
+                    <div className="mb-1.5 flex h-7 w-7 items-center justify-center rounded-lg bg-[#ff0033]/15 text-[#ff2d55] sm:mb-2 sm:h-9 sm:w-9">
+                      <Icon size={14} className="sm:hidden" />
+                      <Icon size={17} className="hidden sm:block" />
                     </div>
-                    <div className="font-display text-2xl font-black text-white">
+                    <div className="font-display text-lg font-black text-white sm:text-2xl">
                       {loading ? (
-                        <span className="block h-7 w-16 animate-pulse rounded bg-white/10" />
+                        <span className="block h-6 w-12 animate-pulse rounded bg-white/10 sm:h-7 sm:w-16" />
                       ) : (
                         item.value
                       )}
                     </div>
-                    <p className="mt-1 text-[10px] font-black uppercase tracking-[0.22em] text-neutral-500">
+                    <p className="mt-1 text-[9px] font-black uppercase tracking-[0.18em] text-neutral-500 sm:text-[10px] sm:tracking-[0.22em]">
                       {item.label}
                     </p>
                   </div>
@@ -216,7 +217,7 @@ export const Hero = () => {
 
         {/* RIGHT: Spline 3D Robot */}
         <div className="relative lg:col-span-5">
-          <div className="relative aspect-square w-full max-w-[560px] mx-auto">
+          <div className="relative aspect-square w-full max-w-[360px] mx-auto sm:max-w-[460px] lg:max-w-[560px]">
             {/* Glow rings behind robot */}
             <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(255,0,51,0.35)_0%,transparent_55%)] animate-glow-pulse" />
             <div className="absolute inset-8 rounded-full border border-[#ff0033]/20 animate-spin-slow" />
