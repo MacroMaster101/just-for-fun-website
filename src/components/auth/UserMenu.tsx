@@ -20,7 +20,13 @@ export const UserMenu = ({
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTab, setModalTab] = useState<"profile" | "favorites">("profile");
   const [favCount, setFavCount] = useState<number | null>(null);
+  const [avatarError, setAvatarError] = useState(false);
   const anchorRef = useRef<HTMLDivElement | null>(null);
+
+  // Reset avatar load error state when user changes (e.g. login/logout)
+  useEffect(() => {
+    setAvatarError(false);
+  }, [user]);
 
   // Close dropdown on outside click / Escape.
   useEffect(() => {
@@ -100,11 +106,12 @@ export const UserMenu = ({
           aria-haspopup="menu"
           aria-expanded={open}
         >
-          {displayAvatar ? (
+          {!avatarError && displayAvatar ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={displayAvatar}
               alt={displayName}
+              onError={() => setAvatarError(true)}
               className={
                 variant === "desktop"
                   ? "h-7 w-7 rounded-full object-cover"
@@ -148,11 +155,12 @@ export const UserMenu = ({
           >
             {/* User identity row */}
             <div className="flex items-center gap-3 rounded-lg px-2.5 py-2.5">
-              {displayAvatar ? (
+              {!avatarError && displayAvatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={displayAvatar}
                   alt={displayName}
+                  onError={() => setAvatarError(true)}
                   className="h-10 w-10 rounded-full border border-white/10 object-cover"
                 />
               ) : (
