@@ -50,7 +50,7 @@ export const Footer = () => {
             </span>
             <div>
               <p className="font-display text-base font-black uppercase tracking-wider text-white">
-                Just For Fun BoYs
+                Just For Fun
               </p>
               <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-[#ff2d55]">
                 @JustForFun-BoYs
@@ -111,7 +111,7 @@ export const Footer = () => {
       </div>
 
       <div className="relative z-10 mx-auto flex max-w-7xl flex-col gap-3 border-t border-white/10 px-5 py-6 text-[11px] font-bold uppercase tracking-[0.22em] text-neutral-500 sm:px-6 md:flex-row md:items-center md:justify-between">
-        <span>&copy; {year} Just For Fun BoYs</span>
+        <span>&copy; {year} Just For Fun</span>
         <span className="flex items-center gap-2">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#ff0033]" />
           Live YouTube Data

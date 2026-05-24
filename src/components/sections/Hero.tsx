@@ -25,7 +25,7 @@ const fallbackStats: StatsItem = {
   subscribers: "--",
   videos: "--",
   views: "--",
-  title: "Just For Fun BoYs",
+  title: "Just For Fun",
   customUrl: "@JustForFun-BoYs",
   description:
     "Sri Lankan gaming crew dropping clutch moments, chaotic fails, and weekend community streams.",
@@ -147,7 +147,7 @@ export const Hero = () => {
 
           <h1 className="font-display text-5xl font-black uppercase leading-[0.9] tracking-tight text-white animate-fade-in-up [animation-delay:0.1s] sm:text-6xl lg:text-7xl">
             <span className="block">Just For</span>
-            <span className="block text-gradient-animated text-glow-red">Fun BoYs</span>
+            <span className="block text-gradient-animated text-glow-red">Fun</span>
           </h1>
 
           <p className="mt-6 max-w-xl text-base font-medium leading-7 text-neutral-300 animate-fade-in-up [animation-delay:0.15s] sm:text-lg">

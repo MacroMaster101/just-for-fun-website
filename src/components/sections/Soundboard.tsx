@@ -301,7 +301,7 @@ export const Soundboard = () => {
                       >
                         <Play size={16} className="text-white fill-white" />
                       </a>
-                      <span className="absolute bottom-1 right-1 bg-black/85 text-[8px] font-bold text-white px-1.5 py-0.5 rounded">
+                      <span className="absolute bottom-1 right-1 bg-black/85 text-[8px] font-bold text-[#ffffff] px-1.5 py-0.5 rounded image-overlay-badge">
                         {clip.duration}
                       </span>
                     </div>

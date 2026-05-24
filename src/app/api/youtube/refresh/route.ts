@@ -15,12 +15,21 @@ function isAuthorized(req: NextRequest): boolean {
     // If no secret is configured, refuse in production.
     return process.env.NODE_ENV !== "production";
   }
+  const stripQuotes = (s: string) => s.replace(/^["']|["']$/g, "").trim();
+
   // Vercel Cron sends: Authorization: Bearer <CRON_SECRET>
-  const auth = req.headers.get("authorization") || "";
-  if (auth === `Bearer ${CRON_SECRET}`) return true;
+  // Be lenient: case-insensitive scheme, trimmed, strip accidental quotes.
+  const auth = (req.headers.get("authorization") || "").trim();
+  if (auth) {
+    const match = /^bearer\s+(.+)$/i.exec(auth);
+    if (match && stripQuotes(match[1]) === CRON_SECRET) return true;
+    // Some cron services send the raw secret without "Bearer ".
+    if (stripQuotes(auth) === CRON_SECRET) return true;
+  }
   // Manual trigger: /api/youtube/refresh?key=<CRON_SECRET>
   const key = req.nextUrl.searchParams.get("key");
-  return key === CRON_SECRET;
+  if (key && stripQuotes(key) === CRON_SECRET) return true;
+  return false;
 }
 
 async function handle(req: NextRequest) {

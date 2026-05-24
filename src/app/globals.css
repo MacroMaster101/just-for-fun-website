@@ -892,6 +892,22 @@ html.light section#merch button.bg-white\/5[class*="border-white/20"] * {
    But my earlier override softened bg-black/85 to 0.78 — that's fine.
    The duration badges in LatestVideos use the same pattern — also fine. */
 
+/* ============================================================
+   LIGHT MODE — OVER-IMAGE BADGES (FORCE READABLE)
+   Duration on video thumbs, price on merch thumbs, key on soundboard.
+   These sit on photos, so they must stay dark-bg + white-text in BOTH
+   themes. Earlier overrides made text dark on dark bg = invisible.
+
+   Markup uses `.image-overlay-badge` to opt out of the global flip.
+   We use a high-specificity selector (html.light + class) and !important
+   to beat the generic `[class*="text-[#ffffff]"]` rule.
+   ============================================================ */
+html.light span.image-overlay-badge,
+html.light .image-overlay-badge {
+  color: #ffffff !important;
+  background-color: rgba(0, 0, 0, 0.85) !important;
+}
+
 @layer utilities {
   /* Backgrounds */
   .bg-dot-pattern {

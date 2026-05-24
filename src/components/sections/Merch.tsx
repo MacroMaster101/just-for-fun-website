@@ -207,7 +207,7 @@ export const Merch = () => {
                   {item.grade}
                 </span>
 
-                <span className="absolute bottom-3 right-3 bg-black/85 text-xs font-black text-white px-2.5 py-1 rounded border border-white/10 shadow-lg font-display">
+                <span className="absolute bottom-3 right-3 bg-black/85 text-xs font-black text-[#ffffff] px-2.5 py-1 rounded border border-white/10 shadow-lg font-display image-overlay-badge">
                   ${item.price}
                 </span>
               </div>
@@ -311,7 +311,7 @@ export const Merch = () => {
                       {/* Product thumbnail */}
                       <div className="w-14 h-14 bg-[#0f0f0f] border border-white/10 rounded-lg overflow-hidden shrink-0 flex items-center justify-center text-2xl relative">
                         <Image src={item.image} alt={item.name} fill sizes="56px" className="object-cover" />
-                        <span className="absolute bottom-0.5 right-0.5 bg-black/85 text-[8px] font-black text-white px-1 py-0.2 rounded">
+                        <span className="absolute bottom-0.5 right-0.5 bg-black/85 text-[8px] font-black text-[#ffffff] px-1 py-0.2 rounded image-overlay-badge">
                           x{item.quantity}
                         </span>
                       </div>

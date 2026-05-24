@@ -53,7 +53,7 @@ export const LatestVideos = () => {
               Latest Uploads
             </h2>
             <p className="mt-3 text-sm font-medium leading-6 text-neutral-400">
-              Fresh videos from Just For Fun BoYs, pulled through the local YouTube API route.
+              Fresh videos from Just For Fun, pulled live from YouTube.
             </p>
           </div>
 
@@ -128,7 +128,7 @@ export const LatestVideos = () => {
                   <div className="absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 scale-90 items-center justify-center rounded-full bg-[#ff0033] text-white opacity-0 shadow-[0_0_26px_rgba(255,0,51,0.45)] transition group-hover:scale-100 group-hover:opacity-100">
                     <Play size={24} className="ml-1 fill-white" />
                   </div>
-                  <span className="absolute bottom-2 right-2 rounded bg-black/90 px-2 py-1 text-[11px] font-black text-white">
+                  <span className="absolute bottom-2 right-2 rounded bg-black/90 px-2 py-1 text-[11px] font-black text-[#ffffff] image-overlay-badge">
                     {video.isLive ? "LIVE" : video.duration}
                   </span>
                 </div>
@@ -139,7 +139,7 @@ export const LatestVideos = () => {
                       {video.title}
                     </h3>
                     <p className="mt-2 line-clamp-2 text-xs leading-5 text-neutral-500">
-                      {video.description || "Watch the full video on the Just For Fun BoYs channel."}
+                      {video.description || "Watch the full video on the Just For Fun channel."}
                     </p>
                   </div>
 

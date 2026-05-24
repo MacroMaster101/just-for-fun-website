@@ -106,7 +106,7 @@ export const fallbackStats = {
   subscribers: "--",
   videos: "--",
   views: "--",
-  title: "Just For Fun BoYs",
+  title: "Just For Fun",
   customUrl: CHANNEL_HANDLE,
   description:
     "Sri Lankan gaming channel for funny gameplay, clutch moments, variety games, and weekend community streams.",

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Orbitron, Inter, Space_Grotesk } from "next/font/google";
-import { AuthProvider } from "@/components/auth/AuthProvider";
 import { CustomCursor } from "@/components/ui/CustomCursor";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { YouTubeProvider } from "@/components/providers/YouTubeProvider";
@@ -24,10 +23,10 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Just For Fun BoYs | YouTube Gaming Channel",
+  title: "Just For Fun | YouTube Gaming Channel",
   description:
-    "Official Just For Fun BoYs channel site for YouTube videos, gaming highlights, live stream schedule, and community updates.",
-  keywords: ["gaming", "gameplay", "just for fun", "justforfun", "justforfun-boys", "valorant sri lanka", "gaming channel", "valheim", "funny gaming moments", "esports website"],
+    "Official Just For Fun channel hub for YouTube videos, gaming highlights, live stream schedule, and community updates.",
+  keywords: ["gaming", "gameplay", "just for fun", "justforfun", "valorant sri lanka", "gaming channel", "valheim", "funny gaming moments", "esports website"],
 };
 
 export default function RootLayout({
@@ -43,12 +42,10 @@ export default function RootLayout({
     >
       <body className="min-h-full bg-[var(--color-bg)] text-[var(--color-text)] font-sans flex flex-col antialiased">
         <ThemeProvider>
-          <AuthProvider>
-            <YouTubeProvider>
-              <CustomCursor />
-              {children}
-            </YouTubeProvider>
-          </AuthProvider>
+          <YouTubeProvider>
+            <CustomCursor />
+            {children}
+          </YouTubeProvider>
         </ThemeProvider>
       </body>
     </html>

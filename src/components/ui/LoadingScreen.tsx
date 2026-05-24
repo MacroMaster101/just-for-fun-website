@@ -192,7 +192,7 @@ export const LoadingScreen = ({
           Just For <span className="text-[#ff0033]">Fun</span>
         </h1>
         <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.4em] text-neutral-500">
-          Gaming · Live · BoYs
+          Gaming · Live · Sri Lanka
         </p>
 
         {/* Progress bar */}

@@ -1,9 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { LogOut, Menu, Radio, X } from "lucide-react";
-import { useAuth } from "@/components/auth/AuthProvider";
-import { AuthModal } from "@/components/auth/AuthModal";
+import { Menu, Radio, X } from "lucide-react";
 import { Youtube } from "@/components/ui/Icons";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
@@ -26,12 +24,9 @@ const navLinks = [
 ];
 
 export const Header = () => {
-  const { user, signOut } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("hero");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<"login" | "signup">("login");
   const [ambientPlaying, setAmbientPlaying] = useState(false);
   const [audioCtx, setAudioCtx] = useState<AudioContext | null>(null);
   const [nodes, setNodes] = useState<AmbientNodeGroup[]>([]);
@@ -127,14 +122,6 @@ export const Header = () => {
 
   const toggleAmbient = () => (ambientPlaying ? stopAmbient() : startAmbient());
 
-  const openAuth = (mode: "login" | "signup") => {
-    setAuthMode(mode);
-    setAuthModalOpen(true);
-    setMobileMenuOpen(false);
-  };
-
-  const visibleNav = user ? [{ name: "Profile", href: "#profile" }, ...navLinks] : navLinks;
-
   return (
     <>
       <header
@@ -156,14 +143,14 @@ export const Header = () => {
                 Just For Fun
               </span>
               <span className="mt-1 text-[10px] font-bold uppercase tracking-[0.28em] text-[#ff2d55]">
-                BoYs Channel
+                Gaming Channel
               </span>
             </span>
           </a>
 
           {/* Pill nav */}
           <nav className="hidden items-center gap-1 rounded-full border border-white/10 bg-[#0c0c0c]/80 p-1 backdrop-blur xl:flex">
-            {visibleNav.map((link) => {
+            {navLinks.map((link) => {
               const active = activeSection === link.href.slice(1);
               return (
                 <a
@@ -195,35 +182,6 @@ export const Header = () => {
               <Radio size={14} className={ambientPlaying ? "animate-pulse" : ""} />
               {ambientPlaying ? "FX On" : "FX Off"}
             </button>
-
-            {user ? (
-              <div className="flex items-center gap-3 rounded-full border border-white/10 bg-white/5 py-1 pl-1 pr-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#ff0033]/20 text-sm font-black text-white">
-                  {user.email?.charAt(0).toUpperCase()}
-                </span>
-                <span className="max-w-[120px] truncate text-xs font-bold text-white">
-                  {user.user_metadata?.name || user.email?.split("@")[0]}
-                </span>
-                <button onClick={signOut} className="text-neutral-500 transition hover:text-[#ff2d55]">
-                  <LogOut size={16} />
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => openAuth("login")}
-                  className="rounded-full px-4 py-2 text-sm font-bold text-neutral-300 transition hover:bg-white/10 hover:text-white"
-                >
-                  Login
-                </button>
-                <button
-                  onClick={() => openAuth("signup")}
-                  className="rounded-full bg-gradient-to-r from-[#ff0033] to-[#ff2d55] px-4 py-2 text-sm font-black text-white shadow-[0_0_18px_rgba(255,0,51,0.4)] transition hover:shadow-[0_0_28px_rgba(255,0,51,0.6)]"
-                >
-                  Join Crew
-                </button>
-              </div>
-            )}
           </div>
 
           <button
@@ -252,7 +210,7 @@ export const Header = () => {
             <Radio size={16} className={ambientPlaying ? "animate-pulse text-[#ff0033]" : ""} />
             {ambientPlaying ? "Stream FX On" : "Stream FX Off"}
           </button>
-          {visibleNav.map((link) => {
+          {navLinks.map((link) => {
             const active = activeSection === link.href.slice(1);
             return (
               <a
@@ -270,42 +228,7 @@ export const Header = () => {
             );
           })}
         </nav>
-
-        <div className="mt-8 border-t border-white/10 pt-6">
-          {user ? (
-            <button
-              onClick={() => {
-                signOut();
-                setMobileMenuOpen(false);
-              }}
-              className="flex w-full items-center justify-center gap-2 rounded-full border border-[#ff0033]/40 px-4 py-3 text-sm font-black text-[#ff2d55] transition hover:bg-[#ff0033]/10"
-            >
-              <LogOut size={16} /> Sign Out
-            </button>
-          ) : (
-            <div className="grid gap-3">
-              <button
-                onClick={() => openAuth("login")}
-                className="rounded-full border border-white/10 px-4 py-3 text-sm font-bold text-neutral-200"
-              >
-                Login
-              </button>
-              <button
-                onClick={() => openAuth("signup")}
-                className="rounded-full bg-[#ff0033] px-4 py-3 text-sm font-black text-white shadow-[0_0_18px_rgba(255,0,51,0.4)]"
-              >
-                Join the Crew
-              </button>
-            </div>
-          )}
-        </div>
       </div>
-
-      <AuthModal
-        isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-        initialMode={authMode}
-      />
     </>
   );
 };

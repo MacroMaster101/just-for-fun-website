@@ -42,7 +42,7 @@ export const SquadRoster = () => {
         monitor: "ASUS ROG 240Hz IPS",
         mouse: "Logitech G Pro X Superlight 2",
       },
-      bio: "Started JustForFun-BoYs to capture hilarious gaming sessions with the crew. Always clutching the 1v5 or dying in the first 5 seconds. No in-between.",
+      bio: "Started Just For Fun to capture hilarious gaming sessions with the crew. Always clutching the 1v5 or dying in the first 5 seconds. No in-between.",
       combatStyle: "Aggressive / W-Key Warrior",
     },
     {
