@@ -56,3 +56,8 @@ model Favorite {
   @@unique([userId, kind, itemId])
   @@index([userId])
 }
+
+model AdminEmail {
+  email     String   @id
+  createdAt DateTime @default(now())
+}
