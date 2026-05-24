@@ -1,10 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { refreshYouTubeCache } from "@/lib/youtubeCache";
+import { prisma } from "@/lib/prisma";
 
 // Don't cache the refresh endpoint itself — it must always run.
 export const dynamic = "force-dynamic";
 
 const CRON_SECRET = process.env.CRON_SECRET?.trim();
+// Minimum gap between refreshes that actually hit YouTube. Anything more
+// frequent returns the existing cached payload without spending quota.
+const MIN_REFRESH_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
 
 function isAuthorized(req: NextRequest): boolean {
   if (!CRON_SECRET) {
@@ -22,6 +26,34 @@ function isAuthorized(req: NextRequest): boolean {
 async function handle(req: NextRequest) {
   if (!isAuthorized(req)) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+  }
+
+  // Rate limit: refuse to call YouTube more than once per MIN_REFRESH_INTERVAL_MS,
+  // unless ?force=1 is passed. Protects quota even if the secret leaks or an
+  // external cron is misconfigured.
+  const force = req.nextUrl.searchParams.get("force") === "1";
+  if (!force) {
+    try {
+      const existing = await prisma.youTubeCache.findUnique({
+        where: { key: "main" },
+        select: { updatedAt: true },
+      });
+      if (existing) {
+        const age = Date.now() - existing.updatedAt.getTime();
+        if (age < MIN_REFRESH_INTERVAL_MS) {
+          return NextResponse.json({
+            ok: true,
+            skipped: true,
+            reason: "rate-limited",
+            ageMs: age,
+            nextAllowedMs: MIN_REFRESH_INTERVAL_MS - age,
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Rate-limit check failed:", err);
+      // Don't block the refresh on a DB read failure — fall through.
+    }
   }
 
   const { ok, payload, skipped, reason } = await refreshYouTubeCache();
