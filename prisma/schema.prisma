@@ -11,11 +11,48 @@ model ContactMessage {
   name      String
   email     String
   message   String
+  userId    String?  // optional link to auth.users.id when submitted by logged-in user
   createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model YouTubeCache {
   key       String   @id
   payload   Json
   updatedAt DateTime @updatedAt
+}
+
+/// Per-user profile data. id MUST equal auth.users.id (Supabase user id, uuid).
+/// We don't link via FK because auth.users lives in the `auth` schema which
+/// Prisma can't manage cleanly. The application is responsible for the link.
+model Profile {
+  id        String   @id // = auth.users.id
+  email     String?
+  name      String?
+  avatarUrl String?
+  bio       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  favorites Favorite[]
+}
+
+enum FavoriteKind {
+  video
+  sound
+}
+
+model Favorite {
+  id        String       @id @default(uuid())
+  userId    String
+  kind      FavoriteKind
+  itemId    String       // YouTube video id, or sound clip id
+  itemTitle String?
+  createdAt DateTime     @default(now())
+
+  profile   Profile      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, kind, itemId])
+  @@index([userId])
 }

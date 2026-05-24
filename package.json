@@ -14,10 +14,13 @@
     "@prisma/client": "^7.8.0",
     "@splinetool/react-spline": "^4.1.0",
     "@splinetool/runtime": "^1.12.95",
+    "@supabase/ssr": "^0.10.3",
+    "@supabase/supabase-js": "^2.106.1",
     "@types/pg": "^8.20.0",
     "dotenv": "^17.4.2",
     "lucide-react": "^1.16.0",
     "next": "16.2.6",
+    "nodemailer": "^8.0.8",
     "pg": "^8.21.0",
     "react": "19.2.4",
     "react-dom": "19.2.4"
@@ -25,6 +28,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/nodemailer": "^8.0.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

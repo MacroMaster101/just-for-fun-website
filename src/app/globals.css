@@ -908,6 +908,240 @@ html.light .image-overlay-badge {
   background-color: rgba(0, 0, 0, 0.85) !important;
 }
 
+/* ============================================================
+   LIGHT MODE — AUTH SURFACES (dropdowns + modals)
+   Components opt in via `.auth-surface`. All children get sane
+   light-mode treatment without us having to hunt every Tailwind
+   class. Scoped tightly so the rest of the site isn't affected.
+   ============================================================ */
+html.light div.auth-surface,
+html.light .auth-surface[class] {
+  background-color: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12) !important;
+  color: #0a0a0a !important;
+}
+
+/* Text inside the panel */
+html.light .auth-surface,
+html.light .auth-surface p,
+html.light .auth-surface span,
+html.light .auth-surface label,
+html.light .auth-surface h1,
+html.light .auth-surface h2,
+html.light .auth-surface h3 {
+  color: #0a0a0a;
+}
+html.light .auth-surface .text-white,
+html.light .auth-surface [class*="text-[#ffffff]"] {
+  color: #0a0a0a !important;
+}
+html.light .auth-surface .text-neutral-500 {
+  color: #6b6b6b !important;
+}
+html.light .auth-surface .text-neutral-400,
+html.light .auth-surface .text-neutral-300,
+html.light .auth-surface .text-neutral-200 {
+  color: #404040 !important;
+}
+html.light .auth-surface .text-neutral-600 {
+  color: #525252 !important;
+}
+
+/* Inner surfaces (input fields, list rows, separators) */
+html.light .auth-surface .bg-\[\#0a0a0a\],
+html.light .auth-surface [class*="bg-[#0a0a0a]"],
+html.light .auth-surface [class*="bg-[#0c0c0c]"] {
+  background-color: #f5f5f7 !important;
+}
+html.light .auth-surface .bg-white\/5,
+html.light .auth-surface .bg-white\/\[0\.02\] {
+  background-color: rgba(0, 0, 0, 0.03) !important;
+}
+html.light .auth-surface .bg-white\/10 {
+  background-color: rgba(0, 0, 0, 0.06) !important;
+}
+html.light .auth-surface .border-white\/5,
+html.light .auth-surface .border-white\/10,
+html.light .auth-surface .border-white\/15,
+html.light .auth-surface .border-white\/20 {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+html.light .auth-surface .bg-white\/5 {
+  background-color: rgba(0, 0, 0, 0.03) !important;
+}
+
+/* ----- Menu items inside auth surfaces ---------------------- */
+/* Default (dark mode) — solid white label, dark icon chip with mid-gray icon */
+.auth-surface .menu-item {
+  color: #f1f1f1;
+}
+.auth-surface .menu-item .menu-item-label {
+  color: #ffffff;
+}
+.auth-surface .menu-item .menu-item-icon {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+.auth-surface .menu-item .menu-item-icon svg {
+  color: #d4d4d4;
+}
+.auth-surface .menu-item .menu-item-trailing {
+  color: #737373;
+  font-size: 11px;
+  font-weight: 700;
+}
+.auth-surface .menu-item:hover .menu-item-icon {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Danger variant (Sign out) — crimson everywhere */
+.auth-surface .menu-item-danger,
+.auth-surface .menu-item-danger .menu-item-label {
+  color: #ff4b5f;
+}
+.auth-surface .menu-item-danger .menu-item-icon {
+  background-color: rgba(255, 0, 51, 0.12);
+}
+.auth-surface .menu-item-danger .menu-item-icon svg {
+  color: #ff4b5f;
+}
+
+/* ----- LIGHT MODE overrides — high contrast ----------------- */
+/* Force transparent base so the white panel shows through.
+   The high-specificity selectors here override the page-wide
+   `html.light .bg-white\/5` rule that would otherwise make the
+   row backgrounds dark via Tailwind's hover utility. */
+html.light .auth-surface button.menu-item,
+html.light .auth-surface button.menu-item[class] {
+  background-color: transparent !important;
+  color: #0a0a0a !important;
+}
+html.light .auth-surface button.menu-item .menu-item-label {
+  color: #0a0a0a !important;
+}
+html.light .auth-surface button.menu-item .menu-item-icon {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+  color: #404040 !important;
+}
+html.light .auth-surface button.menu-item .menu-item-icon svg,
+html.light .auth-surface button.menu-item .menu-item-icon svg * {
+  color: #404040 !important;
+  stroke: #404040 !important;
+}
+html.light .auth-surface button.menu-item .menu-item-trailing {
+  color: #737373 !important;
+}
+html.light .auth-surface button.menu-item:hover,
+html.light .auth-surface button.menu-item:hover[class] {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+html.light .auth-surface button.menu-item:hover .menu-item-icon {
+  background-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Danger row — readable red on white */
+html.light .auth-surface button.menu-item-danger,
+html.light .auth-surface button.menu-item-danger[class] {
+  background-color: transparent !important;
+  color: #dc2626 !important;
+}
+html.light .auth-surface button.menu-item-danger .menu-item-label {
+  color: #dc2626 !important;
+}
+html.light .auth-surface button.menu-item-danger .menu-item-icon {
+  background-color: rgba(255, 0, 51, 0.1) !important;
+  color: #dc2626 !important;
+}
+html.light .auth-surface button.menu-item-danger .menu-item-icon svg,
+html.light .auth-surface button.menu-item-danger .menu-item-icon svg * {
+  color: #dc2626 !important;
+  stroke: #dc2626 !important;
+}
+html.light .auth-surface button.menu-item-danger:hover,
+html.light .auth-surface button.menu-item-danger:hover[class] {
+  background-color: rgba(255, 0, 51, 0.08) !important;
+  color: #b91c1c !important;
+}
+html.light .auth-surface button.menu-item-danger:hover .menu-item-label {
+  color: #b91c1c !important;
+}
+
+/* OAuth buttons — Google button stays white-on-black-text, force it */
+html.light .auth-surface button.bg-white {
+  background-color: #ffffff !important;
+  color: #0a0a0a !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+}
+html.light .auth-surface button.bg-white * {
+  color: #0a0a0a !important;
+}
+/* Facebook button keeps brand blue + white text */
+html.light .auth-surface button.bg-\[\#1877f2\] {
+  background-color: #1877f2 !important;
+  color: #ffffff !important;
+}
+html.light .auth-surface button.bg-\[\#1877f2\] * {
+  color: #ffffff !important;
+}
+
+/* Discord button keeps brand blurple + white text */
+html.light .auth-surface button.bg-\[\#5865f2\] {
+  background-color: #5865f2 !important;
+  color: #ffffff !important;
+}
+html.light .auth-surface button.bg-\[\#5865f2\] * {
+  color: #ffffff !important;
+}
+
+/* Primary red gradient submit button — keep white text */
+html.light .auth-surface button[class*="from-[#ff0033]"] {
+  color: #ffffff !important;
+}
+html.light .auth-surface button[class*="from-[#ff0033]"] * {
+  color: #ffffff !important;
+}
+
+/* Inputs */
+html.light .auth-surface input,
+html.light .auth-surface textarea {
+  background-color: #ffffff !important;
+  color: #0a0a0a !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+}
+html.light .auth-surface input::placeholder,
+html.light .auth-surface textarea::placeholder {
+  color: #9a9a9a !important;
+}
+
+/* Active tab underline already crimson — leave it */
+
+/* Scrim behind modals — slightly lighter on light mode */
+html.light .fixed.inset-0.bg-black\/80 {
+  background-color: rgba(0, 0, 0, 0.45) !important;
+}
+
+/* ============================================================
+   LIGHT MODE — FAVORITE HEART BUTTON ON VIDEO CARDS
+   `.bg-black/70` button on photo thumbnail. Keep dark in both
+   themes so the heart is visible against the image.
+   ============================================================ */
+html.light button[aria-label="Add to favorites"],
+html.light button[aria-label="Remove from favorites"] {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+html.light button[aria-label="Add to favorites"]:hover,
+html.light button[aria-label="Remove from favorites"]:hover {
+  background-color: #ff0033 !important;
+  color: #ffffff !important;
+}
+/* The filled heart (favorited) — keep brand red even on dark bg */
+html.light button[aria-label="Remove from favorites"] svg {
+  color: #ff0033 !important;
+  fill: #ff0033 !important;
+}
+
 @layer utilities {
   /* Backgrounds */
   .bg-dot-pattern {

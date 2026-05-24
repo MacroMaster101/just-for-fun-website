@@ -6,6 +6,7 @@ import {
   Calendar,
   ExternalLink,
   Eye,
+  Heart,
   Play,
   Search,
   ThumbsUp,
@@ -18,6 +19,7 @@ import { Button } from "@/components/ui/Button";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { CursorSpotlight } from "@/components/ui/CursorSpotlight";
 import { useYouTube, type YTVideo } from "@/components/providers/YouTubeProvider";
+import { useFavorites } from "@/components/auth/useFavorites";
 
 type VideoItem = YTVideo;
 
@@ -30,6 +32,7 @@ export const LatestVideos = () => {
   const source = yt.source;
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(null);
+  const { isFavorited, toggle, signedIn } = useFavorites();
 
   const filteredVideos = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -131,6 +134,29 @@ export const LatestVideos = () => {
                   <span className="absolute bottom-2 right-2 rounded bg-black/90 px-2 py-1 text-[11px] font-black text-[#ffffff] image-overlay-badge">
                     {video.isLive ? "LIVE" : video.duration}
                   </span>
+                  {signedIn && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggle("video", video.id, video.title);
+                      }}
+                      aria-label={
+                        isFavorited("video", video.id)
+                          ? "Remove from favorites"
+                          : "Add to favorites"
+                      }
+                      className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-black/70 text-white transition hover:bg-[#ff0033] hover:text-white"
+                    >
+                      <Heart
+                        size={14}
+                        className={
+                          isFavorited("video", video.id)
+                            ? "fill-[#ff0033] text-[#ff0033]"
+                            : ""
+                        }
+                      />
+                    </button>
+                  )}
                 </div>
 
                 <div className="flex flex-1 flex-col justify-between p-4">

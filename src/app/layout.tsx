@@ -3,6 +3,7 @@ import { Orbitron, Inter, Space_Grotesk } from "next/font/google";
 import { CustomCursor } from "@/components/ui/CustomCursor";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { YouTubeProvider } from "@/components/providers/YouTubeProvider";
+import { AuthProvider } from "@/components/auth/AuthProvider";
 import "./globals.css";
 
 const orbitron = Orbitron({
@@ -42,10 +43,12 @@ export default function RootLayout({
     >
       <body className="min-h-full bg-[var(--color-bg)] text-[var(--color-text)] font-sans flex flex-col antialiased">
         <ThemeProvider>
-          <YouTubeProvider>
-            <CustomCursor />
-            {children}
-          </YouTubeProvider>
+          <AuthProvider>
+            <YouTubeProvider>
+              <CustomCursor />
+              {children}
+            </YouTubeProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
