@@ -61,3 +61,12 @@ model AdminEmail {
   email     String   @id
   createdAt DateTime @default(now())
 }
+
+model MusicTrack {
+  id        String   @id @default(uuid())
+  title     String
+  youtubeId String   @unique
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+

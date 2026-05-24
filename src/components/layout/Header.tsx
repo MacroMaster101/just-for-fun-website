@@ -7,6 +7,8 @@ import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { UserMenu } from "@/components/auth/UserMenu";
+import { usePathname } from "next/navigation";
+
 
 
 const navLinks = [
@@ -30,6 +32,21 @@ export const Header = () => {
   const [ambientPlaying, setAmbientPlaying] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
+  
+  const pathname = usePathname();
+  const isAdminPage = pathname?.startsWith("/admin");
+  const [activeYoutubeId, setActiveYoutubeId] = useState("h7MYJghRWt0");
+
+  useEffect(() => {
+    fetch("/api/music/active")
+      .then((r) => (r.ok ? r.json() : { youtubeId: "h7MYJghRWt0" }))
+      .then((data) => {
+        if (data.youtubeId) {
+          setActiveYoutubeId(data.youtubeId);
+        }
+      })
+      .catch(() => setActiveYoutubeId("h7MYJghRWt0"));
+  }, []);
   
   // Track explicit user login transitions to trigger autoplay
   const [initialLoadingFinished, setInitialLoadingFinished] = useState(false);
@@ -150,24 +167,26 @@ export const Header = () => {
           </a>
 
           {/* Pill nav */}
-          <nav className="hidden items-center gap-1 rounded-full border border-white/10 bg-[#0c0c0c]/80 p-1 backdrop-blur xl:flex">
-            {navLinks.map((link) => {
-              const active = activeSection === link.href.slice(1);
-              return (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  className={`relative rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition ${
-                    active
-                      ? "bg-[#ff0033] text-white shadow-[0_0_18px_rgba(255,0,51,0.5)]"
-                      : "text-neutral-400 hover:text-white"
-                  }`}
-                >
-                  {link.name}
-                </a>
-              );
-            })}
-          </nav>
+          {!isAdminPage && (
+            <nav className="hidden items-center gap-1 rounded-full border border-white/10 bg-[#0c0c0c]/80 p-1 backdrop-blur xl:flex">
+              {navLinks.map((link) => {
+                const active = activeSection === link.href.slice(1);
+                return (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    className={`relative rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition ${
+                      active
+                        ? "bg-[#ff0033] text-white shadow-[0_0_18px_rgba(255,0,51,0.5)]"
+                        : "text-neutral-400 hover:text-white"
+                    }`}
+                  >
+                    {link.name}
+                  </a>
+                );
+              })}
+            </nav>
+          )}
           {/* Right cluster */}
           <div className="hidden items-center gap-2 md:flex">
             <ThemeToggle />
@@ -211,7 +230,7 @@ export const Header = () => {
             <ThemeToggle />
           </div>
 
-          {navLinks.map((link) => {
+          {!isAdminPage && navLinks.map((link) => {
             const active = activeSection === link.href.slice(1);
             return (
               <a
@@ -362,7 +381,7 @@ export const Header = () => {
       {/* Hidden YouTube Ambient Audio Player */}
       <iframe
         id="youtube-ambient-player"
-        src="https://www.youtube.com/embed/h7MYJghRWt0?enablejsapi=1&autoplay=0&controls=0&disablekb=1&fs=0&loop=1&playlist=h7MYJghRWt0&modestbranding=1&rel=0&iv_load_policy=3"
+        src={`https://www.youtube.com/embed/${activeYoutubeId}?enablejsapi=1&autoplay=0&controls=0&disablekb=1&fs=0&loop=1&playlist=${activeYoutubeId}&modestbranding=1&rel=0&iv_load_policy=3`}
         allow="autoplay"
         className="pointer-events-none absolute -left-[9999px] -top-[9999px] h-1 w-1 opacity-0"
         tabIndex={-1}

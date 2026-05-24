@@ -21,7 +21,9 @@ import {
   MessageSquare,
   Clock,
   Heart,
-  UserCog
+  UserCog,
+  Radio,
+  Disc
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Button } from "@/components/ui/Button";
@@ -44,6 +46,14 @@ interface AdminEmail {
   createdAt: string;
 }
 
+interface MusicTrack {
+  id: string;
+  title: string;
+  youtubeId: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
 export default function AdminPage() {
   const { user } = useAuth();
   
@@ -53,9 +63,10 @@ export default function AdminPage() {
   const [countdown, setCountdown] = useState(5);
   
   // Dashboard states
-  const [activeTab, setActiveTab] = useState<"command" | "inbox" | "admins" | "cache">("command");
+  const [activeTab, setActiveTab] = useState<"command" | "inbox" | "admins" | "cache" | "music">("command");
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [admins, setAdmins] = useState<AdminEmail[]>([]);
+  const [tracks, setTracks] = useState<MusicTrack[]>([]);
   
   // Message reading modal/drawer state
   const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
@@ -64,6 +75,12 @@ export default function AdminPage() {
   const [newAdminEmail, setNewAdminEmail] = useState("");
   const [adminFormError, setAdminFormError] = useState<string | null>(null);
   const [adminFormSuccess, setAdminFormSuccess] = useState<string | null>(null);
+  
+  // Music form state
+  const [newTrackTitle, setNewTrackTitle] = useState("");
+  const [newTrackYoutubeId, setNewTrackYoutubeId] = useState("");
+  const [musicFormError, setMusicFormError] = useState<string | null>(null);
+  const [musicFormSuccess, setMusicFormSuccess] = useState<string | null>(null);
   
   // Syncing states
   const [syncing, setSyncing] = useState(false);
@@ -125,6 +142,8 @@ export default function AdminPage() {
       fetchMessages();
     } else if (activeTab === "admins") {
       fetchAdmins();
+    } else if (activeTab === "music") {
+      fetchTracks();
     }
   }, [activeTab, isAdmin]);
 
@@ -149,6 +168,18 @@ export default function AdminPage() {
       }
     } catch (err) {
       console.error("Failed to fetch admins:", err);
+    }
+  };
+
+  const fetchTracks = async () => {
+    try {
+      const res = await fetch("/api/admin/music");
+      if (res.ok) {
+        const data = await res.json();
+        setTracks(data.tracks);
+      }
+    } catch (err) {
+      console.error("Failed to fetch music tracks:", err);
     }
   };
 
@@ -219,6 +250,79 @@ export default function AdminPage() {
       }
     } catch {
       alert("Failed to remove administrator.");
+    }
+  };
+
+  const handleAddTrack = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMusicFormError(null);
+    setMusicFormSuccess(null);
+
+    const title = newTrackTitle.trim();
+    const youtubeId = newTrackYoutubeId.trim();
+
+    if (!title || !youtubeId) {
+      setMusicFormError("Title and YouTube Video ID are required.");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/admin/music", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, youtubeId }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setMusicFormError(data.error || "Failed to add music track.");
+      } else {
+        setMusicFormSuccess("Background music track added successfully!");
+        setNewTrackTitle("");
+        setNewTrackYoutubeId("");
+        fetchTracks();
+      }
+    } catch {
+      setMusicFormError("Something went wrong. Please try again.");
+    }
+  };
+
+  const handleActivateTrack = async (id: string) => {
+    try {
+      const res = await fetch("/api/admin/music", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Failed to activate track.");
+      } else {
+        fetchTracks();
+      }
+    } catch {
+      alert("Failed to activate track.");
+    }
+  };
+
+  const handleDeleteTrack = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this background music track?")) return;
+    try {
+      const res = await fetch("/api/admin/music", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Failed to delete music track.");
+      } else {
+        fetchTracks();
+      }
+    } catch {
+      alert("Failed to delete music track.");
     }
   };
 
@@ -348,6 +452,7 @@ export default function AdminPage() {
                 { id: "command", name: "Command Center", icon: <Compass size={16} /> },
                 { id: "inbox", name: "Contact Inbox", icon: <MessageSquare size={16} /> },
                 { id: "admins", name: "Administration", icon: <Users size={16} /> },
+                { id: "music", name: "Music Stream", icon: <Radio size={16} /> },
                 { id: "cache", name: "YouTube Cache", icon: <RefreshCw size={16} /> },
               ].map((tab) => (
                 <button
@@ -625,7 +730,122 @@ export default function AdminPage() {
                 </div>
               )}
 
-              {/* Tab 4: YouTube Cache controls */}
+              {/* Tab 4: Music Stream CRUD */}
+              {activeTab === "music" && (
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start animate-fade-in-up">
+                  {/* Tracks list */}
+                  <div className="md:col-span-7 space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h3 className="font-display font-extrabold text-lg text-[var(--color-text)] flex items-center gap-2">
+                        <Radio size={20} className="text-[#ff0033] animate-pulse" />
+                        Music Library
+                      </h3>
+                      <Button variant="outline" size="sm" onClick={fetchTracks}>
+                        <RefreshCw size={12} />
+                      </Button>
+                    </div>
+                    
+                    <Card className="border-[var(--color-border)] overflow-hidden">
+                      <div className="divide-y divide-[var(--color-border)]">
+                        {tracks.length === 0 ? (
+                          <div className="p-8 text-center text-xs text-[var(--color-text-muted)]">
+                            No custom music tracks added. The site is currently playing the default Synthwave stream.
+                          </div>
+                        ) : (
+                          tracks.map((track) => (
+                            <div key={track.id} className="p-4 flex items-center justify-between gap-4 hover:bg-[var(--color-surface-2)]/40 transition-colors">
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs font-bold text-[var(--color-text)] truncate flex items-center gap-2">
+                                  🎵 {track.title}
+                                  {track.isActive && <Badge variant="success" className="ml-1" pulse>Active</Badge>}
+                                </p>
+                                <p className="text-[10px] text-[var(--color-text-muted)] font-mono pt-0.5">
+                                  Video ID: {track.youtubeId} · Added: {new Date(track.createdAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                              
+                              <div className="flex items-center gap-2">
+                                {!track.isActive && (
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => handleActivateTrack(track.id)}
+                                    className="px-3.5 py-1 text-[10px]"
+                                  >
+                                    Activate
+                                  </Button>
+                                )}
+                                <button
+                                  onClick={() => handleDeleteTrack(track.id)}
+                                  className="p-2 rounded-lg bg-red-950/20 border border-red-500/10 text-[#ff4b5f] hover:bg-[#ff0033]/20 hover:border-[#ff0033] hover:text-white transition"
+                                  title="Delete Music Track"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </Card>
+                  </div>
+
+                  {/* Add track form */}
+                  <div className="md:col-span-5 space-y-4">
+                    <h3 className="font-display font-extrabold text-lg text-[var(--color-text)]">
+                      ➕ Add Custom Track
+                    </h3>
+                    <Card className="p-6 border-[var(--color-border)]">
+                      <form onSubmit={handleAddTrack} className="space-y-4">
+                        {musicFormError && (
+                          <div className="flex items-start gap-2.5 rounded-xl bg-rose-950/40 border border-rose-500/20 p-4 text-xs text-rose-300">
+                            <AlertTriangle size={15} className="shrink-0 mt-0.5" />
+                            <span>{musicFormError}</span>
+                          </div>
+                        )}
+                        
+                        {musicFormSuccess && (
+                          <div className="flex items-start gap-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/20 p-4 text-xs text-emerald-300">
+                            <CheckCircle2 size={15} className="shrink-0 mt-0.5" />
+                            <span>{musicFormSuccess}</span>
+                          </div>
+                        )}
+
+                        <Input
+                          label="Track Title"
+                          type="text"
+                          required
+                          placeholder="e.g. Chill Synthwave Beat 2026"
+                          value={newTrackTitle}
+                          onChange={(e) => setNewTrackTitle(e.target.value)}
+                        />
+
+                        <Input
+                          label="YouTube Video ID"
+                          type="text"
+                          required
+                          placeholder="e.g. h7MYJghRWt0"
+                          value={newTrackYoutubeId}
+                          onChange={(e) => setNewTrackYoutubeId(e.target.value)}
+                        />
+
+                        <Button type="submit" variant="aurora" glow fullWidth className="gap-2">
+                          <Plus size={16} /> Register Track
+                        </Button>
+                      </form>
+                    </Card>
+                    
+                    {/* Tips box */}
+                    <Card className="p-4 border-[var(--color-border)] bg-[var(--color-surface-2)]/30 text-xs text-[var(--color-text-muted)] space-y-2">
+                      <p className="font-black uppercase tracking-wider text-[9px] text-[#ff0033]">💡 How to find the YouTube Video ID?</p>
+                      <p className="leading-relaxed">Copy the 11-character code at the end of the YouTube video URL.</p>
+                      <p className="font-mono text-[10px] text-[var(--color-text)] bg-[var(--color-surface-2)] p-2 rounded border border-[var(--color-border)]">https://youtube.com/watch?v=<span className="text-[#ff0033] font-bold">h7MYJghRWt0</span></p>
+                    </Card>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 5: YouTube Cache controls */}
               {activeTab === "cache" && (
                 <div className="space-y-6">
                   <Card className="p-8 border-[var(--color-border)] relative overflow-hidden">
