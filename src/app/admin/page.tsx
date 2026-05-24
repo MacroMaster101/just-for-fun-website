@@ -1,29 +1,24 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { 
-  ShieldAlert, 
-  Trash2, 
-  Plus, 
-  RefreshCw, 
-  Mail, 
-  UserPlus, 
-  Search, 
-  FileText, 
-  CheckCircle2, 
-  AlertTriangle, 
-  ArrowLeft, 
-  ExternalLink,
-  Menu,
+import {
+  ShieldAlert,
+  Trash2,
+  Plus,
+  RefreshCw,
+  Mail,
+  UserPlus,
+  Search,
+  CheckCircle2,
+  AlertTriangle,
+  ArrowLeft,
   X,
   Compass,
   Users,
   MessageSquare,
   Clock,
-  Heart,
   UserCog,
   Radio,
-  Disc
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Button } from "@/components/ui/Button";
@@ -134,19 +129,6 @@ export default function AdminPage() {
     return () => clearInterval(timer);
   }, [isAdmin]);
 
-  // Load active tab data
-  useEffect(() => {
-    if (!isAdmin) return;
-
-    if (activeTab === "inbox") {
-      fetchMessages();
-    } else if (activeTab === "admins") {
-      fetchAdmins();
-    } else if (activeTab === "music") {
-      fetchTracks();
-    }
-  }, [activeTab, isAdmin]);
-
   const fetchMessages = async () => {
     try {
       const res = await fetch("/api/admin/messages");
@@ -182,6 +164,23 @@ export default function AdminPage() {
       console.error("Failed to fetch music tracks:", err);
     }
   };
+
+  // Load active tab data. The fetch helpers update state from an async response —
+  // a valid "external data → react state" sync pattern that the lint rule flags
+  // because it can't see past the synchronous call.
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    /* eslint-disable react-hooks/set-state-in-effect */
+    if (activeTab === "inbox") {
+      fetchMessages();
+    } else if (activeTab === "admins") {
+      fetchAdmins();
+    } else if (activeTab === "music") {
+      fetchTracks();
+    }
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [activeTab, isAdmin]);
 
   const handleDeleteMessage = async (id: string) => {
     if (!confirm("Are you sure you want to delete this contact message?")) return;
@@ -457,7 +456,7 @@ export default function AdminPage() {
               ].map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
+                  onClick={() => setActiveTab(tab.id as typeof activeTab)}
                   className={`flex w-full items-center gap-3.5 px-4 py-3.5 rounded-xl font-bold text-sm tracking-wide transition-all duration-300 border text-left cursor-pointer ${
                     activeTab === tab.id
                       ? "border-[#ff0033] bg-[#ff0033]/10 text-[#ff0033] shadow-[0_0_20px_rgba(255,0,51,0.12)]"

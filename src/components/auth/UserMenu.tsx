@@ -22,25 +22,31 @@ export const UserMenu = ({
   const [favCount, setFavCount] = useState<number | null>(null);
   const [avatarError, setAvatarError] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [prevUserId, setPrevUserId] = useState<string | null>(user?.id ?? null);
   const anchorRef = useRef<HTMLDivElement | null>(null);
 
-  // Reset avatar load error state when user changes (e.g. login/logout)
-  useEffect(() => {
+  // Reset avatar load error state when the user identity changes (login/logout)
+  if (prevUserId !== (user?.id ?? null)) {
+    setPrevUserId(user?.id ?? null);
     setAvatarError(false);
-  }, [user]);
+    if (!user) setIsAdmin(false);
+  }
 
   // Check dynamically if the active user holds administrator permissions
   useEffect(() => {
-    if (!user) {
-      setIsAdmin(false);
-      return;
-    }
+    if (!user) return;
+    let cancelled = false;
     fetch("/api/admin/check")
       .then((r) => (r.ok ? r.json() : { isAdmin: false }))
       .then((data) => {
-        setIsAdmin(data.isAdmin);
+        if (!cancelled) setIsAdmin(data.isAdmin);
       })
-      .catch(() => setIsAdmin(false));
+      .catch(() => {
+        if (!cancelled) setIsAdmin(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   // Close dropdown on outside click / Escape.

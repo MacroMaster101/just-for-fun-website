@@ -227,10 +227,10 @@ export const AuthModal = ({
               Check Your Email
             </h2>
             <p className="text-sm text-neutral-300 mb-6 max-w-xs leading-relaxed">
-              We've sent a verification link to <span className="font-bold text-white">{email}</span>. Please click the link to finish setting up your account.
+              We&apos;ve sent a verification link to <span className="font-bold text-white">{email}</span>. Please click the link to finish setting up your account.
             </p>
             <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3.5 text-xs text-neutral-500 mb-6 text-left leading-relaxed">
-              💡 <span className="font-bold text-neutral-400">Can't find the email?</span> Check your spam or promotions folder, or ensure the address was spelled correctly.
+              💡 <span className="font-bold text-neutral-400">Can&apos;t find the email?</span> Check your spam or promotions folder, or ensure the address was spelled correctly.
             </div>
             <button
               type="button"

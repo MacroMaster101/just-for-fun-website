@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { Disc, Menu, Radio, X } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { Menu, X } from "lucide-react";
 import { Youtube } from "@/components/ui/Icons";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -48,10 +48,10 @@ export const Header = () => {
       .catch(() => setActiveYoutubeId("h7MYJghRWt0"));
   }, []);
   
-  // Track explicit user login transitions to trigger autoplay
-  const [initialLoadingFinished, setInitialLoadingFinished] = useState(false);
-  const [prevUser, setPrevUser] = useState<any>(null);
-  const [hasSetBaseline, setHasSetBaseline] = useState(false);
+  // Track explicit user login transitions to trigger autoplay.
+  // Refs are used so we can compare across renders without scheduling extra renders.
+  const prevUserRef = useRef<typeof user>(null);
+  const hasSetBaselineRef = useRef(false);
 
   const openAuth = (mode: "login" | "signup") => {
     setAuthMode(mode);
@@ -82,23 +82,17 @@ export const Header = () => {
   }, []);
 
   useEffect(() => {
-    if (!loading) {
-      setInitialLoadingFinished(true);
-    }
-  }, [loading]);
+    if (loading) return;
 
-  useEffect(() => {
-    if (!initialLoadingFinished) return;
-
-    // On first load resolution, capture baseline user state (prevents playing on page refresh with session)
-    if (!hasSetBaseline) {
-      setPrevUser(user);
-      setHasSetBaseline(true);
+    // First post-loading pass: capture baseline so an existing session doesn't auto-play on refresh.
+    if (!hasSetBaselineRef.current) {
+      prevUserRef.current = user;
+      hasSetBaselineRef.current = true;
       return;
     }
 
     // Detect explicit guest -> logged-in transition
-    if (user && !prevUser && !ambientPlaying) {
+    if (user && !prevUserRef.current && !ambientPlaying) {
       const iframe = document.getElementById("youtube-ambient-player") as HTMLIFrameElement | null;
       if (iframe && iframe.contentWindow) {
         iframe.contentWindow.postMessage(
@@ -109,12 +103,14 @@ export const Header = () => {
           JSON.stringify({ event: "command", func: "playVideo", args: "" }),
           "*"
         );
+        // Sync local state to mirror the external (iframe) state we just updated.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setAmbientPlaying(true);
       }
     }
 
-    setPrevUser(user);
-  }, [user, prevUser, initialLoadingFinished, hasSetBaseline, ambientPlaying]);
+    prevUserRef.current = user;
+  }, [user, loading, ambientPlaying]);
 
   const toggleAmbient = () => {
     const iframe = document.getElementById("youtube-ambient-player") as HTMLIFrameElement | null;
