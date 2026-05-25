@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Orbitron, Inter, Space_Grotesk } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { CustomCursor } from "@/components/ui/CustomCursor";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
@@ -53,6 +54,7 @@ export default function RootLayout({
             </YouTubeProvider>
           </AuthProvider>
         </ThemeProvider>
+        <Analytics />
         <SpeedInsights />
       </body>
     </html>
