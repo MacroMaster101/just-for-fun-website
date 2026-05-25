@@ -3,6 +3,7 @@ import { Orbitron, Inter, Space_Grotesk } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { CustomCursor } from "@/components/ui/CustomCursor";
+import { Analytics } from "@vercel/analytics/next";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { YouTubeProvider } from "@/components/providers/YouTubeProvider";
 import { AuthProvider } from "@/components/auth/AuthProvider";
@@ -44,6 +45,12 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${orbitron.variable} ${inter.variable} ${spaceGrotesk.variable} h-full`}
     >
+      <body className="min-h-full bg-[#060606] text-neutral-100 font-sans flex flex-col antialiased">
+        <AuthProvider>
+          <CustomCursor />
+          {children}
+        </AuthProvider>
+        <Analytics />
       <body className="min-h-full bg-[var(--color-bg)] text-[var(--color-text)] font-sans flex flex-col antialiased">
         <ThemeProvider>
           <AuthProvider>
