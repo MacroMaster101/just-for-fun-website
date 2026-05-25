@@ -7,6 +7,9 @@ import { Youtube } from "@/components/ui/Icons";
 import { Button } from "@/components/ui/Button";
 import { SplineRobot } from "@/components/ui/SplineRobot";
 import { CursorSpotlight } from "@/components/ui/CursorSpotlight";
+import { FloatingGameLogos } from "@/components/ui/FloatingGameLogos";
+import { useYouTube } from "@/components/providers/YouTubeProvider";
+import { DEFAULT_MARQUEE } from "@/lib/heroDefaults";
 
 interface StatsItem {
   subscribers: string;
@@ -24,7 +27,7 @@ const fallbackStats: StatsItem = {
   subscribers: "--",
   videos: "--",
   views: "--",
-  title: "Just For Fun BoYs",
+  title: "Just For Fun",
   customUrl: "@JustForFun-BoYs",
   description:
     "Sri Lankan gaming crew dropping clutch moments, chaotic fails, and weekend community streams.",
@@ -34,36 +37,105 @@ const fallbackStats: StatsItem = {
 };
 
 export const Hero = () => {
-  const [stats, setStats] = useState<StatsItem>(fallbackStats);
-  const [loading, setLoading] = useState(true);
-  const [source, setSource] = useState<"youtube" | "fallback">("fallback");
+  const yt = useYouTube();
+  const loading = yt.loading;
+  const source = yt.source;
+  const stats: StatsItem = { ...fallbackStats, ...(yt.stats || {}) };
   const ref = useRef<HTMLDivElement | null>(null);
+  // Robot Spline scene URL — read from /api/settings so admins can swap
+  // the model without a redeploy. Undefined falls back to the SplineRobot
+  // component's own default so the site never breaks on a fresh DB.
+  const [splineScene, setSplineScene] = useState<string | undefined>(undefined);
+  // Games with logos pulled from /api/games. When present, the bottom
+  // marquee renders logo+name cards; when empty, falls back to the
+  // text-only DEFAULT_MARQUEE list.
+  const [games, setGames] = useState<Array<{ id: string; name: string; logoUrl: string }>>([]);
 
   useEffect(() => {
-    fetch("/api/youtube")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.stats) {
-          setStats({ ...fallbackStats, ...data.stats });
-          setSource(data.source === "youtube" ? "youtube" : "fallback");
-        }
+    let cancelled = false;
+    fetch("/api/settings", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : { settings: {} }))
+      .then((data: { settings?: Record<string, string> }) => {
+        if (cancelled) return;
+        const sceneUrl = data.settings?.["hero.splineScene"];
+        if (typeof sceneUrl === "string" && sceneUrl) setSplineScene(sceneUrl);
       })
-      .catch((e) => console.error("Hero YT fetch:", e))
-      .finally(() => setLoading(false));
+      .catch(() => {
+        // ignore — SplineRobot has its own built-in default
+      });
+    fetch("/api/games")
+      .then((r) => (r.ok ? r.json() : { games: [] }))
+      .then((d: { games?: Array<{ id: string; name: string; logoUrl: string }> }) => {
+        if (!cancelled) setGames(d.games || []);
+      })
+      .catch(() => {
+        // Silent — DEFAULT_MARQUEE fallback handles the empty case.
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const onMove = (e: MouseEvent) => {
-      const rect = el.getBoundingClientRect();
-      const px = (e.clientX - rect.left) / rect.width - 0.5;
-      const py = (e.clientY - rect.top) / rect.height - 0.5;
-      el.style.setProperty("--px", px.toString());
-      el.style.setProperty("--py", py.toString());
+    if (
+      typeof window !== "undefined" &&
+      (window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+        !window.matchMedia("(pointer: fine)").matches)
+    ) {
+      // Skip the parallax effect on touch devices and reduced-motion users.
+      return;
+    }
+
+    let raf = 0;
+    let nextPx = 0;
+    let nextPy = 0;
+    let pending = false;
+
+    // Cache the bounding rect — recomputing it on every mousemove forces a
+    // synchronous layout. We refresh the cache only on scroll/resize, when
+    // it can actually change. ResizeObserver also catches font-load shifts.
+    let rect = el.getBoundingClientRect();
+    const refreshRect = () => {
+      rect = el.getBoundingClientRect();
     };
-    window.addEventListener("mousemove", onMove);
-    return () => window.removeEventListener("mousemove", onMove);
+    window.addEventListener("scroll", refreshRect, { passive: true });
+    window.addEventListener("resize", refreshRect);
+    const ro = new ResizeObserver(refreshRect);
+    ro.observe(el);
+
+    const apply = () => {
+      pending = false;
+      el.style.setProperty("--px", nextPx.toString());
+      el.style.setProperty("--py", nextPy.toString());
+    };
+
+    const onMove = (e: MouseEvent) => {
+      // Use cached rect — no layout read per event.
+      if (
+        e.clientY < rect.top ||
+        e.clientY > rect.bottom ||
+        e.clientX < rect.left ||
+        e.clientX > rect.right
+      ) {
+        return;
+      }
+      nextPx = (e.clientX - rect.left) / rect.width - 0.5;
+      nextPy = (e.clientY - rect.top) / rect.height - 0.5;
+      if (!pending) {
+        pending = true;
+        raf = requestAnimationFrame(apply);
+      }
+    };
+    window.addEventListener("mousemove", onMove, { passive: true });
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("scroll", refreshRect);
+      window.removeEventListener("resize", refreshRect);
+      ro.disconnect();
+      if (raf) cancelAnimationFrame(raf);
+    };
   }, []);
 
   const channelUrl = stats.channelUrl || fallbackStats.channelUrl;
@@ -124,9 +196,9 @@ export const Hero = () => {
             </div>
           </div>
 
-          <h1 className="font-display text-5xl font-black uppercase leading-[0.9] tracking-tight text-white animate-fade-in-up [animation-delay:0.1s] sm:text-6xl lg:text-7xl">
+          <h1 className="font-display text-4xl font-black uppercase leading-[0.9] tracking-tight text-white animate-fade-in-up [animation-delay:0.1s] sm:text-6xl lg:text-7xl">
             <span className="block">Just For</span>
-            <span className="block text-gradient-animated text-glow-red">Fun BoYs</span>
+            <span className="block text-gradient-animated text-glow-red">Fun</span>
           </h1>
 
           <p className="mt-6 max-w-xl text-base font-medium leading-7 text-neutral-300 animate-fade-in-up [animation-delay:0.15s] sm:text-lg">
@@ -166,24 +238,25 @@ export const Hero = () => {
               return (
                 <div
                   key={item.label}
-                  className="group relative overflow-hidden rounded-xl border border-white/10 bg-[#131313]/70 p-4 backdrop-blur-xl glass-hover"
+                  className="group relative overflow-hidden rounded-xl border border-white/10 bg-[#131313]/70 p-3 backdrop-blur-xl glass-hover sm:p-4"
                   style={{
                     transform: `perspective(900px) rotateX(calc(var(--py) * ${4 + idx * 2}deg)) rotateY(calc(var(--px) * ${-4 - idx * 2}deg))`,
                   }}
                 >
                   <div className="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-[#ff0033]/12 blur-2xl transition-opacity group-hover:opacity-100" />
                   <div className="relative">
-                    <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-[#ff0033]/15 text-[#ff2d55]">
-                      <Icon size={17} />
+                    <div className="mb-1.5 flex h-7 w-7 items-center justify-center rounded-lg bg-[#ff0033]/15 text-[#ff2d55] sm:mb-2 sm:h-9 sm:w-9">
+                      <Icon size={14} className="sm:hidden" />
+                      <Icon size={17} className="hidden sm:block" />
                     </div>
-                    <div className="font-display text-2xl font-black text-white">
+                    <div className="font-display text-lg font-black text-white sm:text-2xl">
                       {loading ? (
-                        <span className="block h-7 w-16 animate-pulse rounded bg-white/10" />
+                        <span className="block h-6 w-12 animate-pulse rounded bg-white/10 sm:h-7 sm:w-16" />
                       ) : (
                         item.value
                       )}
                     </div>
-                    <p className="mt-1 text-[10px] font-black uppercase tracking-[0.22em] text-neutral-500">
+                    <p className="mt-1 text-[9px] font-black uppercase tracking-[0.18em] text-neutral-500 sm:text-[10px] sm:tracking-[0.22em]">
                       {item.label}
                     </p>
                   </div>
@@ -195,7 +268,7 @@ export const Hero = () => {
 
         {/* RIGHT: Spline 3D Robot */}
         <div className="relative lg:col-span-5">
-          <div className="relative aspect-square w-full max-w-[560px] mx-auto">
+          <div className="relative aspect-square w-full max-w-[360px] mx-auto sm:max-w-[460px] lg:max-w-[560px]">
             {/* Glow rings behind robot */}
             <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(255,0,51,0.35)_0%,transparent_55%)] animate-glow-pulse" />
             <div className="absolute inset-8 rounded-full border border-[#ff0033]/20 animate-spin-slow" />
@@ -214,43 +287,80 @@ export const Hero = () => {
               />
             </div>
 
-            <SplineRobot className="relative z-10" />
+            {/* Floating game logos — drifting behind the robot */}
+            <FloatingGameLogos games={games} />
+
+            <SplineRobot scene={splineScene} className="relative z-10" />
           </div>
 
-          {/* HUD callouts */}
-          <div className="absolute left-0 top-4 hidden flex-col gap-2 lg:flex">
-            <span className="chip chip-red">SYS ONLINE</span>
-            <span className="chip">AI · v4.7</span>
-          </div>
-          <div className="absolute bottom-6 right-4 hidden flex-col items-end gap-2 lg:flex">
-            <span className="chip">3D · WebGL</span>
-            <span className="chip chip-red">LIVE LINK</span>
+          {/* Scroll Down mouse wheel indicator centered under the robot */}
+          <div
+            onClick={() => {
+              document.getElementById("about")?.scrollIntoView({ behavior: "smooth" });
+            }}
+            className="absolute -bottom-20 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 cursor-pointer group select-none transition-all duration-300 hover:scale-105"
+          >
+            <style>{`
+              @keyframes scrollDotMove {
+                0% { transform: translateY(0); opacity: 1; }
+                50% { transform: translateY(6px); opacity: 0.3; }
+                100% { transform: translateY(0); opacity: 1; }
+              }
+              .animate-scroll-dot-move {
+                animation: scrollDotMove 1.6s ease-in-out infinite;
+              }
+            `}</style>
+            <div className="w-5 h-8 border border-neutral-400 rounded-full flex justify-center p-1.5 group-hover:border-[#ff0033] group-hover:shadow-[0_0_10px_rgba(255,0,51,0.25)] transition-all duration-300">
+              <div className="w-1 h-2 bg-[#ff0033] rounded-full animate-scroll-dot-move shadow-[0_0_8px_rgba(255,0,51,0.8)]" />
+            </div>
+            <span className="text-[9px] font-black uppercase tracking-[0.24em] text-neutral-400 group-hover:text-glow-red group-hover:text-white transition-all duration-300 whitespace-nowrap">
+              Scroll to Deploy
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Marquee strip at bottom */}
+      {/* Marquee strip at bottom. Two render modes:
+            - games (DB)  → logo + name cards, admin-managed
+            - fallback    → text-only ★ Name chips from DEFAULT_MARQUEE
+          Both duplicate the list twice for a seamless scroll loop. */}
       <div className="absolute bottom-0 left-0 right-0 overflow-hidden border-y border-white/10 bg-[#0a0a0a]/80 py-3 backdrop-blur">
-        <div className="flex w-max animate-marquee gap-12 whitespace-nowrap font-display text-sm font-black uppercase tracking-[0.3em] text-neutral-500">
-          {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} className="flex shrink-0 items-center gap-12">
-              <span>★ Valorant</span>
-              <span className="text-[#ff0033]">●</span>
-              <span>★ Valheim</span>
-              <span className="text-[#ff0033]">●</span>
-              <span>★ GTA V</span>
-              <span className="text-[#ff0033]">●</span>
-              <span>★ Battlefield</span>
-              <span className="text-[#ff0033]">●</span>
-              <span>★ Minecraft</span>
-              <span className="text-[#ff0033]">●</span>
-              <span>★ Co-op Survival</span>
-              <span className="text-[#ff0033]">●</span>
-              <span>★ Weekend Streams</span>
-              <span className="text-[#ff0033]">●</span>
-            </div>
-          ))}
-        </div>
+        {games.length > 0 ? (
+          <div className="flex w-max animate-marquee gap-8">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="flex shrink-0 items-center gap-8">
+                {games.map((g) => (
+                  <div
+                    key={`${i}-${g.id}`}
+                    className="flex shrink-0 items-center gap-2.5"
+                  >
+                    <span className="text-[#ff0033]">★</span>
+                    <span className="font-display text-sm font-black uppercase tracking-[0.28em] text-neutral-400 whitespace-nowrap">
+                      {g.name}
+                    </span>
+                  </div>
+                ))}
+                {/* Trailing separator between the duplicated halves so the
+                    loop reads "...A B C A B C..." not "...C A...". */}
+                <span className="text-[#ff0033] shrink-0">●</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex w-max animate-marquee gap-12 whitespace-nowrap font-display text-sm font-black uppercase tracking-[0.3em] text-neutral-500">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="flex shrink-0 items-center gap-12">
+                {DEFAULT_MARQUEE.map((label, idx, arr) => (
+                  <React.Fragment key={`${i}-${idx}`}>
+                    <span>★ {label}</span>
+                    {idx < arr.length - 1 && <span className="text-[#ff0033]">●</span>}
+                  </React.Fragment>
+                ))}
+                <span className="text-[#ff0033]">●</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

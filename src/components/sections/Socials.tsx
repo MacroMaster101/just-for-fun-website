@@ -1,8 +1,7 @@
 "use client";
 
 import React from "react";
-import { Video } from "lucide-react";
-import { Youtube, Twitter, Twitch, Discord, Instagram } from "@/components/ui/Icons";
+import { Youtube, Twitch, Discord, Facebook } from "@/components/ui/Icons";
 import { Card } from "@/components/ui/Card";
 
 export const Socials = () => {
@@ -19,35 +18,21 @@ export const Socials = () => {
       tagline: "Live Gameplay Stream",
       icon: <Twitch size={30} />,
       href: "https://www.twitch.tv/justforfunggez",
-      color: "hover:border-[#ff0033]/50 hover:bg-[#ff0033]/10 text-[#ff4b5f] hover:shadow-[0_0_20px_rgba(255,0,51,0.25)]",
+      color: "hover:border-purple-500/50 hover:bg-purple-950/10 text-purple-500 hover:shadow-[0_0_20px_rgba(145,70,255,0.25)]",
     },
     {
-      name: "TikTok",
-      tagline: "Clips & Epic Clutches",
-      icon: <Video size={30} />,
-      href: "https://www.tiktok.com/@justforfunggez",
-      color: "hover:border-pink-500/50 hover:bg-pink-950/10 text-pink-400 hover:shadow-[0_0_20px_rgba(236,72,153,0.25)]",
-    },
-    {
-      name: "Discord Roster",
+      name: "Discord",
       tagline: "Join the Crew Squad Guild",
       icon: <Discord size={30} />,
-      href: "https://discord.gg/yourserver",
+      href: "https://discord.gg/YGEKC2xazD",
       color: "hover:border-indigo-500/50 hover:bg-indigo-950/10 text-indigo-400 hover:shadow-[0_0_20px_rgba(99,102,241,0.25)]",
     },
     {
-      name: "Instagram",
-      tagline: "Behind the Scenes Highlights",
-      icon: <Instagram size={30} />,
-      href: "https://instagram.com/justforfun",
-      color: "hover:border-amber-500/50 hover:bg-amber-950/10 text-amber-400 hover:shadow-[0_0_20px_rgba(245,158,11,0.25)]",
-    },
-    {
-      name: "Twitter / X",
-      tagline: "Updates & Gaming Memes",
-      icon: <Twitter size={30} />,
-      href: "https://twitter.com/justforfun",
-      color: "hover:border-white/30 hover:bg-white/10 text-white hover:shadow-[0_0_20px_rgba(255,255,255,0.18)]",
+      name: "Facebook",
+      tagline: "Updates & Community Page",
+      icon: <Facebook size={30} />,
+      href: "https://www.facebook.com/profile.php?id=61577941642888",
+      color: "hover:border-blue-500/50 hover:bg-blue-950/10 text-blue-400 hover:shadow-[0_0_20px_rgba(59,130,246,0.25)]",
     },
   ];
 
@@ -56,7 +41,7 @@ export const Socials = () => {
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ff0033]/45 to-transparent" />
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
-        
+
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
           <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-white tracking-tight flex items-center justify-center gap-3">
@@ -69,7 +54,7 @@ export const Socials = () => {
         </div>
 
         {/* Social Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {socials.map((platform, idx) => (
             <a
               key={idx}
@@ -93,8 +78,8 @@ export const Socials = () => {
                   <p className="text-neutral-400 text-xs leading-relaxed group-hover:text-neutral-300 transition-colors">
                     {platform.tagline}
                   </p>
-                  <span className="inline-block text-[9px] uppercase font-bold tracking-widest text-[#ff4b5f] group-hover:text-white group-hover:translate-x-1 transition-all mt-2">
-                    CONNECT VECTOR &rarr;
+                  <span className="inline-block text-[10px] uppercase font-bold tracking-widest text-[#ff4b5f] group-hover:text-white group-hover:translate-x-1 transition-all mt-2">
+                    Visit &rarr;
                   </span>
                 </div>
               </Card>

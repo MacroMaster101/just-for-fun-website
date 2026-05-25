@@ -1,0 +1,103 @@
+import { NextResponse } from "next/server";
+import { supabaseServer } from "@/lib/supabase/server";
+import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
+
+const KINDS = new Set(["video", "sound"]);
+
+/** GET — list current user's favorites, optionally filtered by ?kind=video|sound */
+export async function GET(request: Request) {
+  const supabase = await supabaseServer();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  const kind = new URL(request.url).searchParams.get("kind");
+  const favorites = await prisma.favorite.findMany({
+    where: {
+      userId: user.id,
+      ...(kind && KINDS.has(kind) ? { kind: kind as "video" | "sound" } : {}),
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return NextResponse.json({ favorites });
+}
+
+/** POST — add a favorite. Body: { kind: "video"|"sound", itemId, itemTitle? } */
+export async function POST(request: Request) {
+  const supabase = await supabaseServer();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  const body = (await request.json().catch(() => null)) as
+    | { kind?: string; itemId?: string; itemTitle?: string }
+    | null;
+  if (!body || !body.kind || !body.itemId || !KINDS.has(body.kind)) {
+    return NextResponse.json({ error: "invalid body" }, { status: 400 });
+  }
+
+  // Ensure profile exists (first-favorite-before-profile-load case).
+  await prisma.profile.upsert({
+    where: { id: user.id },
+    create: { id: user.id, email: user.email },
+    update: {},
+  });
+
+  const favorite = await prisma.favorite.upsert({
+    where: {
+      userId_kind_itemId: {
+        userId: user.id,
+        kind: body.kind as "video" | "sound",
+        itemId: body.itemId,
+      },
+    },
+    create: {
+      userId: user.id,
+      kind: body.kind as "video" | "sound",
+      itemId: body.itemId,
+      itemTitle: body.itemTitle ?? null,
+    },
+    update: {
+      itemTitle: body.itemTitle ?? null,
+    },
+  });
+
+  return NextResponse.json({ favorite });
+}
+
+/** DELETE — remove a favorite. Body: { kind, itemId } */
+export async function DELETE(request: Request) {
+  const supabase = await supabaseServer();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  const body = (await request.json().catch(() => null)) as
+    | { kind?: string; itemId?: string }
+    | null;
+  if (!body || !body.kind || !body.itemId || !KINDS.has(body.kind)) {
+    return NextResponse.json({ error: "invalid body" }, { status: 400 });
+  }
+
+  await prisma.favorite.deleteMany({
+    where: {
+      userId: user.id,
+      kind: body.kind as "video" | "sound",
+      itemId: body.itemId,
+    },
+  });
+
+  return NextResponse.json({ ok: true });
+}

@@ -1,18 +1,34 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Send, CheckCircle2, AlertCircle } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 export const Contact = () => {
+  const { user } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Prefill name/email when a logged-in user opens the form.
+  useEffect(() => {
+    if (!user) return;
+    const t = setTimeout(() => {
+      const userName =
+        (user.user_metadata?.full_name as string | undefined) ||
+        (user.user_metadata?.name as string | undefined) ||
+        "";
+      if (userName) setName((prev) => prev || userName);
+      if (user.email) setEmail((prev) => prev || user.email!);
+    }, 0);
+    return () => clearTimeout(t);
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
