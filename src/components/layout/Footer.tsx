@@ -22,7 +22,7 @@ const communityLinks = [
 const socials = [
   { icon: <Youtube size={16} />, href: "https://www.youtube.com/@JustForFun-BoYs", label: "YouTube" },
   { icon: <Twitch size={16} />, href: "https://www.twitch.tv/justforfunggez", label: "Twitch" },
-  { icon: <Discord size={16} />, href: "https://discord.gg/YGEKC2xazD", label: "Discord" },
+  { icon: <Discord size={16} />, href: "https://discord.gg/jzcNVPGx3h", label: "Discord" },
   { icon: <Facebook size={16} />, href: "https://www.facebook.com/profile.php?id=61577941642888", label: "Facebook" },
 ];
 

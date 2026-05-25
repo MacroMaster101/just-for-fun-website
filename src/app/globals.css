@@ -343,6 +343,74 @@ html.light footer .text-transparent {
 }
 
 /* ============================================================
+   CHALLENGE SLOT — base + light mode adaptation
+   The slot cabinet uses dark gradients to evoke a brushed-metal
+   arcade look in dark mode. In light mode, swap to brushed-silver
+   so the reels and text remain readable against the page background.
+   ============================================================ */
+.slot-cabinet {
+  background: linear-gradient(145deg, #2a2a2a 0%, #1a1a1a 35%, #0d0d0d 100%);
+}
+html.light .slot-cabinet {
+  background: linear-gradient(145deg, #e8e8ec 0%, #d4d4da 35%, #b8b8c0 100%) !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  box-shadow:
+    0 30px 60px -20px rgba(0, 0, 0, 0.25),
+    inset 0 2px 0 rgba(255, 255, 255, 0.6) !important;
+}
+html.light .slot-display {
+  background-color: #1a1a1f !important;
+  border-color: rgba(0, 0, 0, 0.25) !important;
+}
+html.light .slot-reel {
+  background-image: linear-gradient(to bottom, #0a0a0a, #1a1a1a) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+/* The fade masks need to match the reel's dark background in light mode too. */
+html.light .slot-reel-mask-top {
+  background-image: linear-gradient(to bottom, rgba(10, 10, 10, 0.85), transparent) !important;
+}
+html.light .slot-reel-mask-bottom {
+  background-image: linear-gradient(to top, rgba(10, 10, 10, 0.85), transparent) !important;
+}
+/* The reel cell text and item-id labels must stay light against the dark
+   reel even in light mode (overrides the global .text-white -> dark remap). */
+html.light .slot-reel .slot-reel-text {
+  color: #ffffff !important;
+}
+html.light .slot-reel .text-neutral-500 {
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+
+/* Pull / Spinning / Locked status pill — solid colors so it's always readable
+   in both light and dark mode regardless of background. */
+.slot-status-pill {
+  color: #ffffff !important;
+  border: 1px solid transparent;
+  transition: background-color 200ms, box-shadow 200ms, border-color 200ms;
+}
+.slot-status-pill[data-state="idle"] {
+  background: linear-gradient(180deg, #ff0033 0%, #b30024 100%);
+  border-color: rgba(255, 75, 95, 0.5);
+  box-shadow: 0 0 12px rgba(255, 0, 51, 0.45), 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.slot-status-pill[data-state="spinning"] {
+  background: linear-gradient(180deg, #ff4b5f 0%, #ff0033 100%);
+  border-color: rgba(255, 75, 95, 0.7);
+  box-shadow: 0 0 18px rgba(255, 0, 51, 0.7), 0 2px 6px rgba(0, 0, 0, 0.35);
+  animation: slot-pill-pulse 1.1s ease-in-out infinite;
+}
+.slot-status-pill[data-state="locked"] {
+  background: linear-gradient(180deg, #444 0%, #222 100%);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+@keyframes slot-pill-pulse {
+  0%, 100% { box-shadow: 0 0 18px rgba(255, 0, 51, 0.7), 0 2px 6px rgba(0, 0, 0, 0.35); }
+  50% { box-shadow: 0 0 26px rgba(255, 0, 51, 0.95), 0 2px 6px rgba(0, 0, 0, 0.35); }
+}
+
+/* ============================================================
    LIGHT MODE — TARGETED FIXES
    ============================================================ */
 

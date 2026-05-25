@@ -22,6 +22,7 @@ const navLinks = [
   { name: "Schedule", href: "#schedule" },
   { name: "Shop", href: "#merch" },
   { name: "Socials", href: "#socials" },
+  { name: "Community", href: "#community" },
   { name: "Contact", href: "#contact" },
 ];
 

@@ -10,6 +10,7 @@ export const CustomCursor = () => {
   const [enabled, setEnabled] = useState(false);
   const [hovering, setHovering] = useState(false);
   const [clicking, setClicking] = useState(false);
+  const [overIframe, setOverIframe] = useState(false);
   const { resolved } = useTheme();
   const isLight = resolved === "light";
 
@@ -78,9 +79,27 @@ export const CustomCursor = () => {
     const onDown = () => setClicking(true);
     const onUp = () => setClicking(false);
 
+    // When the mouse moves into a cross-origin iframe, our window stops
+    // receiving mousemove events and the custom cursor freezes mid-widget.
+    // Use window blur (fires when an iframe steals focus on hover/click)
+    // and document visibility to flip into a "show native cursor" mode.
+    const onBlur = () => setOverIframe(true);
+    const onFocus = () => setOverIframe(false);
+    const onDocMouseOver = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.tagName === "IFRAME") {
+        setOverIframe(true);
+      } else {
+        setOverIframe(false);
+      }
+    };
+
     window.addEventListener("mousemove", onMove, { passive: true });
     window.addEventListener("mousedown", onDown);
     window.addEventListener("mouseup", onUp);
+    window.addEventListener("blur", onBlur);
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("mouseover", onDocMouseOver);
     // Defer the mount-flag so setState happens outside the effect body.
     const enableId = setTimeout(() => setEnabled(true), 0);
 
@@ -89,6 +108,9 @@ export const CustomCursor = () => {
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mousedown", onDown);
       window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("blur", onBlur);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("mouseover", onDocMouseOver);
       if (raf) cancelAnimationFrame(raf);
     };
   }, []);
@@ -106,6 +128,11 @@ export const CustomCursor = () => {
           [role="button"] {
             cursor: none !important;
           }
+          /* Iframes can't inherit our custom cursor — restore the native
+             cursor over them so users can interact with embedded widgets. */
+          iframe {
+            cursor: auto !important;
+          }
         }
       `}</style>
 
@@ -120,7 +147,7 @@ export const CustomCursor = () => {
           mixBlendMode: isLight ? "normal" : "screen",
           filter: isLight ? "none" : "blur(14px)",
           transition: "opacity 200ms",
-          opacity: isLight ? 0 : hovering ? 0.95 : 0.6,
+          opacity: overIframe ? 0 : isLight ? 0 : hovering ? 0.95 : 0.6,
           display: isLight ? "none" : "block",
         }}
       />
@@ -132,11 +159,12 @@ export const CustomCursor = () => {
         style={{
           width: hovering ? 56 : 36,
           height: hovering ? 56 : 36,
+          opacity: overIframe ? 0 : 1,
           boxShadow: isLight
             ? "none"
             : "0 0 18px rgba(255,0,51,0.7), inset 0 0 10px rgba(255,75,95,0.35)",
           transition:
-            "width 180ms cubic-bezier(.2,.8,.2,1), height 180ms cubic-bezier(.2,.8,.2,1), border-color 180ms",
+            "width 180ms cubic-bezier(.2,.8,.2,1), height 180ms cubic-bezier(.2,.8,.2,1), border-color 180ms, opacity 120ms",
           borderColor: clicking
             ? isLight
               ? "#0a0a0a"
@@ -152,11 +180,12 @@ export const CustomCursor = () => {
         style={{
           width: clicking ? 4 : 6,
           height: clicking ? 4 : 6,
+          opacity: overIframe ? 0 : 1,
           backgroundColor: isLight ? "#ff0033" : "#ffffff",
           boxShadow: isLight
             ? "none"
             : "0 0 12px rgba(255,255,255,0.9), 0 0 22px rgba(255,0,51,0.7)",
-          transition: "width 120ms, height 120ms",
+          transition: "width 120ms, height 120ms, opacity 120ms",
         }}
       />
     </>

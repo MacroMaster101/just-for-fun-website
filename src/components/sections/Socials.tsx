@@ -24,7 +24,7 @@ export const Socials = () => {
       name: "Discord",
       tagline: "Join the Crew Squad Guild",
       icon: <Discord size={30} />,
-      href: "https://discord.gg/YGEKC2xazD",
+      href: "https://discord.gg/jzcNVPGx3h",
       color: "hover:border-indigo-500/50 hover:bg-indigo-950/10 text-indigo-400 hover:shadow-[0_0_20px_rgba(99,102,241,0.25)]",
     },
     {

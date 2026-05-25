@@ -12,6 +12,7 @@ import { ChallengeWheel } from "@/components/sections/ChallengeWheel";
 import { Schedule } from "@/components/sections/Schedule";
 import { Merch } from "@/components/sections/Merch";
 import { Socials } from "@/components/sections/Socials";
+import { Community } from "@/components/sections/Community";
 import { CrewWall } from "@/components/sections/CrewWall";
 import { Contact } from "@/components/sections/Contact";
 import { Footer } from "@/components/layout/Footer";
@@ -35,6 +36,7 @@ export default function Home() {
             <Schedule />
             <Merch />
             <Socials />
+            <Community />
             <CrewWall />
             <Contact />
           </main>
