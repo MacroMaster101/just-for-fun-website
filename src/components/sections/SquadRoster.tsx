@@ -143,16 +143,16 @@ export const SquadRoster = () => {
   }, []);
 
   return (
-    <section id="squad" className="relative py-24 bg-[#060606] overflow-hidden">
+    <section id="squad" className="relative overflow-hidden bg-[#060606] py-20 sm:py-24">
       {/* HUD Background Assets */}
       <div className="absolute top-1/3 left-1/4 -translate-x-1/2 w-[600px] h-[600px] bg-[#ff0033]/5 blur-[120px] pointer-events-none rounded-full animate-float" />
       <div className="absolute bottom-1/3 right-1/4 translate-x-1/2 w-[600px] h-[600px] bg-[#ffffff]/5 blur-[120px] pointer-events-none rounded-full animate-float [animation-delay:3s]" />
       <div className="absolute inset-0 bg-cyber-matrix opacity-[0.12] pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6">
         {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-          <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-white tracking-tight flex items-center justify-center gap-3">
+        <div className="mx-auto mb-12 max-w-2xl space-y-3 text-center sm:mb-16">
+          <h2 className="flex flex-wrap items-center justify-center gap-3 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
             <span className="text-[#ff0033] drop-shadow-[0_0_8px_rgba(255,0,51,0.5)]">⚔️</span> Meet the Squad
           </h2>
           <p className="text-neutral-400 text-sm tracking-wider uppercase font-semibold">
@@ -205,8 +205,8 @@ export const SquadRoster = () => {
                     </div>
 
                     {/* Details */}
-                    <div className="flex-grow">
-                      <h4 className="font-display font-extrabold text-white text-sm tracking-wide flex items-center gap-2">
+                    <div className="min-w-0 flex-grow">
+                      <h4 className="flex items-center gap-2 truncate font-display text-sm font-extrabold tracking-wide text-white">
                         {member.name}
                         {member.twitchUrl && (
                           <span className="w-1.5 h-1.5 rounded-full bg-[#ffffff] animate-pulse" />
@@ -216,7 +216,7 @@ export const SquadRoster = () => {
                     </div>
 
                     {/* Signature Badge */}
-                    <Badge variant={isSelected ? "primary" : "secondary"} className="text-[9px]">
+                    <Badge variant={isSelected ? "primary" : "secondary"} className="shrink-0 text-[9px]">
                       {member.signatureAgent.split(" / ")[0]}
                     </Badge>
                   </button>
@@ -227,7 +227,7 @@ export const SquadRoster = () => {
 
           {/* Right Column: Character Details Dashboard (HUD specs screen) */}
           <div className="lg:col-span-7">
-            <Card className="border border-white/10 bg-[#181818]/40 backdrop-blur-xl p-8 relative overflow-hidden shadow-[0_15px_40px_-15px_rgba(255,0,51,0.2)]">
+            <Card className="relative overflow-hidden border border-white/10 bg-[#181818]/40 p-5 shadow-[0_15px_40px_-15px_rgba(255,0,51,0.2)] backdrop-blur-xl sm:p-8">
               {/* Scanline & ambient overlay */}
               <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#030303]/10 to-[#030303]/40 pointer-events-none" />
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#ff0033]/40 via-[#ffffff]/40 to-transparent pointer-events-none" />

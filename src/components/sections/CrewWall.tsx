@@ -64,7 +64,7 @@ export const CrewWall = () => {
   return (
     <section
       id="crew-wall"
-      className="relative py-24 bg-[#060606] overflow-hidden"
+      className="relative overflow-hidden bg-[#060606] py-20 sm:py-24"
     >
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ff0033]/45 to-transparent" />
       {/* Subtle scanline grid backdrop */}
@@ -78,9 +78,9 @@ export const CrewWall = () => {
         }}
       />
 
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 pb-6 border-b border-white/5">
+        <div className="mb-10 flex flex-col justify-between gap-6 border-b border-white/5 pb-6 md:flex-row md:items-end">
           <div className="space-y-3">
             <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.4em] text-[#ff4b5f] flex items-center gap-2">
               <span className="relative flex h-2 w-2">
@@ -89,7 +89,7 @@ export const CrewWall = () => {
               </span>
               Crew Online
             </p>
-            <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-white tracking-tight flex items-center gap-3">
+            <h2 className="flex flex-wrap items-center gap-3 font-display text-2xl font-extrabold tracking-tight text-white sm:text-4xl">
               <Users
                 size={28}
                 className="text-[#ff0033] drop-shadow-[0_0_8px_rgba(255,0,51,0.5)]"
@@ -188,7 +188,7 @@ const MemberTile = ({ member, index }: { member: Member; index: number }) => {
 };
 
 const MarqueeStrip = ({ members }: { members: Member[] }) => (
-  <div className="relative mt-16 overflow-hidden rounded-2xl border border-white/5 bg-[#0c0c0c]/60 py-4">
+  <div className="relative mt-10 overflow-hidden rounded-2xl border border-white/5 bg-[#0c0c0c]/60 py-4 sm:mt-16">
     {/* edge fades */}
     <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-[#060606] to-transparent z-10" />
     <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#060606] to-transparent z-10" />
@@ -246,7 +246,7 @@ const SkeletonGrid = () => (
 );
 
 const EmptyState = () => (
-  <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-12 text-center">
+  <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-8 text-center sm:p-12">
     <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#ff0033]/10 text-[#ff4b5f] mb-4">
       <UserPlus size={22} />
     </div>

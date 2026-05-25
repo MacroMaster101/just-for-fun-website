@@ -163,7 +163,7 @@ export const LatestVideos = () => {
   };
 
   return (
-    <section id="latest" className="relative overflow-hidden bg-[#060606] py-24">
+    <section id="latest" className="relative overflow-hidden bg-[#060606] py-20 sm:py-24">
       <div className="absolute inset-0 bg-[linear-gradient(180deg,#060606_0%,#0c0c0c_48%,#060606_100%)]" />
       <CursorSpotlight color="rgba(255, 0, 51, 0.18)" size={500} />
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ff0033]/60 to-transparent" />
@@ -469,7 +469,7 @@ const FeedState = ({
   title: string;
   body: string;
 }) => (
-  <div className="mx-auto max-w-lg rounded-lg border border-white/10 bg-[#181818] p-8 text-center">
+  <div className="mx-auto max-w-lg rounded-lg border border-white/10 bg-[#181818] p-6 text-center sm:p-8">
     <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#ff0033]/14 text-[#ff4b5f]">
       {icon}
     </div>

@@ -64,13 +64,13 @@ export const Contact = () => {
   };
 
   return (
-    <section id="contact" className="relative py-24 bg-[#060606] overflow-hidden bg-grid-subtle">
+    <section id="contact" className="relative overflow-hidden bg-[#060606] bg-grid-subtle py-20 sm:py-24">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ff0033]/45 to-transparent" />
 
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6">
         {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-          <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-white tracking-tight flex items-center justify-center gap-3">
+        <div className="mx-auto mb-12 max-w-2xl space-y-3 text-center sm:mb-16">
+          <h2 className="flex flex-wrap items-center justify-center gap-3 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
             <span className="text-[#ff0033] drop-shadow-[0_0_8px_rgba(255,0,51,0.5)]">✉️</span> Get in Touch
           </h2>
           <p className="text-neutral-400 text-sm tracking-wider uppercase font-semibold">
@@ -81,7 +81,7 @@ export const Contact = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-stretch max-w-5xl mx-auto">
           {/* Left Column: Information Card */}
-          <div className="lg:col-span-5 flex flex-col justify-between p-8 rounded-lg border border-white/10 bg-[#181818]/70 backdrop-blur-md relative overflow-hidden">
+          <div className="relative flex flex-col justify-between overflow-hidden rounded-lg border border-white/10 bg-[#181818]/70 p-5 backdrop-blur-md sm:p-8 lg:col-span-5">
             <div className="absolute top-0 left-0 right-0 h-1 bg-[#ff0033]" />
             
             <div className="space-y-6 relative z-10">
@@ -116,7 +116,7 @@ export const Contact = () => {
 
           {/* Right Column: Contact Form */}
           <div className="lg:col-span-7">
-            <Card className="p-8 border border-white/10 bg-[#181818]/80 backdrop-blur-xl">
+            <Card className="border border-white/10 bg-[#181818]/80 p-5 backdrop-blur-xl sm:p-8">
               <form onSubmit={handleSubmit} className="space-y-5">
                 {success && (
                   <div className="flex items-start gap-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/20 p-4 text-xs text-emerald-300">

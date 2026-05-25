@@ -120,8 +120,8 @@ export const BugReportButton = () => {
       </div>
 
       {open && (
-        <div className="fixed inset-0 z-[130] flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center">
-          <div className="auth-surface relative w-full max-w-lg rounded-2xl border border-white/10 bg-[#0c0c0c] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.65)]">
+        <div className="fixed inset-0 z-[130] flex items-end justify-center overflow-y-auto bg-black/70 p-3 backdrop-blur-sm sm:items-center sm:p-4">
+          <div className="auth-surface relative my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-white/10 bg-[#0c0c0c] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.65)] sm:max-h-[calc(100dvh-2rem)] sm:p-6">
             <button
               type="button"
               onClick={close}
@@ -135,7 +135,7 @@ export const BugReportButton = () => {
               <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#ff0033]/35 bg-[#ff0033]/12 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-[#ff4b5f]">
                 <Bug size={13} /> Bug Report
               </div>
-              <h2 className="font-display text-2xl font-black uppercase text-white">
+              <h2 className="font-display text-xl font-black uppercase text-white sm:text-2xl">
                 Found Something Broken?
               </h2>
               <p className="mt-2 text-sm leading-6 text-neutral-400">

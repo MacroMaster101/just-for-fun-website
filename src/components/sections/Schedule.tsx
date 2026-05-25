@@ -89,13 +89,13 @@ export const Schedule = () => {
     data !== null && (slots?.length ?? 0) === 0 && upcoming.length === 0;
 
   return (
-    <section id="schedule" className="relative py-24 bg-[#060606] overflow-hidden">
+    <section id="schedule" className="relative overflow-hidden bg-[#060606] py-20 sm:py-24">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ff0033]/45 to-transparent" />
 
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6">
         {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-          <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-white tracking-tight flex items-center justify-center gap-3">
+        <div className="mx-auto mb-12 max-w-2xl space-y-3 text-center sm:mb-16">
+          <h2 className="flex flex-wrap items-center justify-center gap-3 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
             <span className="text-[#ff0033]">📅</span> Stream Schedule
           </h2>
           <p className="text-neutral-400 text-sm tracking-wider uppercase font-semibold">
@@ -127,7 +127,7 @@ export const Schedule = () => {
         {/* Empty state — no upcoming streams AND no manual slots configured. */}
         {isCompletelyEmpty && (
           <div className="mx-auto max-w-xl">
-            <Card className="relative overflow-hidden border border-white/10 bg-[#181818]/70 p-10 text-center">
+            <Card className="relative overflow-hidden border border-white/10 bg-[#181818]/70 p-6 text-center sm:p-10">
               <div className="absolute -top-16 left-1/2 h-32 w-32 -translate-x-1/2 rounded-full bg-[#ff0033]/15 blur-3xl" />
               <div className="relative space-y-4">
                 <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-[#ff0033]/30 bg-[#ff0033]/10 text-[#ff4b5f]">
@@ -276,7 +276,7 @@ export const Schedule = () => {
 
         {/* Schedule Footer warnings — only show when there ARE slots */}
         {!showSkeleton && !isCompletelyEmpty && (
-          <div className="max-w-2xl mx-auto mt-16 p-4 rounded-lg bg-[#ff0033]/8 border border-[#ff0033]/20 flex gap-3 text-xs text-[#ff4b5f] leading-relaxed">
+          <div className="mx-auto mt-12 flex max-w-2xl gap-3 rounded-lg border border-[#ff0033]/20 bg-[#ff0033]/8 p-4 text-xs leading-relaxed text-[#ff4b5f] sm:mt-16">
             <AlertTriangle size={16} className="text-[#ff0033] shrink-0 mt-0.5" />
             <p>
               <strong>Note:</strong> Stream times are flexible and may vary due to gaming updates, internet connection, or scheduling changes. Follow us on social media and turn on notifications 🔔 to get alerted whenever we go live!

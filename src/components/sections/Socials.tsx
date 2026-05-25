@@ -37,14 +37,14 @@ export const Socials = () => {
   ];
 
   return (
-    <section id="socials" className="relative py-24 bg-[#060606] overflow-hidden bg-dot-pattern">
+    <section id="socials" className="relative overflow-hidden bg-[#060606] bg-dot-pattern py-20 sm:py-24">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ff0033]/45 to-transparent" />
 
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6">
 
         {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-          <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-white tracking-tight flex items-center justify-center gap-3">
+        <div className="mx-auto mb-12 max-w-2xl space-y-3 text-center sm:mb-16">
+          <h2 className="flex flex-wrap items-center justify-center gap-3 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
             <span className="text-[#ff0033] drop-shadow-[0_0_8px_rgba(255,0,51,0.5)]">🌐</span> Social Grid
           </h2>
           <p className="text-neutral-400 text-sm tracking-wider uppercase font-semibold">
@@ -66,7 +66,7 @@ export const Socials = () => {
             >
               <Card
                 hoverEffect
-                className={`p-6 border border-white/10 bg-[#181818]/70 backdrop-blur-xl flex items-center gap-5 transition-all duration-300 ${platform.color}`}
+                className={`flex items-center gap-4 border border-white/10 bg-[#181818]/70 p-5 backdrop-blur-xl transition-all duration-300 sm:gap-5 sm:p-6 ${platform.color}`}
               >
                 <div className="shrink-0 transition-transform duration-300 group-hover:scale-110">
                   {platform.icon}

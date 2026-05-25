@@ -332,13 +332,13 @@ export const Soundboard = () => {
   };
 
   return (
-    <section id="arena" className="relative py-24 bg-[#060606] overflow-hidden">
+    <section id="arena" className="relative overflow-hidden bg-[#060606] py-20 sm:py-24">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ff0033]/45 to-transparent" />
 
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6">
         {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-          <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-white tracking-tight flex items-center justify-center gap-3">
+        <div className="mx-auto mb-12 max-w-2xl space-y-3 text-center sm:mb-16">
+          <h2 className="flex flex-wrap items-center justify-center gap-3 font-display text-2xl font-extrabold tracking-tight text-white sm:text-4xl">
             <span className="text-[#ff0033] filter drop-shadow-[0_0_8px_rgba(255,0,51,0.5)]">🔥</span>{" "}
             Highlights &amp; Sound Arena
           </h2>
@@ -365,7 +365,7 @@ export const Soundboard = () => {
                 <button
                   key={sound.id}
                   onClick={() => triggerSound(sound)}
-                  className={`p-5 rounded-lg border border-white/10 bg-[#181818]/70 backdrop-blur-md text-center transition-all duration-300 flex flex-col items-center justify-center gap-3 cursor-pointer group hover:bg-[#202020]/70 active:scale-95 ${sound.color}`}
+                  className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border border-white/10 bg-[#181818]/70 p-4 text-center backdrop-blur-md transition-all duration-300 hover:bg-[#202020]/70 active:scale-95 sm:p-5 ${sound.color}`}
                 >
                   <span className="text-3xl transition-transform duration-300 group-hover:scale-125">
                     {sound.emoji}
@@ -392,7 +392,7 @@ export const Soundboard = () => {
 
           {/* Right Column: Mini Highlights Arena */}
           <div className="lg:col-span-6 space-y-6">
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <h3 className="font-display font-extrabold text-lg sm:text-xl text-white tracking-wide flex items-center gap-2">
                   <Sparkles className="text-[#ff4b5f]" /> Community Highlights
@@ -405,7 +405,7 @@ export const Soundboard = () => {
                 variant="primary"
                 size="sm"
                 onClick={() => setShowSubmit(true)}
-                className="gap-1.5 shrink-0"
+                className="w-full shrink-0 gap-1.5 sm:w-auto"
               >
                 <Upload size={12} /> Submit clip
               </Button>
@@ -533,10 +533,10 @@ export const Soundboard = () => {
 
       {/* Submission modal */}
       {showSubmit && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/75 p-3 backdrop-blur-sm animate-fade-in sm:p-4">
           <Card
             glass
-            className="max-w-xl w-full p-7 border-white/10 bg-[#0c0c0c]/95 backdrop-blur-2xl relative shadow-[0_20px_50px_rgba(0,0,0,0.5)] animate-fade-in-up max-h-[90vh] overflow-y-auto"
+            className="relative my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-xl overflow-y-auto border-white/10 bg-[#0c0c0c]/95 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-2xl animate-fade-in-up sm:max-h-[90vh] sm:p-7"
           >
             <button
               onClick={closeSubmit}
@@ -670,11 +670,11 @@ export const Soundboard = () => {
                   />
                 )}
 
-                <div className="flex justify-end gap-2 pt-2 border-t border-white/5">
-                  <Button type="button" variant="ghost" onClick={closeSubmit}>
+                <div className="flex flex-col-reverse gap-2 border-t border-white/5 pt-2 sm:flex-row sm:justify-end">
+                  <Button type="button" variant="ghost" onClick={closeSubmit} className="w-full sm:w-auto">
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={submitting} className="gap-2">
+                  <Button type="submit" disabled={submitting} className="w-full gap-2 sm:w-auto">
                     {submitting ? "Submitting…" : (
                       <>
                         <Upload size={14} /> Submit for review

@@ -56,7 +56,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${orbitron.variable} ${inter.variable} ${spaceGrotesk.variable} h-full`}
     >
-      <body className="min-h-full bg-[var(--color-bg)] text-[var(--color-text)] font-sans flex flex-col antialiased">
+      <body className="flex min-h-full flex-col overflow-x-hidden bg-[var(--color-bg)] font-sans text-[var(--color-text)] antialiased">
         <ThemeProvider>
           <AuthProvider>
             <YouTubeProvider>

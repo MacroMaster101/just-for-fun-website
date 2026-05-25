@@ -166,9 +166,9 @@ export const Merch = () => {
   // Section header is shared between the live grid and the coming-soon
   // panel so the visual continuity stays the same when the shop flips on.
   const sectionHeader = (
-    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16 pb-6 border-b border-white/5">
+    <div className="mb-10 flex flex-col justify-between gap-6 border-b border-white/5 pb-6 md:mb-16 md:flex-row md:items-end">
       <div className="space-y-3">
-        <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-white tracking-tight flex items-center gap-3">
+        <h2 className="flex flex-wrap items-center gap-3 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
           <span className="text-[#ff0033] filter drop-shadow-[0_0_8px_rgba(255,0,51,0.5)]">
             🛍️
           </span>{" "}
@@ -182,7 +182,7 @@ export const Merch = () => {
       {shopLive && items.length > 0 && (
         <button
           onClick={() => setIsCartOpen(true)}
-          className="px-5 py-3 rounded-full border border-white/20 bg-white/5 text-white hover:bg-gradient-to-r hover:from-[#ff0033] hover:to-[#ff4b5f] hover:text-white transition-all cursor-pointer font-bold text-xs flex items-center justify-center gap-2.5 relative shadow-lg shadow-black/80"
+          className="relative flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-full border border-white/20 bg-white/5 px-5 py-3 text-xs font-bold text-white shadow-lg shadow-black/80 transition-all hover:bg-gradient-to-r hover:from-[#ff0033] hover:to-[#ff4b5f] hover:text-white md:w-auto"
         >
           <ShoppingCart size={15} />
           View Arsenal Cart
@@ -199,10 +199,10 @@ export const Merch = () => {
   const showGrid = !loading && shopLive && items.length > 0;
 
   return (
-    <section id="merch" className="relative py-24 bg-[#060606] overflow-hidden">
+    <section id="merch" className="relative overflow-hidden bg-[#060606] py-20 sm:py-24">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ff0033]/45 to-transparent" />
 
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6">
         {sectionHeader}
 
         {/* Coming Soon panel — shown while loading, when shop is paused,
@@ -274,7 +274,7 @@ export const Merch = () => {
         )}
 
         {/* Brand values footer — kept on both modes to preserve layout */}
-        <div className="flex flex-wrap items-center justify-center gap-6 mt-16 text-xs text-neutral-500 font-bold border-t border-white/5 pt-8">
+        <div className="mt-12 flex flex-wrap items-center justify-center gap-3 border-t border-white/5 pt-8 text-xs font-bold text-neutral-500 sm:mt-16 sm:gap-6">
           {[
             { icon: <Award size={14} className="text-[#ff0033]" />, text: "Genuine Custom Prints" },
             { icon: <Globe size={14} className="text-white" />, text: "Worldwide Cargo Shipping" },
@@ -297,7 +297,7 @@ export const Merch = () => {
             onClick={() => setIsCartOpen(false)}
             className="absolute inset-0 cursor-pointer"
           />
-          <div className="relative w-full max-w-md bg-[#181818]/95 backdrop-blur-xl border-l border-[#ff0033]/25 h-full p-6 flex flex-col justify-between shadow-2xl z-10 animate-float">
+          <div className="relative z-10 flex h-full w-full max-w-md animate-float flex-col justify-between border-l border-[#ff0033]/25 bg-[#181818]/95 p-4 shadow-2xl backdrop-blur-xl sm:p-6">
             <div>
               <div className="flex justify-between items-center pb-4 border-b border-white/10">
                 <h3 className="font-display font-extrabold text-base text-white tracking-wide uppercase flex items-center gap-2">
@@ -419,7 +419,7 @@ export const Merch = () => {
 
 const ComingSoonPanel = ({ loading }: { loading: boolean }) => (
   <Card className="border border-white/10 bg-[#181818]/70 overflow-hidden">
-    <div className="relative px-6 sm:px-12 py-16 sm:py-20 text-center">
+    <div className="relative px-5 py-14 text-center sm:px-12 sm:py-20">
       {/* Subtle scanline backdrop */}
       <div
         aria-hidden

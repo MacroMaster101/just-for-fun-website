@@ -31,15 +31,15 @@ export const About = () => {
   ];
 
   return (
-    <section id="about" className="relative py-24 bg-[#060606] overflow-hidden">
+    <section id="about" className="relative overflow-hidden bg-[#060606] py-20 sm:py-24">
       <CursorSpotlight color="rgba(255, 75, 95, 0.16)" size={520} />
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ff0033]/45 to-transparent" />
 
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6">
         
         {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-          <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-white tracking-tight flex items-center justify-center gap-3">
+        <div className="mx-auto mb-12 max-w-2xl space-y-3 text-center sm:mb-16">
+          <h2 className="flex flex-wrap items-center justify-center gap-3 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
             <span className="text-[#ff0033] drop-shadow-[0_0_8px_rgba(255,0,51,0.45)]">🎯</span> Channel DNA
           </h2>
           <p className="text-neutral-400 text-sm tracking-wider uppercase font-semibold">
@@ -70,7 +70,7 @@ export const About = () => {
               We focus on premium visual streams, funny highlights, and interactive viewer lobbies. We don&apos;t care about professional brackets or sweat-level toxicity — we play strictly to celebrate video games for what they are meant to be: a fun escape!
             </p>
             
-            <div className="flex gap-4 pt-4 border-t border-white/5">
+            <div className="flex flex-wrap gap-3 border-t border-white/5 pt-4 sm:gap-4">
               {["FPS Highlights", "Co-op Survival", "Viewer Lobbies"].map((item) => (
                 <div key={item} className="flex items-center gap-2 text-[10px] uppercase font-extrabold tracking-wider text-neutral-300">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#ff0033] animate-ping" />
@@ -86,7 +86,7 @@ export const About = () => {
               <TiltCard key={idx} max={10} scale={1.03} className="rounded-lg">
               <Card
                 hoverEffect
-                className="p-6 border border-white/10 bg-[#181818]/70 backdrop-blur-md space-y-4"
+                className="space-y-4 border border-white/10 bg-[#181818]/70 p-5 backdrop-blur-md sm:p-6"
               >
                 <div className="w-12 h-12 rounded-xl bg-[#0f0f0f]/80 flex items-center justify-center border border-white/10 shadow-inner">
                   {feature.icon}

@@ -287,16 +287,16 @@ export const ChallengeWheel = () => {
   };
 
   return (
-    <section id="wheel" className="relative py-24 bg-[#060606] overflow-hidden">
+    <section id="wheel" className="relative overflow-hidden bg-[#060606] py-20 sm:py-24">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ff0033]/45 to-transparent" />
 
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute left-1/2 top-1/3 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-[#ff0033]/8 blur-[120px]" />
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6">
         {/* Header */}
-        <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
+        <div className="mx-auto mb-10 max-w-2xl space-y-3 text-center sm:mb-16">
           <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-white tracking-tight flex items-center justify-center gap-3">
             <span className="text-[#ff0033] filter drop-shadow-[0_0_8px_rgba(255,0,51,0.5)]">🎰</span>{" "}
             Challenge Slot
@@ -312,7 +312,7 @@ export const ChallengeWheel = () => {
           <div className="lg:col-span-7 flex items-center justify-center lg:justify-start">
             <div className="relative">
               {/* Cabinet outer frame — brushed metal look */}
-              <div className="slot-cabinet relative rounded-[28px] p-5 sm:p-7 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8),inset_0_2px_0_rgba(255,255,255,0.08)] border border-white/[0.08]">
+              <div className="slot-cabinet relative rounded-[20px] border border-white/[0.08] p-3 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8),inset_0_2px_0_rgba(255,255,255,0.08)] sm:rounded-[28px] sm:p-7">
                 {/* Marquee lights — running around the cabinet edge */}
                 <div className="absolute inset-x-6 top-2 flex justify-between pointer-events-none">
                   {Array.from({ length: 11 }).map((_, i) => (
@@ -338,7 +338,7 @@ export const ChallengeWheel = () => {
                 </div>
 
                 {/* Inner display — black glass behind the reels */}
-                <div className="slot-display relative rounded-2xl bg-black p-3 sm:p-4 border border-white/10 shadow-[inset_0_4px_20px_rgba(0,0,0,0.9)]">
+                <div className="slot-display relative rounded-2xl border border-white/10 bg-black p-3 shadow-[inset_0_4px_20px_rgba(0,0,0,0.9)] sm:p-4">
                   {/* Selection highlight bar — overlays the center row across all 3 reels */}
                   <div
                     className="absolute left-3 right-3 sm:left-4 sm:right-4 z-30 pointer-events-none border-y-2 border-[#ff0033]/70 bg-gradient-to-r from-[#ff0033]/[0.08] via-[#ff4b5f]/[0.05] to-[#ff0033]/[0.08] shadow-[0_0_30px_rgba(255,0,51,0.4),inset_0_0_20px_rgba(255,0,51,0.15)]"
@@ -362,7 +362,7 @@ export const ChallengeWheel = () => {
                   </div>
 
                   {/* Three reels */}
-                  <div className="grid grid-cols-[1fr_2fr_1fr] gap-2 sm:gap-3 relative">
+                  <div className="relative grid grid-cols-[1fr_2fr_1fr] gap-1.5 sm:gap-3">
                     {/* Reel 1 — game icon */}
                     <Reel
                       items={CHALLENGES}
@@ -421,7 +421,7 @@ export const ChallengeWheel = () => {
                 </div>
 
                 {/* Cabinet footer — credits + spin counter */}
-                <div className="flex items-center justify-between mt-4 px-2 pb-1">
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 px-1 pb-1 sm:px-2">
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => setLocked((v) => !v)}
@@ -536,7 +536,7 @@ export const ChallengeWheel = () => {
 
           {/* Verdict Card */}
           <div className="lg:col-span-5">
-            <Card className="border border-white/10 bg-[#181818]/70 backdrop-blur-xl p-8 relative overflow-hidden h-full flex flex-col justify-center shadow-[0_4px_30px_rgba(0,0,0,0.4)]">
+            <Card className="relative flex h-full flex-col justify-center overflow-hidden border border-white/10 bg-[#181818]/70 p-5 shadow-[0_4px_30px_rgba(0,0,0,0.4)] backdrop-blur-xl sm:p-8">
               <div className="absolute top-0 right-0 w-24 h-24 bg-[#ff0033]/10 blur-xl pointer-events-none rounded-full animate-pulse" />
 
               <div className="space-y-6 relative z-10">

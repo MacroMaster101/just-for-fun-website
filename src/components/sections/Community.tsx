@@ -8,10 +8,10 @@ const DISCORD_INVITE_URL = "https://discord.gg/jzcNVPGx3h";
 
 export const Community = () => {
   return (
-    <section id="community" className="relative py-24 bg-[#060606] overflow-hidden bg-dot-pattern">
+    <section id="community" className="relative overflow-hidden bg-[#060606] bg-dot-pattern py-20 sm:py-24">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#5865F2]/45 to-transparent" />
 
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6">
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-12 space-y-3">
           <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-white tracking-tight flex items-center justify-center gap-3">
@@ -27,7 +27,7 @@ export const Community = () => {
         </div>
 
         {/* Widget Embed */}
-        <div className="grid lg:grid-cols-[1fr_auto] gap-8 items-center justify-center">
+        <div className="grid items-center justify-center gap-8 lg:grid-cols-[1fr_auto]">
           <div className="relative mx-auto w-full max-w-[350px] animate-fade-in-up">
             <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-[#5865F2]/40 via-[#ff0033]/20 to-[#5865F2]/40 blur-xl opacity-60" />
             <div className="relative rounded-2xl border border-white/10 bg-[#181818]/70 backdrop-blur-xl overflow-hidden shadow-[0_0_30px_rgba(88,101,242,0.25)]">
@@ -37,9 +37,17 @@ export const Community = () => {
                 height="500"
                 sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
                 title="Just For Fun Discord Server"
-                className="block border-0"
+                className="block h-[460px] w-full max-w-full border-0 sm:h-[500px]"
               />
             </div>
+            <a
+              href={DISCORD_INVITE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#5865F2] px-5 py-3 text-sm font-bold uppercase tracking-wider text-white shadow-[0_0_24px_rgba(88,101,242,0.35)] transition hover:scale-[1.02] lg:hidden"
+            >
+              <Discord size={18} /> Join the Server
+            </a>
           </div>
 
           {/* Side blurb + CTA (desktop only) */}

@@ -156,7 +156,7 @@ export const Hero = () => {
       {/* Animated grid lines */}
       <div className="absolute inset-x-0 top-24 h-px bg-gradient-to-r from-transparent via-[#ff0033]/60 to-transparent" />
 
-      <div className="relative z-10 mx-auto grid min-h-[calc(100vh-6rem)] max-w-7xl grid-cols-1 items-center gap-10 px-5 pb-16 sm:px-6 lg:grid-cols-12">
+      <div className="relative z-10 mx-auto grid min-h-[calc(100vh-6rem)] max-w-7xl grid-cols-1 items-center gap-8 px-5 pb-16 sm:gap-10 sm:px-6 lg:grid-cols-12">
         {/* LEFT: Copy block */}
         <div className="lg:col-span-7">
           <div className="mb-6 flex flex-wrap items-center gap-3 animate-fade-in-up">
@@ -268,7 +268,7 @@ export const Hero = () => {
 
         {/* RIGHT: Spline 3D Robot */}
         <div className="relative lg:col-span-5">
-          <div className="relative aspect-square w-full max-w-[360px] mx-auto sm:max-w-[460px] lg:max-w-[560px]">
+          <div className="relative mx-auto aspect-square w-full max-w-[300px] sm:max-w-[460px] lg:max-w-[560px]">
             {/* Glow rings behind robot */}
             <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(255,0,51,0.35)_0%,transparent_55%)] animate-glow-pulse" />
             <div className="absolute inset-8 rounded-full border border-[#ff0033]/20 animate-spin-slow" />
@@ -288,7 +288,7 @@ export const Hero = () => {
             </div>
 
             {/* Floating game logos — drifting behind the robot */}
-            <FloatingGameLogos games={games} />
+            <FloatingGameLogos games={games} className="hidden sm:block" />
 
             <SplineRobot scene={splineScene} className="relative z-10" />
           </div>
@@ -298,7 +298,7 @@ export const Hero = () => {
             onClick={() => {
               document.getElementById("about")?.scrollIntoView({ behavior: "smooth" });
             }}
-            className="absolute -bottom-20 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 cursor-pointer group select-none transition-all duration-300 hover:scale-105"
+            className="absolute -bottom-20 left-1/2 z-20 hidden -translate-x-1/2 cursor-pointer select-none flex-col items-center gap-2 transition-all duration-300 hover:scale-105 sm:flex"
           >
             <style>{`
               @keyframes scrollDotMove {
