@@ -150,8 +150,9 @@ export const Header = () => {
         }`}
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 sm:px-6">
-          {/* Logo */}
-          <a href="#hero" className="group flex items-center gap-3">
+          {/* Logo — links to home on admin (and other non-homepage routes),
+              jumps to #hero anchor on the homepage. */}
+          <a href={isAdminPage ? "/" : "#hero"} className="group flex items-center gap-3">
             <span className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#ff0033] to-[#b30024] text-white shadow-[0_0_24px_rgba(255,0,51,0.45)] transition-transform group-hover:scale-110">
               <Youtube size={22} />
               <span className="absolute inset-0 rounded-xl border border-white/20" />

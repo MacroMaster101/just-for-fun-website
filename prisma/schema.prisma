@@ -225,6 +225,33 @@ model Highlight {
   @@index([submittedByUserId])
 }
 
+/// Loot grade tag rendered on each Creator Shop card.
+enum MerchGrade {
+  LEGENDARY
+  RARE
+  COMMON
+}
+
+/// One product card in the Creator Shop section. Empty table + the
+/// `shop.live` SiteSetting being absent/"false" → the public Merch
+/// component renders a "Coming Soon" panel instead of the grid.
+model MerchItem {
+  id          String     @id @default(uuid())
+  name        String
+  description String     @default("")
+  /// Price in the channel's display currency. Stored as a plain number;
+  /// the UI formats it with the dollar sign.
+  price       Float      @default(0)
+  /// Single emoji rendered as the lo-fi fallback when imageUrl is empty.
+  emoji       String     @default("🛍️")
+  imageUrl    String     @default("")
+  grade       MerchGrade @default(COMMON)
+  /// Manual ordering — lower = earlier in the grid. Defaults to creation time.
+  sortOrder   Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
 model SquadMember {
   id              String   @id @default(uuid())
   name            String

@@ -72,6 +72,13 @@ const ALLOWED_KEYS: Record<string, (v: string) => string | null> = {
     }
     return null;
   },
+  "shop.live": (v) => {
+    if (v === "") return null;
+    if (v !== "true" && v !== "false") {
+      return "Shop live must be 'true' or 'false'.";
+    }
+    return null;
+  },
 };
 
 export async function GET() {

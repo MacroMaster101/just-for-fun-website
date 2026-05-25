@@ -29,6 +29,7 @@ import {
   Check,
   XCircle,
   Play,
+  Store,
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useRouter } from "next/navigation";
@@ -41,7 +42,9 @@ import { SplineRobot } from "@/components/ui/SplineRobot";
 import { SquadMemberEditor } from "./SquadMemberEditor";
 import { StreamSlotEditor } from "./StreamSlotEditor";
 import { EmojiPicker } from "./EmojiPicker";
+import { MerchEditor } from "./MerchEditor";
 import {
+  emptyMerchItem,
   emptySoundClip,
   emptySquadMember,
   emptyStreamSlot,
@@ -50,6 +53,7 @@ import {
   type Game,
   type Highlight,
   type HighlightStatus,
+  type MerchItem,
   type MusicTrack,
   type SoundClip,
   type SquadMember,
@@ -105,7 +109,7 @@ export default function AdminPage() {
   const [countdown, setCountdown] = useState(5);
 
   // Dashboard states
-  const [activeTab, setActiveTab] = useState<"command" | "inbox" | "admins" | "cache" | "music" | "squad" | "schedule" | "sounds" | "highlights" | "settings" | "games">("command");
+  const [activeTab, setActiveTab] = useState<"command" | "inbox" | "admins" | "cache" | "music" | "squad" | "schedule" | "sounds" | "highlights" | "settings" | "games" | "merch">("command");
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [admins, setAdmins] = useState<AdminEmail[]>([]);
   const [tracks, setTracks] = useState<MusicTrack[]>([]);
@@ -187,6 +191,15 @@ export default function AdminPage() {
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [settingsSuccess, setSettingsSuccess] = useState<string | null>(null);
+
+  // Creator Shop state
+  const [merchItems, setMerchItems] = useState<MerchItem[]>([]);
+  const [editingMerch, setEditingMerch] = useState<MerchItem | null>(null);
+  const [creatingMerch, setCreatingMerch] = useState<typeof emptyMerchItem | null>(null);
+  const [merchFormError, setMerchFormError] = useState<string | null>(null);
+  const [merchFormSuccess, setMerchFormSuccess] = useState<string | null>(null);
+  const [shopLive, setShopLive] = useState(false);
+  const [shopLiveSaved, setShopLiveSaved] = useState(false);
 
   // Floating settings state
   const [floatingGames, setFloatingGames] = useState<any[]>([]);
@@ -516,8 +529,90 @@ export default function AdminPage() {
       } else {
         setFloatingWords(DEFAULT_SYSTEM_WORDS);
       }
+
+      const live = data.settings?.["shop.live"] === "true";
+      setShopLive(live);
+      setShopLiveSaved(live);
     } catch (err) {
       console.error("Failed to fetch settings:", err);
+    }
+  };
+
+  const fetchMerch = async () => {
+    try {
+      const res = await fetch("/api/admin/merch", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        setMerchItems(data.items || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch merch items:", err);
+    }
+  };
+
+  const handleSaveMerch = async (item: MerchItem | (typeof emptyMerchItem & { id?: string })) => {
+    setMerchFormError(null);
+    setMerchFormSuccess(null);
+    const isUpdate = "id" in item && typeof item.id === "string" && item.id.length > 0;
+    try {
+      const res = await fetch("/api/admin/merch", {
+        method: isUpdate ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(item),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setMerchFormError(data.error || "Failed to save product.");
+        return;
+      }
+      setMerchFormSuccess(isUpdate ? "Product updated." : "Product added.");
+      setEditingMerch(null);
+      setCreatingMerch(null);
+      await fetchMerch();
+    } catch (err) {
+      console.error("Failed to save merch:", err);
+      setMerchFormError("Network error while saving.");
+    }
+  };
+
+  const handleDeleteMerch = async (id: string) => {
+    if (!confirm("Delete this product? This cannot be undone.")) return;
+    try {
+      const res = await fetch("/api/admin/merch", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (res.ok) {
+        setMerchItems((prev) => prev.filter((m) => m.id !== id));
+      }
+    } catch (err) {
+      console.error("Failed to delete merch:", err);
+    }
+  };
+
+  const handleSaveShopLive = async () => {
+    setSettingsError(null);
+    setSettingsSuccess(null);
+    setSettingsSaving(true);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: "shop.live", value: shopLive ? "true" : "false" }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setSettingsError(data.error || "Failed to save shop status.");
+        return;
+      }
+      setShopLiveSaved(shopLive);
+      setSettingsSuccess(shopLive ? "Shop is now LIVE." : "Shop is now in Coming Soon mode.");
+    } catch (err) {
+      console.error("Failed to toggle shop live:", err);
+      setSettingsError("Network error while saving.");
+    } finally {
+      setSettingsSaving(false);
     }
   };
 
@@ -1009,6 +1104,9 @@ export default function AdminPage() {
       fetchGames();
     } else if (activeTab === "settings") {
       fetchSettings();
+    } else if (activeTab === "merch") {
+      fetchMerch();
+      fetchSettings();
     }
     /* eslint-enable react-hooks/set-state-in-effect */
     // fetchHighlights closes over highlightFilter; listing the filter in deps
@@ -1373,6 +1471,7 @@ export default function AdminPage() {
                 { id: "sounds", name: "Soundboard", icon: <Volume2 size={16} /> },
                 { id: "highlights", name: "Highlights Queue", icon: <Sparkles size={16} /> },
                 { id: "games", name: "Manage Games", icon: <Gamepad2 size={16} /> },
+                { id: "merch", name: "Creator Shop", icon: <Store size={16} /> },
                 { id: "settings", name: "Site Settings", icon: <Settings size={16} /> },
                 { id: "cache", name: "YouTube Cache", icon: <RefreshCw size={16} /> },
               ].map((tab) => (
@@ -3237,6 +3336,190 @@ export default function AdminPage() {
                       )}
                     </div>
                   </Card>
+                </div>
+              )}
+
+              {/* Creator Shop — products + live toggle */}
+              {activeTab === "merch" && (
+                <div className="space-y-6">
+                  {/* Live toggle */}
+                  <Card className="p-8 border-[var(--color-border)] relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-1.5 h-full bg-[#ff0033]" />
+                    <div className="space-y-5">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#ff0033]/15 text-[#ff4b5f]">
+                          <Store size={18} />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-display font-extrabold text-xl text-[var(--color-text)]">
+                            Creator Shop Status
+                          </h3>
+                          <p className="text-xs text-[var(--color-text-muted)]">
+                            Off → public site shows a Coming Soon panel. On → the product grid is live.
+                          </p>
+                        </div>
+                        <Badge variant={shopLiveSaved ? "primary" : "secondary"}>
+                          {shopLiveSaved ? "LIVE" : "COMING SOON"}
+                        </Badge>
+                      </div>
+
+                      <label className="flex items-center gap-3 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={shopLive}
+                          onChange={(e) => setShopLive(e.target.checked)}
+                          className="h-4 w-4 accent-[#ff0033]"
+                        />
+                        <span className="text-sm font-bold text-[var(--color-text)]">
+                          Shop is live (show product grid publicly)
+                        </span>
+                      </label>
+
+                      {settingsError && (
+                        <div className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-xs font-bold text-red-500">
+                          <AlertTriangle size={14} /> {settingsError}
+                        </div>
+                      )}
+                      {settingsSuccess && (
+                        <div className="flex items-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-xs font-bold text-green-500">
+                          <CheckCircle2 size={14} /> {settingsSuccess}
+                        </div>
+                      )}
+
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          onClick={() => setShopLive(shopLiveSaved)}
+                          disabled={shopLive === shopLiveSaved || settingsSaving}
+                        >
+                          Revert
+                        </Button>
+                        <Button
+                          onClick={handleSaveShopLive}
+                          disabled={settingsSaving || shopLive === shopLiveSaved}
+                          className="gap-2"
+                        >
+                          {settingsSaving ? "Saving…" : "Save Status"}
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+
+                  {/* Product list */}
+                  <Card className="p-8 border-[var(--color-border)] relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-1.5 h-full bg-[#ff0033]" />
+                    <div className="space-y-5">
+                      <div className="flex items-center justify-between gap-3 flex-wrap">
+                        <div>
+                          <h3 className="font-display font-extrabold text-xl text-[var(--color-text)]">
+                            Products ({merchItems.length})
+                          </h3>
+                          <p className="text-xs text-[var(--color-text-muted)]">
+                            Add, edit, or remove items shown in the Creator Shop grid.
+                          </p>
+                        </div>
+                        <Button
+                          onClick={() => {
+                            setCreatingMerch({ ...emptyMerchItem });
+                            setMerchFormError(null);
+                            setMerchFormSuccess(null);
+                          }}
+                          className="gap-2"
+                        >
+                          <Plus size={14} /> Add Product
+                        </Button>
+                      </div>
+
+                      {merchFormSuccess && (
+                        <div className="flex items-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-xs font-bold text-green-500">
+                          <CheckCircle2 size={14} /> {merchFormSuccess}
+                        </div>
+                      )}
+
+                      {merchItems.length === 0 && !creatingMerch ? (
+                        <div className="rounded-xl border border-dashed border-[var(--color-border)] p-10 text-center text-sm text-[var(--color-text-muted)]">
+                          No products yet. The public shop will show a Coming Soon panel until you add some.
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {merchItems.map((item) => (
+                            <div
+                              key={item.id}
+                              className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-soft)]/40 p-4 flex gap-4"
+                            >
+                              <div className="h-20 w-20 shrink-0 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] overflow-hidden relative flex items-center justify-center text-3xl">
+                                {item.imageUrl ? (
+                                  <img
+                                    src={item.imageUrl}
+                                    alt={item.name}
+                                    className="absolute inset-0 h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  <span>{item.emoji}</span>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="min-w-0">
+                                    <p className="font-display font-extrabold text-sm text-[var(--color-text)] truncate">
+                                      {item.name}
+                                    </p>
+                                    <p className="text-[11px] text-[var(--color-text-muted)] line-clamp-2 mt-0.5">
+                                      {item.description || "—"}
+                                    </p>
+                                  </div>
+                                  <Badge variant="secondary">{item.grade}</Badge>
+                                </div>
+                                <div className="flex items-center justify-between mt-2">
+                                  <span className="text-sm font-black text-[#ff4b5f]">
+                                    ${item.price.toFixed(2)}
+                                  </span>
+                                  <div className="flex gap-1">
+                                    <button
+                                      onClick={() => {
+                                        setEditingMerch(item);
+                                        setMerchFormError(null);
+                                        setMerchFormSuccess(null);
+                                      }}
+                                      className="p-1.5 rounded-lg border border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:border-[#ff0033]/40 transition"
+                                      title="Edit"
+                                    >
+                                      <UserCog size={13} />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteMerch(item.id)}
+                                      className="p-1.5 rounded-lg border border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-red-500 hover:border-red-500/40 transition"
+                                      title="Delete"
+                                    >
+                                      <Trash2 size={13} />
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+
+                  {/* Create / Edit form modal-ish (inline) */}
+                  {(creatingMerch || editingMerch) && (
+                    <Card className="p-8 border-[var(--color-border)] relative overflow-hidden">
+                      <div className="absolute top-0 left-0 w-1.5 h-full bg-[#ff0033]" />
+                      <MerchEditor
+                        initial={editingMerch ?? creatingMerch!}
+                        isUpdate={!!editingMerch}
+                        onCancel={() => {
+                          setEditingMerch(null);
+                          setCreatingMerch(null);
+                          setMerchFormError(null);
+                        }}
+                        onSave={handleSaveMerch}
+                        error={merchFormError}
+                      />
+                    </Card>
+                  )}
                 </div>
               )}
 

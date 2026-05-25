@@ -141,6 +141,31 @@ export interface SquadMember {
   sortOrder: number;
 }
 
+export type MerchGrade = "LEGENDARY" | "RARE" | "COMMON";
+
+export interface MerchItem {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  emoji: string;
+  imageUrl: string;
+  grade: MerchGrade;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const emptyMerchItem: Omit<MerchItem, "id" | "createdAt" | "updatedAt"> = {
+  name: "",
+  description: "",
+  price: 0,
+  emoji: "🛍️",
+  imageUrl: "",
+  grade: "COMMON",
+  sortOrder: 0,
+};
+
 export const emptySquadMember: Omit<SquadMember, "id"> = {
   name: "",
   role: "",
