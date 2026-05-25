@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { supabase } from "@/lib/supabase/client";
+import { resolveAvatarUrl } from "@/lib/avatar";
 
 interface ProfileData {
   id: string;
@@ -72,6 +73,11 @@ export const ProfileModal = ({
   const [pwError, setPwError] = useState<string | null>(null);
   const [pwDone, setPwDone] = useState(false);
 
+  // Account deletion state (type-DELETE confirmation flow)
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   // Determine whether the user has an email/password identity (vs OAuth-only).
   const hasPasswordIdentity = !!user?.identities?.some(
     (i) => i.provider === "email"
@@ -80,10 +86,15 @@ export const ProfileModal = ({
     (i) => i.provider !== "email"
   )?.provider;
 
-  // Reset to chosen tab whenever the modal is opened.
+  // Reset to chosen tab whenever the modal is opened, and clear any stale
+  // confirm text from the danger zone so the user has to re-type it next time.
   useEffect(() => {
     if (!isOpen) return;
-    const t = setTimeout(() => setTab(initialTab), 0);
+    const t = setTimeout(() => {
+      setTab(initialTab);
+      setDeleteConfirm("");
+      setDeleteError(null);
+    }, 0);
     return () => clearTimeout(t);
   }, [isOpen, initialTab]);
 
@@ -242,6 +253,32 @@ export const ProfileModal = ({
     setPwDone(true);
   };
 
+  const handleDeleteAccount = async () => {
+    if (deleteConfirm.trim() !== "DELETE") {
+      setDeleteError("Type DELETE (in caps) to confirm.");
+      return;
+    }
+    setDeleteError(null);
+    setDeleting(true);
+    try {
+      const res = await fetch("/api/profile", { method: "DELETE" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setDeleteError(data.error || "Failed to delete account.");
+        setDeleting(false);
+        return;
+      }
+      // Sign the local session out and bounce home. The auth.users row is
+      // already gone, but signOut clears the cookies the SSR client uses.
+      await supabase().auth.signOut().catch(() => {});
+      window.location.assign("/?account=deleted");
+    } catch (err) {
+      console.error("Account delete failed:", err);
+      setDeleteError("Network error while deleting account.");
+      setDeleting(false);
+    }
+  };
+
   const removeFavorite = async (fav: FavoriteItem) => {
     setFavorites((prev) => prev.filter((f) => f.id !== fav.id));
     await fetch("/api/favorites", {
@@ -251,12 +288,16 @@ export const ProfileModal = ({
     });
   };
 
-  // Effective avatar: custom upload first, then OAuth provider fallback.
-  const avatar =
+  // Effective avatar: custom upload → OAuth provider → DiceBear bot
+  // seeded by user.id (same fallback used in the header pill and the
+  // public Crew Wall, so the user sees a consistent identity).
+  const avatar = resolveAvatarUrl(
     profile?.avatarUrl ??
-    (user.user_metadata?.avatar_url as string | undefined) ??
-    (user.user_metadata?.picture as string | undefined) ??
-    null;
+      (user.user_metadata?.avatar_url as string | undefined) ??
+      (user.user_metadata?.picture as string | undefined) ??
+      null,
+    user.id
+  );
   const initial = (profile?.name || user.email || "U").charAt(0).toUpperCase();
 
   return createPortal(
@@ -565,6 +606,62 @@ export const ProfileModal = ({
                   </p>
                 </div>
               )}
+
+              {/* Danger Zone — permanently delete this account */}
+              <div className="mt-2 rounded-lg border border-red-500/30 bg-red-500/[0.04] p-4">
+                <div className="mb-3 flex items-center gap-2">
+                  <Trash2 size={14} className="text-red-400" />
+                  <h3 className="font-display text-xs font-black uppercase tracking-[0.2em] text-red-400">
+                    Danger Zone
+                  </h3>
+                </div>
+                <p className="text-xs text-neutral-400 leading-relaxed">
+                  Deleting your account is <span className="font-bold text-white">permanent</span>.
+                  All your favorites, uploaded avatar, and sign-in credentials
+                  will be erased. You can sign up again with the same email
+                  later, but your history won&apos;t come back.
+                </p>
+                <label className="mt-4 grid gap-1.5">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500">
+                    Type{" "}
+                    <span className="font-mono text-red-400">DELETE</span>{" "}
+                    to confirm
+                  </span>
+                  <input
+                    type="text"
+                    value={deleteConfirm}
+                    onChange={(e) => {
+                      setDeleteConfirm(e.target.value);
+                      if (deleteError) setDeleteError(null);
+                    }}
+                    placeholder="DELETE"
+                    className="rounded-lg border border-white/10 bg-[#0a0a0a] px-3 py-2.5 text-sm font-mono text-white placeholder:text-neutral-700 focus:border-red-500 focus:outline-none"
+                  />
+                </label>
+
+                {deleteError && (
+                  <p className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-300">
+                    {deleteError}
+                  </p>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleDeleteAccount}
+                  disabled={deleting || deleteConfirm.trim() !== "DELETE"}
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-red-500/50 bg-red-500/10 px-4 py-2.5 text-sm font-black uppercase tracking-wide text-red-300 transition hover:bg-red-500/20 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {deleting ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" /> Deleting account…
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 size={14} /> Permanently Delete Account
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           )}
         </div>

@@ -34,11 +34,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const client = supabase();
     let mounted = true;
 
+    // Seed the user's Profile row server-side the first time we observe
+    // them logged in. This is what feeds the public Crew Wall — without
+    // it, members who never open their profile modal would be invisible.
+    // /api/profile GET is idempotent (upsert), so calling more than once
+    // is harmless. Cheap network ping, fire-and-forget.
+    let seededFor: string | null = null;
+    const seedProfile = (userId: string | null) => {
+      if (!userId || seededFor === userId) return;
+      seededFor = userId;
+      fetch("/api/profile", { cache: "no-store" }).catch(() => {
+        // Reset so we'll retry on the next auth state change.
+        seededFor = null;
+      });
+    };
+
     client.auth.getSession().then(({ data }) => {
       if (!mounted) return;
       setSession(data.session);
       setUser(data.session?.user ?? null);
       setLoading(false);
+      seedProfile(data.session?.user?.id ?? null);
     });
 
     const {
@@ -48,6 +64,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(newSession);
       setUser(newSession?.user ?? null);
       setLoading(false);
+      seedProfile(newSession?.user?.id ?? null);
     });
 
     // bfcache guard: whenever the page is restored from the back/forward

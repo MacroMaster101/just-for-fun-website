@@ -5,6 +5,7 @@ import { ChevronDown, Heart, LogOut, UserCog, ShieldAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { ProfileModal } from "@/components/auth/ProfileModal";
+import { resolveAvatarUrl } from "@/lib/avatar";
 
 interface UserMenuProps {
   /** Display variant — desktop pill or mobile full-width. */
@@ -22,7 +23,9 @@ export const UserMenu = ({
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTab, setModalTab] = useState<"profile" | "favorites">("profile");
   const [favCount, setFavCount] = useState<number | null>(null);
-  const [avatarError, setAvatarError] = useState(false);
+  // avatarError counts failures: 0 = use OAuth/uploaded, 1 = fall back to
+  // DiceBear, 2 = give up and show the initial letter.
+  const [avatarError, setAvatarError] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
   const [prevUserId, setPrevUserId] = useState<string | null>(user?.id ?? null);
   const anchorRef = useRef<HTMLDivElement | null>(null);
@@ -30,7 +33,7 @@ export const UserMenu = ({
   // Reset avatar load error state when the user identity changes (login/logout)
   if (prevUserId !== (user?.id ?? null)) {
     setPrevUserId(user?.id ?? null);
-    setAvatarError(false);
+    setAvatarError(0);
     if (!user) {
       setIsAdmin(false);
     }
@@ -99,10 +102,19 @@ export const UserMenu = ({
     (user.user_metadata?.full_name as string | undefined) ||
     user.email?.split("@")[0] ||
     "User";
-  const displayAvatar =
+  const oauthAvatar =
     (user.user_metadata?.avatar_url as string | undefined) ||
     (user.user_metadata?.picture as string | undefined) ||
     null;
+  // 3-stage fallback chain: OAuth/uploaded → DiceBear → initial letter.
+  // Seeded by user.id so the DiceBear fallback is stable across sessions
+  // and matches what the public Crew Wall renders for the same person.
+  const displayAvatar =
+    avatarError === 0
+      ? resolveAvatarUrl(oauthAvatar, user.id)
+      : avatarError === 1
+        ? resolveAvatarUrl(null, user.id)
+        : null;
 
   const openModal = (tab: "profile" | "favorites") => {
     setModalTab(tab);
@@ -135,12 +147,12 @@ export const UserMenu = ({
           aria-haspopup="menu"
           aria-expanded={open}
         >
-          {!avatarError && displayAvatar ? (
+          {displayAvatar ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={displayAvatar}
               alt={displayName}
-              onError={() => setAvatarError(true)}
+              onError={() => setAvatarError((n) => n + 1)}
               className={
                 variant === "desktop"
                   ? "h-7 w-7 rounded-full object-cover"
@@ -149,7 +161,7 @@ export const UserMenu = ({
             />
           ) : (
             <span
-              className={`flex items-center justify-center rounded-full bg-[#ff0033]/20 font-black text-white ${
+              className={`flex items-center justify-center rounded-full bg-gradient-to-br from-[#ff0033] to-[#b30024] font-black text-white ${
                 variant === "desktop" ? "h-7 w-7 text-xs" : "h-9 w-9 text-sm"
               }`}
             >
@@ -184,16 +196,16 @@ export const UserMenu = ({
           >
             {/* User identity row */}
             <div className="flex items-center gap-3 rounded-lg px-2.5 py-2.5">
-              {!avatarError && displayAvatar ? (
+              {displayAvatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={displayAvatar}
                   alt={displayName}
-                  onError={() => setAvatarError(true)}
+                  onError={() => setAvatarError((n) => n + 1)}
                   className="h-10 w-10 rounded-full border border-white/10 object-cover"
                 />
               ) : (
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#ff0033]/20 text-sm font-black text-white">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#ff0033] to-[#b30024] text-sm font-black text-white">
                   {displayName.charAt(0).toUpperCase()}
                 </span>
               )}
