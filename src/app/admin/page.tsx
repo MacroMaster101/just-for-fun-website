@@ -21,6 +21,9 @@ import {
   Radio,
   Settings,
   Bot,
+  Calendar,
+  ExternalLink,
+  Gamepad2,
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useRouter } from "next/navigation";
@@ -31,12 +34,17 @@ import { Badge } from "@/components/ui/Badge";
 import { Header } from "@/components/layout/Header";
 import { SplineRobot } from "@/components/ui/SplineRobot";
 import { SquadMemberEditor } from "./SquadMemberEditor";
+import { StreamSlotEditor } from "./StreamSlotEditor";
 import {
   emptySquadMember,
+  emptyStreamSlot,
   type AdminEmail,
   type ContactMessage,
+  type Game,
   type MusicTrack,
   type SquadMember,
+  type StreamSlot,
+  type UpcomingStream,
 } from "./types";
 
 export default function AdminPage() {
@@ -49,7 +57,7 @@ export default function AdminPage() {
   const [countdown, setCountdown] = useState(5);
   
   // Dashboard states
-  const [activeTab, setActiveTab] = useState<"command" | "inbox" | "admins" | "cache" | "music" | "squad" | "settings">("command");
+  const [activeTab, setActiveTab] = useState<"command" | "inbox" | "admins" | "cache" | "music" | "squad" | "schedule" | "settings">("command");
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [admins, setAdmins] = useState<AdminEmail[]>([]);
   const [tracks, setTracks] = useState<MusicTrack[]>([]);
@@ -59,7 +67,24 @@ export default function AdminPage() {
   const [squadFormError, setSquadFormError] = useState<string | null>(null);
   const [squadFormSuccess, setSquadFormSuccess] = useState<string | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
-  
+
+  // Games (with logos) state — drives the hero marquee when populated.
+  const [games, setGames] = useState<Game[]>([]);
+  const [newGameName, setNewGameName] = useState("");
+  const [gameUploadingFor, setGameUploadingFor] = useState<string | null>(null);
+  const [gameError, setGameError] = useState<string | null>(null);
+  const [gameSuccess, setGameSuccess] = useState<string | null>(null);
+
+  // Schedule (stream slots) state
+  const [streamSlots, setStreamSlots] = useState<StreamSlot[]>([]);
+  // Auto-pulled from the cached YouTube payload — read-only on this tab.
+  const [upcomingYouTubeStreams, setUpcomingYouTubeStreams] = useState<UpcomingStream[]>([]);
+  const [youtubeCachedAt, setYoutubeCachedAt] = useState<string | null>(null);
+  const [editingSlot, setEditingSlot] = useState<StreamSlot | null>(null);
+  const [creatingSlot, setCreatingSlot] = useState<typeof emptyStreamSlot | null>(null);
+  const [slotFormError, setSlotFormError] = useState<string | null>(null);
+  const [slotFormSuccess, setSlotFormSuccess] = useState<string | null>(null);
+
   // Message reading modal/drawer state
   const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
   const [replyText, setReplyText] = useState("");
@@ -213,8 +238,175 @@ export default function AdminPage() {
       const sceneUrl = (data.settings?.["hero.splineScene"] as string | undefined) ?? "";
       setSplineSceneUrl(sceneUrl);
       setSplineSceneSaved(sceneUrl);
+
     } catch (err) {
       console.error("Failed to fetch settings:", err);
+    }
+  };
+
+  const fetchGames = async () => {
+    try {
+      const res = await fetch("/api/admin/games", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        setGames(data.games || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch games:", err);
+    }
+  };
+
+  const flashGameSuccess = (msg: string) => {
+    setGameSuccess(msg);
+    setGameError(null);
+    setTimeout(() => setGameSuccess(null), 2500);
+  };
+
+  const handleAddGame = async () => {
+    const name = newGameName.trim();
+    if (!name) {
+      setGameError("Name is required.");
+      return;
+    }
+    try {
+      const res = await fetch("/api/admin/games", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, sortOrder: games.length }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setGameError(data.error || "Failed to add game.");
+        return;
+      }
+      setNewGameName("");
+      flashGameSuccess("Game added. Upload a logo next.");
+      await fetchGames();
+    } catch {
+      setGameError("Network error.");
+    }
+  };
+
+  const handleRenameGame = async (id: string, name: string) => {
+    try {
+      const res = await fetch("/api/admin/games", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, name }),
+      });
+      if (res.ok) await fetchGames();
+    } catch (err) {
+      console.error("Rename failed:", err);
+    }
+  };
+
+  const handleDeleteGame = async (id: string, name: string) => {
+    if (!confirm(`Remove "${name}" from the marquee?`)) return;
+    try {
+      const res = await fetch("/api/admin/games", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (res.ok) {
+        flashGameSuccess("Game removed.");
+        await fetchGames();
+      }
+    } catch (err) {
+      console.error("Delete failed:", err);
+    }
+  };
+
+  const handleUploadGameLogo = async (gameId: string, file: File) => {
+    setGameUploadingFor(gameId);
+    setGameError(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("gameId", gameId);
+      const res = await fetch("/api/admin/games/logo", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setGameError(data.error || "Logo upload failed.");
+        return;
+      }
+      flashGameSuccess("Logo uploaded.");
+      await fetchGames();
+    } catch {
+      setGameError("Network error.");
+    } finally {
+      setGameUploadingFor(null);
+    }
+  };
+
+  const fetchSchedule = async () => {
+    try {
+      const res = await fetch("/api/admin/schedule", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        setStreamSlots(data.slots || []);
+        setUpcomingYouTubeStreams(filterFreshUpcoming(data.upcomingStreams || []));
+        setYoutubeCachedAt(data.youtubeCachedAt ?? null);
+      }
+    } catch (err) {
+      console.error("Failed to fetch schedule:", err);
+    }
+  };
+
+  const flashSlotSuccess = (msg: string) => {
+    setSlotFormSuccess(msg);
+    setSlotFormError(null);
+    setTimeout(() => setSlotFormSuccess(null), 2500);
+  };
+
+  const handleSaveSlot = async (
+    slot: StreamSlot | (typeof emptyStreamSlot),
+    isNew: boolean
+  ) => {
+    setSlotFormError(null);
+    setSlotFormSuccess(null);
+    if (!slot.day.trim() || !slot.title.trim() || !slot.time.trim()) {
+      setSlotFormError("Day, title, and time are required.");
+      return;
+    }
+    try {
+      const res = await fetch("/api/admin/schedule", {
+        method: isNew ? "POST" : "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(slot),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setSlotFormError(data.error || "Save failed.");
+        return;
+      }
+      flashSlotSuccess(isNew ? "Slot added." : "Slot updated.");
+      setEditingSlot(null);
+      setCreatingSlot(null);
+      await fetchSchedule();
+    } catch (err) {
+      console.error("Failed to save slot:", err);
+      setSlotFormError("Network error.");
+    }
+  };
+
+  const handleDeleteSlot = async (id: string, title: string) => {
+    if (!confirm(`Delete the "${title}" slot?`)) return;
+    try {
+      const res = await fetch("/api/admin/schedule", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (res.ok) {
+        flashSlotSuccess("Slot removed.");
+        await fetchSchedule();
+      }
+    } catch (err) {
+      console.error("Failed to delete slot:", err);
     }
   };
 
@@ -339,8 +531,11 @@ export default function AdminPage() {
       fetchTracks();
     } else if (activeTab === "squad") {
       fetchSquad();
+    } else if (activeTab === "schedule") {
+      fetchSchedule();
     } else if (activeTab === "settings") {
       fetchSettings();
+      fetchGames();
     }
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [activeTab, isAdmin]);
@@ -673,6 +868,7 @@ export default function AdminPage() {
                 { id: "admins", name: "Administration", icon: <Users size={16} /> },
                 { id: "music", name: "Music Stream", icon: <Radio size={16} /> },
                 { id: "squad", name: "Squad Roster", icon: <Users size={16} /> },
+                { id: "schedule", name: "Stream Schedule", icon: <Calendar size={16} /> },
                 { id: "settings", name: "Site Settings", icon: <Settings size={16} /> },
                 { id: "cache", name: "YouTube Cache", icon: <RefreshCw size={16} /> },
               ].map((tab) => (
@@ -1179,9 +1375,182 @@ export default function AdminPage() {
                 </div>
               )}
 
-              {/* Tab 6: Site Settings */}
+              {/* Tab 6: Stream Schedule CRUD */}
+              {activeTab === "schedule" && (
+                <div className="space-y-6">
+                  {/* Read-only: streams the channel owner scheduled on YouTube itself.
+                      Auto-refreshed by the daily cron — sync sooner via YouTube Cache tab. */}
+                  <Card className="p-6 border-[var(--color-border)] relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-1.5 h-full bg-[#ff0033]/60" />
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+                      <div>
+                        <h3 className="font-display font-extrabold text-lg text-[var(--color-text)] flex items-center gap-2">
+                          <Radio size={16} className="text-[#ff4b5f]" />
+                          Auto-pulled from YouTube
+                        </h3>
+                        <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                          Streams you scheduled on YouTube directly. Read-only here — manage them on{" "}
+                          <a
+                            href="https://studio.youtube.com"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#ff4b5f] hover:underline"
+                          >
+                            YouTube Studio
+                          </a>{" "}
+                          and they refresh on the next cron tick (or hit Sync in the YouTube Cache tab).
+                        </p>
+                      </div>
+                      {youtubeCachedAt && (
+                        <span className="text-[10px] text-[var(--color-text-muted)] font-mono whitespace-nowrap">
+                          Cache: {new Date(youtubeCachedAt).toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+
+                    {upcomingYouTubeStreams.length === 0 ? (
+                      <div className="rounded-lg border border-dashed border-[var(--color-border)] p-6 text-center text-xs text-[var(--color-text-muted)]">
+                        No upcoming scheduled streams found on YouTube. When you schedule one in YouTube Studio it will show up here after the next cache refresh.
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {upcomingYouTubeStreams.map((s) => (
+                          <a
+                            key={s.id}
+                            href={s.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-4 p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[#ff0033]/40 transition group"
+                          >
+                            {s.thumbnail && (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={s.thumbnail}
+                                alt=""
+                                className="h-12 w-20 rounded-md object-cover shrink-0 border border-[var(--color-border)]"
+                              />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="font-bold text-sm text-[var(--color-text)] truncate group-hover:text-[#ff4b5f] transition">
+                                {s.title}
+                              </p>
+                              <p className="text-[10px] text-[var(--color-text-muted)] font-mono">
+                                {new Date(s.scheduledStartTime).toLocaleString()}
+                              </p>
+                            </div>
+                            <ExternalLink size={14} className="text-[var(--color-text-muted)] shrink-0" />
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </Card>
+
+                  <Card className="p-6 border-[var(--color-border)]">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+                      <div>
+                        <h3 className="font-display font-extrabold text-xl text-[var(--color-text)]">
+                          📅 Weekly Schedule (manual)
+                        </h3>
+                        <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                          Recurring slots you control. Shown alongside the YouTube auto-pull above. Empty <em>and</em> no YouTube streams = the homepage shows a <strong>Coming soon</strong> placeholder.
+                        </p>
+                      </div>
+                      <Button
+                        onClick={() => {
+                          setCreatingSlot({ ...emptyStreamSlot });
+                          setEditingSlot(null);
+                          setSlotFormError(null);
+                          setSlotFormSuccess(null);
+                        }}
+                        className="gap-2"
+                      >
+                        <Plus size={14} /> Add Slot
+                      </Button>
+                    </div>
+
+                    {slotFormError && (
+                      <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-xs font-bold text-red-500">
+                        <AlertTriangle size={14} /> {slotFormError}
+                      </div>
+                    )}
+                    {slotFormSuccess && (
+                      <div className="mb-4 flex items-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-xs font-bold text-green-500">
+                        <CheckCircle2 size={14} /> {slotFormSuccess}
+                      </div>
+                    )}
+
+                    {streamSlots.length === 0 ? (
+                      <div className="rounded-lg border border-dashed border-[var(--color-border)] p-8 text-center text-sm text-[var(--color-text-muted)]">
+                        No stream slots yet. Click <strong>Add Slot</strong> to create one — the homepage will show a <em>Coming soon</em> card until you do.
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {streamSlots.map((s) => (
+                          <div
+                            key={s.id}
+                            className="flex items-center gap-4 p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]"
+                          >
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[var(--color-surface-2)] font-display font-black text-sm text-[var(--color-text)] shrink-0">
+                              {s.day}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-bold text-sm text-[var(--color-text)] flex items-center gap-2">
+                                <span>{s.icon}</span>
+                                <span className="truncate">{s.title}</span>
+                                {s.featured && (
+                                  <Badge variant="primary" className="text-[9px]">Featured</Badge>
+                                )}
+                              </p>
+                              <p className="text-xs text-[var(--color-text-muted)] truncate">
+                                {s.time}
+                              </p>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setEditingSlot(s);
+                                setCreatingSlot(null);
+                                setSlotFormError(null);
+                                setSlotFormSuccess(null);
+                              }}
+                              className="gap-1.5"
+                            >
+                              <UserCog size={12} /> Edit
+                            </Button>
+                            <button
+                              onClick={() => handleDeleteSlot(s.id, s.title)}
+                              className="p-2 rounded-lg text-red-500 hover:bg-red-500/10 transition cursor-pointer"
+                              aria-label={`Delete ${s.title}`}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </Card>
+
+                  {(editingSlot || creatingSlot) && (
+                    <StreamSlotEditor
+                      key={editingSlot?.id || "new"}
+                      initial={editingSlot || (creatingSlot as typeof emptyStreamSlot)}
+                      isNew={!editingSlot}
+                      onCancel={() => {
+                        setEditingSlot(null);
+                        setCreatingSlot(null);
+                        setSlotFormError(null);
+                      }}
+                      onSave={(slot, isNew) => handleSaveSlot(slot, isNew)}
+                    />
+                  )}
+                </div>
+              )}
+
+              {/* Tab 7: Site Settings — Hero Robot + Games (logos) */}
               {activeTab === "settings" && (
                 <div className="space-y-6">
+                  {/* Hero Robot — Spline scene URL editor with live preview. */}
                   <Card className="p-8 border-[var(--color-border)] relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-1.5 h-full bg-[#ff0033]" />
                     <div className="space-y-6">
@@ -1191,75 +1560,29 @@ export default function AdminPage() {
                         </div>
                         <div>
                           <h3 className="font-display font-extrabold text-xl text-[var(--color-text)]">
-                            Hero Robot (Spline scene)
+                            Hero Robot
                           </h3>
                           <p className="text-xs text-[var(--color-text-muted)]">
-                            Swap the 3D model in the hero section without a redeploy.
+                            Swap the 3D model in the hero section.
                           </p>
                         </div>
                       </div>
 
-                      {/* Currently active scene — shows what the homepage is using right now. */}
-                      <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-                        <div className="flex items-center justify-between gap-3 mb-2">
-                          <div className="flex items-center gap-2">
-                            <span className="relative flex h-2 w-2">
-                              <span className="absolute inset-0 animate-ping rounded-full bg-emerald-500 opacity-60" />
-                              <span className="relative h-2 w-2 rounded-full bg-emerald-500" />
-                            </span>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">
-                              Currently active
-                            </span>
-                          </div>
-                          <span
-                            className={`text-[9px] font-black uppercase tracking-wider rounded-full px-2 py-0.5 ${
-                              splineSceneSaved
-                                ? "bg-[#ff0033]/15 text-[#ff4b5f]"
-                                : "bg-[var(--color-surface-2)] text-[var(--color-text-muted)]"
-                            }`}
-                          >
-                            {splineSceneSaved ? "DB override" : "Built-in default"}
-                          </span>
-                        </div>
-                        {splineSceneSaved ? (
-                          <p className="font-mono text-[11px] text-[var(--color-text)] break-all leading-relaxed">
-                            {splineSceneSaved}
-                          </p>
-                        ) : (
-                          <p className="text-xs text-[var(--color-text-muted)]">
-                            No DB override saved — the homepage is rendering the original built-in robot. Paste a custom Spline URL below to change it.
-                          </p>
-                        )}
+                      <div className="relative w-full aspect-video max-w-md rounded-xl overflow-hidden border border-[var(--color-border)] bg-[var(--color-surface-2)]">
+                        <SplineRobot
+                          key={splineSceneSaved || "default"}
+                          scene={splineSceneSaved || undefined}
+                          className="absolute inset-0"
+                        />
                       </div>
 
-                      {/* Live preview of the current scene. Re-keyed on splineSceneSaved
-                          so it remounts when admin saves a new URL. */}
                       <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">
-                          Live preview
-                        </label>
-                        <div className="relative w-full aspect-video max-w-md rounded-xl overflow-hidden border border-[var(--color-border)] bg-[var(--color-surface-2)]">
-                          <SplineRobot
-                            key={splineSceneSaved || "default"}
-                            scene={splineSceneSaved || undefined}
-                            className="absolute inset-0"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-2 pt-2 border-t border-[var(--color-border)]">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">
-                          Update scene URL
-                        </label>
                         <Input
                           type="text"
                           placeholder="https://prod.spline.design/.../scene.splinecode"
                           value={splineSceneUrl}
                           onChange={(e) => setSplineSceneUrl(e.target.value)}
                         />
-                        <p className="text-[11px] text-[var(--color-text-muted)] leading-relaxed">
-                          Open your scene on <a href="https://spline.design" target="_blank" rel="noopener noreferrer" className="text-[#ff4b5f] hover:underline">spline.design</a>, click <strong>Export</strong> &rarr; <strong>Code Export</strong> &rarr; <strong>React</strong>, and copy the URL ending in <code className="bg-[var(--color-surface-2)] px-1.5 py-0.5 rounded text-[10px]">.splinecode</code>. Save an empty string to fall back to the built-in default.
-                        </p>
                       </div>
 
                       {settingsError && (
@@ -1298,6 +1621,141 @@ export default function AdminPage() {
                           {settingsSaving ? "Saving…" : "Save"}
                         </Button>
                       </div>
+                    </div>
+                  </Card>
+
+                  {/* Games with logos — drives the hero bottom marquee. */}
+                  <Card className="p-8 border-[var(--color-border)] relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-1.5 h-full bg-[#ff0033]" />
+                    <div className="space-y-5">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#ff0033]/15 text-[#ff4b5f]">
+                          <Gamepad2 size={18} />
+                        </div>
+                        <div>
+                          <h3 className="font-display font-extrabold text-xl text-[var(--color-text)]">
+                            Games
+                          </h3>
+                          <p className="text-xs text-[var(--color-text-muted)]">
+                            Logos shown in the scrolling strip at the bottom of the hero.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <Input
+                          placeholder="e.g. Valorant"
+                          value={newGameName}
+                          onChange={(e) => setNewGameName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              handleAddGame();
+                            }
+                          }}
+                          maxLength={60}
+                          className="flex-1"
+                        />
+                        <Button
+                          onClick={handleAddGame}
+                          disabled={!newGameName.trim()}
+                          className="gap-2"
+                        >
+                          <Plus size={14} /> Add
+                        </Button>
+                      </div>
+
+                      {gameError && (
+                        <div className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-xs font-bold text-red-500">
+                          <AlertTriangle size={14} /> {gameError}
+                        </div>
+                      )}
+                      {gameSuccess && (
+                        <div className="flex items-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-xs font-bold text-green-500">
+                          <CheckCircle2 size={14} /> {gameSuccess}
+                        </div>
+                      )}
+
+                      {games.length === 0 ? (
+                        <div className="rounded-lg border border-dashed border-[var(--color-border)] p-6 text-center text-xs text-[var(--color-text-muted)]">
+                          No games yet.
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {games.map((g) => (
+                            <div
+                              key={g.id}
+                              className="flex items-center gap-3 p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]"
+                            >
+                              <div className="h-12 w-12 rounded-lg overflow-hidden border border-[var(--color-border)] bg-[var(--color-surface-2)] flex items-center justify-center shrink-0">
+                                {g.logoUrl ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    src={g.logoUrl}
+                                    alt={g.name}
+                                    className="h-full w-full object-contain"
+                                  />
+                                ) : (
+                                  <Gamepad2 size={18} className="text-[var(--color-text-muted)]" />
+                                )}
+                              </div>
+                              <input
+                                type="text"
+                                value={g.name}
+                                onChange={(e) => {
+                                  const newName = e.target.value;
+                                  setGames((prev) =>
+                                    prev.map((x) =>
+                                      x.id === g.id ? { ...x, name: newName } : x
+                                    )
+                                  );
+                                }}
+                                onBlur={(e) => {
+                                  if (e.target.value.trim() !== g.name) {
+                                    handleRenameGame(g.id, e.target.value.trim());
+                                  }
+                                }}
+                                maxLength={60}
+                                className="flex-1 min-w-0 bg-transparent border-0 outline-none text-sm font-bold text-[var(--color-text)] focus:underline"
+                              />
+                              <label className="cursor-pointer shrink-0">
+                                <input
+                                  type="file"
+                                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                                  onChange={(e) => {
+                                    const f = e.target.files?.[0];
+                                    if (f) handleUploadGameLogo(g.id, f);
+                                    e.target.value = ""; // allow re-uploading same file
+                                  }}
+                                  disabled={gameUploadingFor === g.id}
+                                  className="hidden"
+                                />
+                                <span
+                                  className={`inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-2.5 py-1.5 text-[11px] font-bold transition ${
+                                    gameUploadingFor === g.id
+                                      ? "opacity-50 cursor-not-allowed"
+                                      : "text-[var(--color-text-muted)] hover:border-[#ff0033]/40 hover:text-[var(--color-text)]"
+                                  }`}
+                                >
+                                  <Plus size={12} />
+                                  {gameUploadingFor === g.id
+                                    ? "Uploading…"
+                                    : g.logoUrl
+                                      ? "Replace"
+                                      : "Upload"}
+                                </span>
+                              </label>
+                              <button
+                                onClick={() => handleDeleteGame(g.id, g.name)}
+                                className="p-2 rounded-lg text-red-500 hover:bg-red-500/10 transition cursor-pointer shrink-0"
+                                aria-label={`Delete ${g.name}`}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </Card>
                 </div>
@@ -1476,3 +1934,17 @@ export default function AdminPage() {
     </>
   );
 }
+
+/**
+ * Drops streams whose scheduledStart is already in the past, with a 5-minute
+ * grace window for YouTube cache lag. Lives at module scope so calling
+ * Date.now() doesn't trip React's purity rules inside the component body.
+ */
+function filterFreshUpcoming(streams: UpcomingStream[]): UpcomingStream[] {
+  const now = Date.now();
+  return streams.filter((s) => {
+    const t = Date.parse(s.scheduledStartTime);
+    return Number.isFinite(t) && t > now - 5 * 60 * 1000;
+  });
+}
+

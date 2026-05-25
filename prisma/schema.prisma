@@ -108,6 +108,42 @@ model MusicTrack {
   createdAt DateTime @default(now())
 }
 
+/// One row per stream slot rendered on the homepage Schedule section.
+/// Empty table → the public component shows a "Coming soon" placeholder.
+/// `featured` marks the one slot rendered with the prime-event styling
+/// (only one should be featured at a time; nothing enforces this in DB).
+/// Games the channel actively plays. Rendered in the hero bottom-strip
+/// marquee with each entry showing its logo + name. Empty table falls
+/// back to the text-only DEFAULT_MARQUEE in src/lib/heroDefaults.ts.
+model Game {
+  id        String   @id @default(uuid())
+  name      String
+  /// Public URL of the logo image. Hosted in the `game-logos` Supabase
+  /// bucket via the admin upload route, or any external https URL.
+  logoUrl   String   @default("")
+  /// Manual ordering — lower = earlier in the marquee. Defaults to creation time.
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model StreamSlot {
+  id          String   @id @default(uuid())
+  /// 3-letter day badge, e.g. "FRI", "SAT", "SUN".
+  day         String
+  title       String
+  /// Free-form time string, e.g. "8:00 PM – 11:00 PM" or "Anytime (Surprise!)".
+  time        String
+  description String   @default("")
+  /// Emoji shown next to the title. Free-form so admins can use whatever.
+  icon        String   @default("🎮")
+  featured    Boolean  @default(false)
+  /// Manual ordering — lower = earlier in the grid. Defaults to creation time.
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model SquadMember {
   id              String   @id @default(uuid())
   name            String

@@ -18,6 +18,7 @@ const emptyPayload: YouTubePayload = {
   stats: fallbackStats,
   videos: [],
   playlists: [],
+  upcomingStreams: [],
 };
 
 let backgroundRefreshInFlight = false;

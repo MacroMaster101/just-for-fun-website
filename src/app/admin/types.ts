@@ -29,6 +29,50 @@ export interface MusicTrack {
   createdAt: string;
 }
 
+export interface StreamSlot {
+  id: string;
+  day: string;
+  title: string;
+  time: string;
+  description: string;
+  icon: string;
+  featured: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Game {
+  id: string;
+  name: string;
+  logoUrl: string;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** YouTube-scheduled stream pulled from the cached payload — read-only on
+ *  the admin side. The admin doesn't create/edit/delete these; they come
+ *  straight from whatever the channel owner scheduled on YouTube. */
+export interface UpcomingStream {
+  id: string;
+  title: string;
+  description: string;
+  thumbnail: string;
+  scheduledStartTime: string;
+  url: string;
+}
+
+export const emptyStreamSlot: Omit<StreamSlot, "id" | "createdAt" | "updatedAt"> = {
+  day: "FRI",
+  title: "",
+  time: "",
+  description: "",
+  icon: "🎮",
+  featured: false,
+  sortOrder: 0,
+};
+
 export interface SquadMember {
   id: string;
   name: string;

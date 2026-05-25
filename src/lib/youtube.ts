@@ -96,6 +96,16 @@ interface VideosResponse extends YouTubeErrorResponse {
   items?: VideoDetailsItem[];
 }
 
+/** search.list response. Skinny — just enough to grab videoIds we then
+ *  feed into videos.list to get full details + liveStreamingDetails. */
+interface SearchListItem {
+  id?: { videoId?: string };
+}
+
+interface SearchListResponse extends YouTubeErrorResponse {
+  items?: SearchListItem[];
+}
+
 export interface ApiVideo {
   id: string;
   title: string;
@@ -120,6 +130,19 @@ export interface ApiPlaylist {
   itemCount: number;
 }
 
+/** A stream scheduled on YouTube (eventType=upcoming). Lighter than ApiVideo
+ *  because we don't have engagement metrics for streams that haven't started
+ *  yet — just enough to render an "Upcoming" card on the schedule page. */
+export interface ApiUpcomingStream {
+  id: string;
+  title: string;
+  description: string;
+  thumbnail: string;
+  /** ISO timestamp of when the stream is scheduled to start. */
+  scheduledStartTime: string;
+  url: string;
+}
+
 export interface YouTubePayload {
   source: "youtube" | "fallback";
   fetchedAt: string;
@@ -127,6 +150,7 @@ export interface YouTubePayload {
   stats: typeof fallbackStats;
   videos: ApiVideo[];
   playlists: ApiPlaylist[];
+  upcomingStreams: ApiUpcomingStream[];
 }
 
 export const fallbackStats = {
@@ -173,12 +197,18 @@ export async function fetchFreshYouTubePayload(): Promise<YouTubePayload> {
       video.playlistIds = membership.get(video.id) || [];
     }
 
+    // Upcoming scheduled streams (eventType=upcoming on search.list).
+    // Fetched in parallel with the rest would save a bit of latency but the
+    // cron job runs at 06:00 UTC daily so it's not worth the complexity.
+    const upcomingStreams = await getUpcomingStreams(channel.id);
+
     return {
       source: "youtube",
       fetchedAt: new Date().toISOString(),
       stats,
       videos,
       playlists,
+      upcomingStreams,
     };
   } catch (error) {
     const message =
@@ -385,6 +415,62 @@ function mapChannelStats(channel: ChannelItem) {
   };
 }
 
+/**
+ * Fetches up to 10 upcoming scheduled streams from the channel. Two calls:
+ *   1. search.list?eventType=upcoming → list of video ids (cheap, but `search`
+ *      does cost 100 quota units per call, so we do it just once per refresh).
+ *   2. videos.list with `liveStreamingDetails` → start times + thumbnails.
+ *
+ * Returns an empty array on any error so the broader refresh never fails
+ * just because the channel has no upcoming streams.
+ */
+async function getUpcomingStreams(channelId: string): Promise<ApiUpcomingStream[]> {
+  try {
+    const search = await fetchYouTube<SearchListResponse>("search", {
+      part: "id",
+      channelId,
+      eventType: "upcoming",
+      type: "video",
+      order: "date",
+      maxResults: "10",
+    });
+    const ids = (search.items || [])
+      .map((i) => i.id?.videoId)
+      .filter((v): v is string => Boolean(v));
+    if (ids.length === 0) return [];
+
+    const details = await fetchYouTube<VideosResponse>("videos", {
+      part: "snippet,liveStreamingDetails",
+      id: ids.join(","),
+    });
+
+    return (details.items || [])
+      .map((item): ApiUpcomingStream | null => {
+        const scheduled = item.liveStreamingDetails?.scheduledStartTime;
+        // Drop anything without a scheduled start (could be a live or ended
+        // stream that snuck into the eventType=upcoming bucket by mistake).
+        if (!scheduled) return null;
+        return {
+          id: item.id,
+          title: item.snippet?.title || "Untitled stream",
+          description: item.snippet?.description || "",
+          thumbnail: getBestThumbnail(item.snippet?.thumbnails),
+          scheduledStartTime: scheduled,
+          url: `https://www.youtube.com/watch?v=${item.id}`,
+        };
+      })
+      .filter((s): s is ApiUpcomingStream => s !== null)
+      // Sort soonest-first since search.list order isn't guaranteed when we
+      // do post-filtering.
+      .sort((a, b) =>
+        a.scheduledStartTime.localeCompare(b.scheduledStartTime)
+      );
+  } catch (err) {
+    console.warn("Upcoming streams fetch failed:", (err as Error).message);
+    return [];
+  }
+}
+
 function mapVideoDetails(item: VideoDetailsItem): ApiVideo {
   const title = item.snippet?.title || "Untitled video";
   const description = item.snippet?.description || "";
@@ -575,5 +661,6 @@ async function fallbackPayload(message: string): Promise<YouTubePayload> {
     stats: fallbackStats,
     videos,
     playlists: [],
+    upcomingStreams: [],
   };
 }

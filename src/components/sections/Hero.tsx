@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { SplineRobot } from "@/components/ui/SplineRobot";
 import { CursorSpotlight } from "@/components/ui/CursorSpotlight";
 import { useYouTube } from "@/components/providers/YouTubeProvider";
+import { DEFAULT_MARQUEE } from "@/lib/heroDefaults";
 
 interface StatsItem {
   subscribers: string;
@@ -44,6 +45,10 @@ export const Hero = () => {
   // the model without a redeploy. Undefined falls back to the SplineRobot
   // component's own default so the site never breaks on a fresh DB.
   const [splineScene, setSplineScene] = useState<string | undefined>(undefined);
+  // Games with logos pulled from /api/games. When present, the bottom
+  // marquee renders logo+name cards; when empty, falls back to the
+  // text-only DEFAULT_MARQUEE list.
+  const [games, setGames] = useState<Array<{ id: string; name: string; logoUrl: string }>>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -51,11 +56,19 @@ export const Hero = () => {
       .then((r) => (r.ok ? r.json() : { settings: {} }))
       .then((data: { settings?: Record<string, string> }) => {
         if (cancelled) return;
-        const v = data.settings?.["hero.splineScene"];
-        if (typeof v === "string" && v) setSplineScene(v);
+        const sceneUrl = data.settings?.["hero.splineScene"];
+        if (typeof sceneUrl === "string" && sceneUrl) setSplineScene(sceneUrl);
       })
       .catch(() => {
-        // ignore — fallback default in SplineRobot handles it.
+        // ignore — SplineRobot has its own built-in default
+      });
+    fetch("/api/games")
+      .then((r) => (r.ok ? r.json() : { games: [] }))
+      .then((d: { games?: Array<{ id: string; name: string; logoUrl: string }> }) => {
+        if (!cancelled) setGames(d.games || []);
+      })
+      .catch(() => {
+        // Silent — DEFAULT_MARQUEE fallback handles the empty case.
       });
     return () => {
       cancelled = true;
@@ -288,28 +301,56 @@ export const Hero = () => {
         </div>
       </div>
 
-      {/* Marquee strip at bottom */}
+      {/* Marquee strip at bottom. Two render modes:
+            - games (DB)  → logo + name cards, admin-managed
+            - fallback    → text-only ★ Name chips from DEFAULT_MARQUEE
+          Both duplicate the list twice for a seamless scroll loop. */}
       <div className="absolute bottom-0 left-0 right-0 overflow-hidden border-y border-white/10 bg-[#0a0a0a]/80 py-3 backdrop-blur">
-        <div className="flex w-max animate-marquee gap-12 whitespace-nowrap font-display text-sm font-black uppercase tracking-[0.3em] text-neutral-500">
-          {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} className="flex shrink-0 items-center gap-12">
-              <span>★ Valorant</span>
-              <span className="text-[#ff0033]">●</span>
-              <span>★ Valheim</span>
-              <span className="text-[#ff0033]">●</span>
-              <span>★ GTA V</span>
-              <span className="text-[#ff0033]">●</span>
-              <span>★ Battlefield</span>
-              <span className="text-[#ff0033]">●</span>
-              <span>★ Minecraft</span>
-              <span className="text-[#ff0033]">●</span>
-              <span>★ Co-op Survival</span>
-              <span className="text-[#ff0033]">●</span>
-              <span>★ Weekend Streams</span>
-              <span className="text-[#ff0033]">●</span>
-            </div>
-          ))}
-        </div>
+        {games.length > 0 ? (
+          <div className="flex w-max animate-marquee gap-8">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="flex shrink-0 items-center gap-8">
+                {games.map((g) => (
+                  <div
+                    key={`${i}-${g.id}`}
+                    className="flex shrink-0 items-center gap-2.5"
+                  >
+                    {g.logoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={g.logoUrl}
+                        alt={g.name}
+                        className="h-6 w-6 rounded object-contain"
+                      />
+                    ) : (
+                      <span className="text-[#ff0033]">★</span>
+                    )}
+                    <span className="font-display text-sm font-black uppercase tracking-[0.28em] text-neutral-400 whitespace-nowrap">
+                      {g.name}
+                    </span>
+                  </div>
+                ))}
+                {/* Trailing separator between the duplicated halves so the
+                    loop reads "...A B C A B C..." not "...C A...". */}
+                <span className="text-[#ff0033] shrink-0">●</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex w-max animate-marquee gap-12 whitespace-nowrap font-display text-sm font-black uppercase tracking-[0.3em] text-neutral-500">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="flex shrink-0 items-center gap-12">
+                {DEFAULT_MARQUEE.map((label, idx, arr) => (
+                  <React.Fragment key={`${i}-${idx}`}>
+                    <span>★ {label}</span>
+                    {idx < arr.length - 1 && <span className="text-[#ff0033]">●</span>}
+                  </React.Fragment>
+                ))}
+                <span className="text-[#ff0033]">●</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
