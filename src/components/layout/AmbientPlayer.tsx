@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 
 /**
@@ -13,6 +13,7 @@ export const AmbientPlayer = () => {
   const { user, loading } = useAuth();
   const [ambientPlaying, setAmbientPlaying] = useState(false);
   const [activeYoutubeId, setActiveYoutubeId] = useState("h7MYJghRWt0");
+  const [ambientVolume, setAmbientVolume] = useState(35);
 
   // Whether the iframe should boot with autoplay=1. True when the user's
   // last visible state was "playing" (persisted in localStorage). Browsers
@@ -45,6 +46,19 @@ export const AmbientPlayer = () => {
   // the active video id matches what we restored from localStorage.
   const pendingSeekRef = useRef<{ videoId: string; seconds: number } | null>(null);
 
+  const sendPlayerCommand = useCallback((func: string, args: unknown = "") => {
+    const iframe = document.getElementById("youtube-ambient-player") as HTMLIFrameElement | null;
+    if (!iframe || !iframe.contentWindow) return;
+    iframe.contentWindow.postMessage(
+      JSON.stringify({ event: "command", func, args }),
+      "*"
+    );
+  }, []);
+
+  const applyVolume = useCallback((volume = ambientVolume) => {
+    sendPlayerCommand("setVolume", [volume]);
+  }, [ambientVolume, sendPlayerCommand]);
+
   // Active-track polling. Re-checks every 5 seconds so admin-side
   // activation propagates quickly. Also re-runs whenever the tab regains
   // focus (visibility change) — if the user just switched back from the
@@ -68,6 +82,10 @@ export const AmbientPlayer = () => {
           setActiveYoutubeId((prev) =>
             prev === data.youtubeId ? prev : data.youtubeId
           );
+        }
+        if (typeof data.volume === "number" && Number.isFinite(data.volume)) {
+          const nextVolume = Math.min(100, Math.max(0, Math.round(data.volume)));
+          setAmbientVolume((prev) => prev === nextVolume ? prev : nextVolume);
         }
       } catch {
         if (!cancelled) setActiveYoutubeId((prev) => prev || "h7MYJghRWt0");
@@ -246,6 +264,14 @@ export const AmbientPlayer = () => {
     };
   }, [activeYoutubeId]);
 
+  // Apply admin-controlled stream volume to the current YouTube iframe.
+  // Re-run when either the active track or the saved admin volume changes,
+  // because a track swap remounts the iframe and loses its previous volume.
+  useEffect(() => {
+    const t = setTimeout(() => applyVolume(ambientVolume), 850);
+    return () => clearTimeout(t);
+  }, [activeYoutubeId, ambientVolume, applyVolume]);
+
   // Flush the latest currentTime + active track id to localStorage every
   // ~5s, so a refresh resumes within +/- 5 seconds of where the user was.
   // Also writes one final sample on unload as a best-effort safety net.
@@ -313,14 +339,8 @@ export const AmbientPlayer = () => {
       attempted = true;
       const iframe = document.getElementById("youtube-ambient-player") as HTMLIFrameElement | null;
       if (iframe && iframe.contentWindow) {
-        iframe.contentWindow.postMessage(
-          JSON.stringify({ event: "command", func: "setVolume", args: [35] }),
-          "*"
-        );
-        iframe.contentWindow.postMessage(
-          JSON.stringify({ event: "command", func: "playVideo", args: "" }),
-          "*"
-        );
+        applyVolume();
+        sendPlayerCommand("playVideo");
       }
     };
     window.addEventListener("pointerdown", onInteract);
@@ -331,7 +351,7 @@ export const AmbientPlayer = () => {
       window.removeEventListener("keydown", onInteract);
       window.removeEventListener("touchstart", onInteract);
     };
-  }, [bootAutoplay]);
+  }, [bootAutoplay, applyVolume, sendPlayerCommand]);
 
   // Guest -> logged-in transition autoplay.
   useEffect(() => {
@@ -344,40 +364,25 @@ export const AmbientPlayer = () => {
     if (user && !prevUserRef.current && !ambientPlaying) {
       const iframe = document.getElementById("youtube-ambient-player") as HTMLIFrameElement | null;
       if (iframe && iframe.contentWindow) {
-        iframe.contentWindow.postMessage(
-          JSON.stringify({ event: "command", func: "setVolume", args: [35] }),
-          "*"
-        );
-        iframe.contentWindow.postMessage(
-          JSON.stringify({ event: "command", func: "playVideo", args: "" }),
-          "*"
-        );
+        applyVolume();
+        sendPlayerCommand("playVideo");
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setAmbientPlaying(true);
       }
     }
     prevUserRef.current = user;
-  }, [user, loading, ambientPlaying]);
+  }, [user, loading, ambientPlaying, applyVolume, sendPlayerCommand]);
 
   const toggleAmbient = () => {
     const iframe = document.getElementById("youtube-ambient-player") as HTMLIFrameElement | null;
     if (!iframe || !iframe.contentWindow) return;
 
     if (ambientPlaying) {
-      iframe.contentWindow.postMessage(
-        JSON.stringify({ event: "command", func: "pauseVideo", args: "" }),
-        "*"
-      );
+      sendPlayerCommand("pauseVideo");
       setAmbientPlaying(false);
     } else {
-      iframe.contentWindow.postMessage(
-        JSON.stringify({ event: "command", func: "setVolume", args: [35] }),
-        "*"
-      );
-      iframe.contentWindow.postMessage(
-        JSON.stringify({ event: "command", func: "playVideo", args: "" }),
-        "*"
-      );
+      applyVolume();
+      sendPlayerCommand("playVideo");
       setAmbientPlaying(true);
     }
   };

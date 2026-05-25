@@ -64,6 +64,14 @@ const ALLOWED_KEYS: Record<string, (v: string) => string | null> = {
       return "Must be valid JSON.";
     }
   },
+  "music.volume": (v) => {
+    if (v === "") return null;
+    const volume = Number(v);
+    if (!Number.isInteger(volume) || volume < 0 || volume > 100) {
+      return "Volume must be a whole number from 0 to 100.";
+    }
+    return null;
+  },
 };
 
 export async function GET() {

@@ -334,6 +334,9 @@ export default function AdminPage() {
   // Music form state
   const [newTrackTitle, setNewTrackTitle] = useState("");
   const [newTrackYoutubeId, setNewTrackYoutubeId] = useState("");
+  const [musicVolume, setMusicVolume] = useState(35);
+  const [musicVolumeSaved, setMusicVolumeSaved] = useState(35);
+  const [musicVolumeSaving, setMusicVolumeSaving] = useState(false);
   const [musicFormError, setMusicFormError] = useState<string | null>(null);
   const [musicFormSuccess, setMusicFormSuccess] = useState<string | null>(null);
 
@@ -484,6 +487,13 @@ export default function AdminPage() {
       const sceneUrl = (data.settings?.["hero.splineScene"] as string | undefined) ?? "";
       setSplineSceneUrl(sceneUrl);
       setSplineSceneSaved(sceneUrl);
+
+      const rawMusicVolume = Number((data.settings?.["music.volume"] as string | undefined) ?? "35");
+      const nextMusicVolume = Number.isInteger(rawMusicVolume)
+        ? Math.min(100, Math.max(0, rawMusicVolume))
+        : 35;
+      setMusicVolume(nextMusicVolume);
+      setMusicVolumeSaved(nextMusicVolume);
 
       const fg = (data.settings?.["hero.floatingGames"] as string | undefined) ?? "";
       setFloatingGamesSaved(fg);
@@ -986,6 +996,7 @@ export default function AdminPage() {
       fetchAdmins();
     } else if (activeTab === "music") {
       fetchTracks();
+      fetchSettings();
     } else if (activeTab === "squad") {
       fetchSquad();
     } else if (activeTab === "schedule") {
@@ -1152,6 +1163,31 @@ export default function AdminPage() {
       }
     } catch {
       setMusicFormError("Something went wrong. Please try again.");
+    }
+  };
+
+  const handleSaveMusicVolume = async () => {
+    setMusicFormError(null);
+    setMusicFormSuccess(null);
+    setMusicVolumeSaving(true);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: "music.volume", value: String(musicVolume) }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setMusicFormError(data.error || "Failed to save music volume.");
+        return;
+      }
+      setMusicVolumeSaved(musicVolume);
+      setMusicFormSuccess("Music stream volume updated successfully!");
+      setTimeout(() => setMusicFormSuccess(null), 3000);
+    } catch {
+      setMusicFormError("Something went wrong. Please try again.");
+    } finally {
+      setMusicVolumeSaving(false);
     }
   };
 
@@ -1676,6 +1712,68 @@ export default function AdminPage() {
 
                   {/* Add track form */}
                   <div className="md:col-span-5 space-y-4">
+                    <h3 className="font-display font-extrabold text-lg text-[var(--color-text)] flex items-center gap-2">
+                      <Volume2 size={18} className="text-[#ff0033]" />
+                      Stream Volume
+                    </h3>
+                    <Card className="p-6 border-[var(--color-border)]">
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between gap-4">
+                          <div>
+                            <p className="text-xs font-black uppercase tracking-wider text-[var(--color-text)]">
+                              Ambient music level
+                            </p>
+                            <p className="text-[10px] text-[var(--color-text-muted)] mt-1">
+                              Applies to the floating music player across the site.
+                            </p>
+                          </div>
+                          <div className="h-11 min-w-16 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 flex items-center justify-center font-mono text-sm font-black text-[#ff0033]">
+                            {musicVolume}%
+                          </div>
+                        </div>
+
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          step="1"
+                          value={musicVolume}
+                          onChange={(e) => setMusicVolume(Number(e.target.value))}
+                          className="w-full accent-[#ff0033] cursor-pointer"
+                          aria-label="Music stream volume"
+                        />
+
+                        <div className="grid grid-cols-3 gap-2">
+                          {[20, 35, 60].map((preset) => (
+                            <button
+                              key={preset}
+                              type="button"
+                              onClick={() => setMusicVolume(preset)}
+                              className={`rounded-lg border px-3 py-2 text-[10px] font-black uppercase tracking-wider transition ${
+                                musicVolume === preset
+                                  ? "border-[#ff0033] bg-[#ff0033]/15 text-white"
+                                  : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-[#ff0033]/60 hover:text-[var(--color-text)]"
+                              }`}
+                            >
+                              {preset}%
+                            </button>
+                          ))}
+                        </div>
+
+                        <Button
+                          type="button"
+                          variant="outline"
+                          fullWidth
+                          disabled={musicVolumeSaving || musicVolume === musicVolumeSaved}
+                          onClick={handleSaveMusicVolume}
+                          className="gap-2"
+                        >
+                          <Check size={14} />
+                          {musicVolumeSaving ? "Saving..." : "Save Volume"}
+                        </Button>
+                      </div>
+                    </Card>
+
                     <h3 className="font-display font-extrabold text-lg text-[var(--color-text)]">
                       ➕ Add Custom Track
                     </h3>
@@ -3328,4 +3426,3 @@ function filterFreshUpcoming(streams: UpcomingStream[]): UpcomingStream[] {
     return Number.isFinite(t) && t > now - 5 * 60 * 1000;
   });
 }
-
