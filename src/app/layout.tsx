@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { YouTubeProvider } from "@/components/providers/YouTubeProvider";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { AmbientPlayer } from "@/components/layout/AmbientPlayer";
+import { ScrollRestorer } from "@/components/layout/ScrollRestorer";
 import "./globals.css";
 
 const orbitron = Orbitron({
@@ -59,6 +60,7 @@ export default function RootLayout({
           <AuthProvider>
             <YouTubeProvider>
               <CustomCursor />
+              <ScrollRestorer />
               {children}
               <AmbientPlayer />
             </YouTubeProvider>
