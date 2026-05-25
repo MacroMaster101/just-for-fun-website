@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { YouTubeProvider } from "@/components/providers/YouTubeProvider";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { AmbientPlayer } from "@/components/layout/AmbientPlayer";
+import { BugReportButton } from "@/components/layout/BugReportButton";
 import { ScrollRestorer } from "@/components/layout/ScrollRestorer";
 import "./globals.css";
 
@@ -63,6 +64,7 @@ export default function RootLayout({
               <ScrollRestorer />
               {children}
               <AmbientPlayer />
+              <BugReportButton />
             </YouTubeProvider>
           </AuthProvider>
         </ThemeProvider>

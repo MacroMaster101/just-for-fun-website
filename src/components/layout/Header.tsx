@@ -26,6 +26,15 @@ const navLinks = [
   { name: "Contact", href: "#contact" },
 ];
 
+const navSectionAliases: Record<string, string> = {
+  "crew-wall": "community",
+};
+
+const sectionSpyIds = [
+  ...navLinks.map((link) => link.href.slice(1)),
+  ...Object.keys(navSectionAliases),
+];
+
 export const Header = () => {
   const { user } = useAuth();
   const [scrolled, setScrolled] = useState(false);
@@ -113,8 +122,7 @@ export const Header = () => {
   // old top-down search behavior but at zero scroll-event cost.
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const ids = navLinks.map((l) => l.href.slice(1));
-    const elements = ids
+    const elements = sectionSpyIds
       .map((id) => document.getElementById(id))
       .filter((el): el is HTMLElement => Boolean(el));
     if (elements.length === 0) return;
@@ -127,7 +135,7 @@ export const Header = () => {
           else visible.delete(entry.target.id);
         }
         // Pick the first id (in nav order) that's currently intersecting.
-        const next = ids.find((id) => visible.has(id)) || "hero";
+        const next = sectionSpyIds.find((id) => visible.has(id)) || "hero";
         setActiveSection((prev) => (prev === next ? prev : next));
       },
       {
@@ -140,6 +148,8 @@ export const Header = () => {
     elements.forEach((el) => observer.observe(el));
     return () => observer.disconnect();
   }, []);
+
+  const activeNavSection = navSectionAliases[activeSection] ?? activeSection;
 
   return (
     <>
@@ -172,7 +182,7 @@ export const Header = () => {
           {!isAdminPage && (
             <nav className="hidden items-center gap-1 rounded-full border border-white/10 bg-[#0c0c0c]/80 p-1 backdrop-blur lg:flex">
               {navLinks.map((link) => {
-                const active = activeSection === link.href.slice(1);
+                const active = activeNavSection === link.href.slice(1);
                 return (
                   <a
                     key={link.href}
@@ -236,7 +246,7 @@ export const Header = () => {
           </div>
 
           {!isAdminPage && navLinks.map((link) => {
-            const active = activeSection === link.href.slice(1);
+            const active = activeNavSection === link.href.slice(1);
             return (
               <a
                 key={link.href}
