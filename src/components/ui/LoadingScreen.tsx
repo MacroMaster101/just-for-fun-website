@@ -31,6 +31,12 @@ export const LoadingScreen = ({
   const scanlineRef = useRef<HTMLDivElement | null>(null);
   const ringRef = useRef<SVGCircleElement | null>(null);
   const pctTextRef = useRef<HTMLSpanElement | null>(null);
+  // Stash onDone in a ref so the RAF effect doesn't re-run (and reset
+  // progress) whenever the parent re-renders and passes a new arrow.
+  const onDoneRef = useRef(onDone);
+  useEffect(() => {
+    onDoneRef.current = onDone;
+  }, [onDone]);
 
   useEffect(() => {
     let raf = 0;
@@ -72,7 +78,7 @@ export const LoadingScreen = ({
       if (t >= 1) {
         if (pctTextRef.current) pctTextRef.current.textContent = "100%";
         // Tell parent to mount the page now (behind the fading overlay)
-        onDone?.();
+        onDoneRef.current?.();
         setFading(true);
         setTimeout(() => setVisible(false), 450);
         return;
@@ -82,7 +88,7 @@ export const LoadingScreen = ({
 
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [duration, onDone]);
+  }, [duration]);
 
   if (!visible) return null;
 

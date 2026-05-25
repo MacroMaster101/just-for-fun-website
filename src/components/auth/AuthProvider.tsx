@@ -50,9 +50,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
     });
 
+    // bfcache guard: whenever the page is restored from the back/forward
+    // cache, React state is frozen at whatever it was when the user
+    // navigated away — this includes a stuck LoadingScreen or a stale
+    // OAuth "PLEASE WAIT..." modal. Force a fresh navigation so the whole
+    // tree re-mounts and Supabase picks up any new session cookies.
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        window.location.reload();
+      }
+    };
+    window.addEventListener("pageshow", onPageShow);
+
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      window.removeEventListener("pageshow", onPageShow);
     };
   }, []);
 

@@ -133,6 +133,7 @@ export const FloatingGameLogos: React.FC<FloatingGameLogosProps> = ({
   const rafRef = useRef<number>(0);
   const [, forceRender] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
+  const [active, setActive] = useState(true);
 
   // Custom settings loaded dynamically from public API
   const [customFloatingGames, setCustomFloatingGames] = useState<Game[]>([]);
@@ -147,6 +148,40 @@ export const FloatingGameLogos: React.FC<FloatingGameLogosProps> = ({
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  /* ---------- Activation gating: pause RAF when off-screen or tab hidden ---------- */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const el = containerRef.current;
+    if (!el) return;
+
+    let inView = true;
+    let visible = !document.hidden;
+    const apply = () => setActive(inView && visible);
+
+    const onVisibility = () => {
+      visible = !document.hidden;
+      apply();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    let observer: IntersectionObserver | null = null;
+    if (typeof IntersectionObserver !== "undefined") {
+      observer = new IntersectionObserver(
+        (entries) => {
+          inView = entries.some((e) => e.isIntersecting);
+          apply();
+        },
+        { rootMargin: "100px" }
+      );
+      observer.observe(el);
+    }
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      observer?.disconnect();
+    };
   }, []);
 
   /* ---------- Load Dynamic Settings Override ---------- */
@@ -262,6 +297,7 @@ export const FloatingGameLogos: React.FC<FloatingGameLogosProps> = ({
 
   /* ---------- Animation loop ---------- */
   useEffect(() => {
+    if (!active) return;
     let running = true;
 
     const tick = () => {
@@ -362,7 +398,7 @@ export const FloatingGameLogos: React.FC<FloatingGameLogosProps> = ({
       running = false;
       cancelAnimationFrame(rafRef.current);
     };
-  }, [isMobile]);
+  }, [isMobile, active]);
 
   /* ---------- Shoot handler ---------- */
   const handleShoot = useCallback((logoId: string, e: React.MouseEvent) => {

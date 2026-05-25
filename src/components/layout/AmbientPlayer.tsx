@@ -97,19 +97,24 @@ export const AmbientPlayer = () => {
     refresh();
     // 30s baseline poll. Active-track id changes rarely (admin rotation),
     // so a tight 5s poll was burning ~12 req/min for no real benefit.
-    // Visibility-change refresh below still gives instant updates when
-    // the user tabs back from the admin tab where they just activated.
-    const interval = setInterval(refresh, 30_000);
-    // Refresh on visibility regain so coming back from the admin tab hits
-    // the new active track without waiting for the next tick.
+    // Pause polling entirely while the tab is hidden, and refresh once on
+    // visibility regain so coming back from the admin tab hits the new
+    // active track without waiting for the next tick.
+    let interval: ReturnType<typeof setInterval> | null = setInterval(refresh, 30_000);
     const onVisibility = () => {
-      if (document.visibilityState === "visible") refresh();
+      if (document.visibilityState === "visible") {
+        refresh();
+        if (!interval) interval = setInterval(refresh, 30_000);
+      } else if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
     };
     document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
       cancelled = true;
-      clearInterval(interval);
+      if (interval) clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisibility);
     };
   }, []);

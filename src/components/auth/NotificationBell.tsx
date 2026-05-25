@@ -61,10 +61,23 @@ export const NotificationBell = ({ variant = "desktop" }: NotificationBellProps)
         });
     };
     refresh();
-    const interval = setInterval(refresh, 30_000);
+    let interval: ReturnType<typeof setInterval> | null = setInterval(refresh, 30_000);
+    const onVisibility = () => {
+      if (document.hidden) {
+        if (interval) {
+          clearInterval(interval);
+          interval = null;
+        }
+      } else if (!interval) {
+        refresh();
+        interval = setInterval(refresh, 30_000);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       cancelled = true;
-      clearInterval(interval);
+      if (interval) clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [userId]);
 

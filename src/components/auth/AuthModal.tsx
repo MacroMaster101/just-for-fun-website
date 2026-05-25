@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Eye, EyeOff, Loader2, Mail, X } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -38,6 +39,7 @@ export const AuthModal = ({
   initialMode = "login",
   initialError = null,
 }: AuthModalProps) => {
+  const { user } = useAuth();
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -48,6 +50,15 @@ export const AuthModal = ({
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [isSignedUp, setIsSignedUp] = useState(false);
+
+  // Auto-close the modal if the user is already logged in (e.g. after OAuth
+  // success). Without this, the modal could remain visible on top of the
+  // logged-in UI if it was re-opened or never closed.
+  useEffect(() => {
+    if (isOpen && user) {
+      onClose();
+    }
+  }, [isOpen, user, onClose]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -108,6 +119,9 @@ export const AuthModal = ({
     setBusy(true);
     setError(null);
     try {
+      // Drop a sentinel so the bfcache guard knows to reload if the user
+      // hits the browser back button from the OAuth provider page.
+      sessionStorage.setItem("oauth_pending", "1");
       const { error } = await supabase().auth.signInWithOAuth({
         provider,
         options: {
@@ -115,10 +129,12 @@ export const AuthModal = ({
         },
       });
       if (error) {
+        sessionStorage.removeItem("oauth_pending");
         setBusy(false);
         setError(error.message);
       }
     } catch (err: unknown) {
+      sessionStorage.removeItem("oauth_pending");
       setBusy(false);
       setError(err instanceof Error ? err.message : "An unexpected error occurred during OAuth sign in.");
       console.error("OAuth error:", err);
