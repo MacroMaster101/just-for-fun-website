@@ -45,6 +45,9 @@ export const AmbientPlayer = () => {
   // Pending seek queued during mount; applied once the iframe is ready and
   // the active video id matches what we restored from localStorage.
   const pendingSeekRef = useRef<{ videoId: string; seconds: number } | null>(null);
+  // When a foreground YouTube video opens, temporarily pause the ambient
+  // track and only resume it if the user had it playing beforehand.
+  const resumeAfterTheaterRef = useRef(false);
 
   const sendPlayerCommand = useCallback((func: string, args: unknown = "") => {
     const iframe = document.getElementById("youtube-ambient-player") as HTMLIFrameElement | null;
@@ -322,6 +325,31 @@ export const AmbientPlayer = () => {
       // ignore
     }
   }, [ambientPlaying]);
+
+  useEffect(() => {
+    const onVideoTheater = (event: Event) => {
+      const open = (event as CustomEvent<{ open?: boolean }>).detail?.open === true;
+
+      if (open) {
+        resumeAfterTheaterRef.current = ambientPlayingRef.current;
+        if (ambientPlayingRef.current) {
+          sendPlayerCommand("pauseVideo");
+          setAmbientPlaying(false);
+        }
+        return;
+      }
+
+      if (resumeAfterTheaterRef.current) {
+        applyVolume();
+        sendPlayerCommand("playVideo");
+        setAmbientPlaying(true);
+      }
+      resumeAfterTheaterRef.current = false;
+    };
+
+    window.addEventListener("jff:video-theater", onVideoTheater);
+    return () => window.removeEventListener("jff:video-theater", onVideoTheater);
+  }, [applyVolume, sendPlayerCommand]);
 
   // Auto-hide the first-visit hint tooltip after 10s.
   useEffect(() => {

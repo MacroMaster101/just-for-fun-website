@@ -1074,6 +1074,22 @@ html.light .auth-surface .bg-white\/5 {
   color: #ff4b5f;
 }
 
+.video-modal-close,
+html.light .video-modal-close,
+html.light .auth-surface .video-modal-close[class] {
+  background: #0a0a0a !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+}
+
+.video-modal-close:hover,
+html.light .video-modal-close:hover,
+html.light .auth-surface .video-modal-close:hover[class] {
+  background: #ff0033 !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 0, 51, 0.65) !important;
+}
+
 /* ----- LIGHT MODE overrides — high contrast ----------------- */
 /* Force transparent base so the white panel shows through.
    The high-specificity selectors here override the page-wide
