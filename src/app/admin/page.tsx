@@ -24,6 +24,11 @@ import {
   Calendar,
   ExternalLink,
   Gamepad2,
+  Volume2,
+  Sparkles,
+  Check,
+  XCircle,
+  Play,
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useRouter } from "next/navigation";
@@ -35,17 +40,23 @@ import { Header } from "@/components/layout/Header";
 import { SplineRobot } from "@/components/ui/SplineRobot";
 import { SquadMemberEditor } from "./SquadMemberEditor";
 import { StreamSlotEditor } from "./StreamSlotEditor";
+import { EmojiPicker } from "./EmojiPicker";
 import {
+  emptySoundClip,
   emptySquadMember,
   emptyStreamSlot,
   type AdminEmail,
   type ContactMessage,
   type Game,
+  type Highlight,
+  type HighlightStatus,
   type MusicTrack,
+  type SoundClip,
   type SquadMember,
   type StreamSlot,
   type UpcomingStream,
 } from "./types";
+import { PUBLIC_SOUND_LIMIT, SOUND_TYPE_OPTIONS } from "@/lib/soundboardDefaults";
 
 export default function AdminPage() {
   const { user } = useAuth();
@@ -57,7 +68,7 @@ export default function AdminPage() {
   const [countdown, setCountdown] = useState(5);
   
   // Dashboard states
-  const [activeTab, setActiveTab] = useState<"command" | "inbox" | "admins" | "cache" | "music" | "squad" | "schedule" | "settings">("command");
+  const [activeTab, setActiveTab] = useState<"command" | "inbox" | "admins" | "cache" | "music" | "squad" | "schedule" | "sounds" | "highlights" | "settings">("command");
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [admins, setAdmins] = useState<AdminEmail[]>([]);
   const [tracks, setTracks] = useState<MusicTrack[]>([]);
@@ -84,6 +95,21 @@ export default function AdminPage() {
   const [creatingSlot, setCreatingSlot] = useState<typeof emptyStreamSlot | null>(null);
   const [slotFormError, setSlotFormError] = useState<string | null>(null);
   const [slotFormSuccess, setSlotFormSuccess] = useState<string | null>(null);
+
+  // Sounds (Soundboard) state
+  const [sounds, setSounds] = useState<SoundClip[]>([]);
+  const [editingSound, setEditingSound] = useState<SoundClip | null>(null);
+  const [creatingSound, setCreatingSound] = useState<typeof emptySoundClip | null>(null);
+  const [soundFormError, setSoundFormError] = useState<string | null>(null);
+  const [soundFormSuccess, setSoundFormSuccess] = useState<string | null>(null);
+  const [audioUploading, setAudioUploading] = useState(false);
+
+  // Highlights (community clips) state
+  const [highlights, setHighlights] = useState<Highlight[]>([]);
+  const [highlightFilter, setHighlightFilter] = useState<HighlightStatus | "all">("pending");
+  const [highlightActionId, setHighlightActionId] = useState<string | null>(null);
+  const [highlightError, setHighlightError] = useState<string | null>(null);
+  const [highlightSuccess, setHighlightSuccess] = useState<string | null>(null);
 
   // Message reading modal/drawer state
   const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
@@ -410,6 +436,184 @@ export default function AdminPage() {
     }
   };
 
+  const fetchSounds = async () => {
+    try {
+      const res = await fetch("/api/admin/sounds", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        setSounds(data.sounds || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch sounds:", err);
+    }
+  };
+
+  const flashSoundSuccess = (msg: string) => {
+    setSoundFormSuccess(msg);
+    setSoundFormError(null);
+    setTimeout(() => setSoundFormSuccess(null), 2500);
+  };
+
+  const handleSaveSound = async (
+    sound: SoundClip | typeof emptySoundClip,
+    isNew: boolean
+  ) => {
+    setSoundFormError(null);
+    setSoundFormSuccess(null);
+    if (!sound.name.trim()) {
+      setSoundFormError("Sound name is required.");
+      return;
+    }
+    try {
+      const res = await fetch("/api/admin/sounds", {
+        method: isNew ? "POST" : "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sound),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setSoundFormError(data.error || "Save failed.");
+        return;
+      }
+      flashSoundSuccess(isNew ? "Sound added." : "Sound updated.");
+      setEditingSound(null);
+      setCreatingSound(null);
+      await fetchSounds();
+    } catch {
+      setSoundFormError("Network error.");
+    }
+  };
+
+  const handleSeedSounds = async () => {
+    setSoundFormError(null);
+    setSoundFormSuccess(null);
+    try {
+      const res = await fetch("/api/admin/sounds/seed", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        setSoundFormError(data.error || "Seed failed.");
+        return;
+      }
+      flashSoundSuccess(
+        data.inserted === 0
+          ? "Already up to date — no missing defaults."
+          : `Added ${data.inserted} default sound${data.inserted === 1 ? "" : "s"}.`
+      );
+      await fetchSounds();
+    } catch {
+      setSoundFormError("Network error.");
+    }
+  };
+
+  const handleUploadSoundAudio = async (soundId: string, file: File) => {
+    setAudioUploading(true);
+    setSoundFormError(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("soundId", soundId);
+      const res = await fetch("/api/admin/sounds/audio", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) {
+        setSoundFormError(data.error || "Audio upload failed.");
+        return;
+      }
+      flashSoundSuccess("Audio uploaded.");
+      // Patch the editor draft so the new URL + source=upload is reflected.
+      setEditingSound((prev) =>
+        prev && prev.id === soundId
+          ? { ...prev, audioUrl: data.audioUrl, source: "upload" }
+          : prev
+      );
+      await fetchSounds();
+    } catch {
+      setSoundFormError("Network error.");
+    } finally {
+      setAudioUploading(false);
+    }
+  };
+
+  const handleDeleteSound = async (id: string, name: string) => {
+    if (!confirm(`Delete the "${name}" sound?`)) return;
+    try {
+      const res = await fetch("/api/admin/sounds", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (res.ok) {
+        flashSoundSuccess("Sound removed.");
+        await fetchSounds();
+      }
+    } catch (err) {
+      console.error("Failed to delete sound:", err);
+    }
+  };
+
+  const fetchHighlights = async () => {
+    try {
+      const params = highlightFilter === "all" ? "" : `?status=${highlightFilter}`;
+      const res = await fetch(`/api/admin/highlights${params}`, { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        setHighlights(data.highlights || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch highlights:", err);
+    }
+  };
+
+  const flashHighlightSuccess = (msg: string) => {
+    setHighlightSuccess(msg);
+    setHighlightError(null);
+    setTimeout(() => setHighlightSuccess(null), 2500);
+  };
+
+  const handleReviewHighlight = async (id: string, status: HighlightStatus) => {
+    setHighlightActionId(id);
+    setHighlightError(null);
+    try {
+      const res = await fetch("/api/admin/highlights", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setHighlightError(data.error || "Action failed.");
+        return;
+      }
+      flashHighlightSuccess(
+        status === "approved" ? "Highlight approved." : status === "rejected" ? "Highlight rejected." : "Status updated."
+      );
+      await fetchHighlights();
+    } catch {
+      setHighlightError("Network error.");
+    } finally {
+      setHighlightActionId(null);
+    }
+  };
+
+  const handleDeleteHighlight = async (id: string, title: string) => {
+    if (!confirm(`Delete "${title}"? This removes it permanently.`)) return;
+    setHighlightActionId(id);
+    try {
+      const res = await fetch("/api/admin/highlights", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (res.ok) {
+        flashHighlightSuccess("Highlight removed.");
+        await fetchHighlights();
+      }
+    } catch (err) {
+      console.error("Failed to delete highlight:", err);
+    } finally {
+      setHighlightActionId(null);
+    }
+  };
+
   const handleSaveSpline = async () => {
     setSettingsError(null);
     setSettingsSuccess(null);
@@ -533,12 +737,19 @@ export default function AdminPage() {
       fetchSquad();
     } else if (activeTab === "schedule") {
       fetchSchedule();
+    } else if (activeTab === "sounds") {
+      fetchSounds();
+    } else if (activeTab === "highlights") {
+      fetchHighlights();
     } else if (activeTab === "settings") {
       fetchSettings();
       fetchGames();
     }
     /* eslint-enable react-hooks/set-state-in-effect */
-  }, [activeTab, isAdmin]);
+    // fetchHighlights closes over highlightFilter; listing the filter in deps
+    // is what we want so the panel reloads when the admin flips the tabs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, isAdmin, highlightFilter]);
 
   const handleDeleteMessage = async (id: string) => {
     if (!confirm("Are you sure you want to delete this contact message?")) return;
@@ -869,6 +1080,8 @@ export default function AdminPage() {
                 { id: "music", name: "Music Stream", icon: <Radio size={16} /> },
                 { id: "squad", name: "Squad Roster", icon: <Users size={16} /> },
                 { id: "schedule", name: "Stream Schedule", icon: <Calendar size={16} /> },
+                { id: "sounds", name: "Soundboard", icon: <Volume2 size={16} /> },
+                { id: "highlights", name: "Highlights Queue", icon: <Sparkles size={16} /> },
                 { id: "settings", name: "Site Settings", icon: <Settings size={16} /> },
                 { id: "cache", name: "YouTube Cache", icon: <RefreshCw size={16} /> },
               ].map((tab) => (
@@ -1544,6 +1757,425 @@ export default function AdminPage() {
                       onSave={(slot, isNew) => handleSaveSlot(slot, isNew)}
                     />
                   )}
+                </div>
+              )}
+
+              {/* Tab: Soundboard CRUD */}
+              {activeTab === "sounds" && (
+                <div className="space-y-6">
+                  <Card className="p-6 border-[var(--color-border)]">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+                      <div>
+                        <h3 className="font-display font-extrabold text-xl text-[var(--color-text)] flex items-center gap-2">
+                          <Volume2 size={20} className="text-[#ff0033]" />
+                          Soundboard
+                        </h3>
+                        <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                          Synth buttons shown on the homepage <code className="bg-[var(--color-surface-2)] px-1.5 py-0.5 rounded text-[10px]">Highlights &amp; Sound Arena</code>. Empty list falls back to the built-in defaults.
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[11px] font-bold font-mono tracking-wider ${
+                            Math.min(sounds.length, PUBLIC_SOUND_LIMIT) === PUBLIC_SOUND_LIMIT
+                              ? "border-[#ff0033]/40 bg-[#ff0033]/10 text-[#ff4b5f]"
+                              : "border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text-muted)]"
+                          }`}
+                          title="Public sounds / homepage limit"
+                        >
+                          <Volume2 size={12} />
+                          {Math.min(sounds.length, PUBLIC_SOUND_LIMIT)}/{PUBLIC_SOUND_LIMIT}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleSeedSounds}
+                          className="gap-1.5"
+                          title="Insert any built-in default sounds that aren't already in the DB"
+                        >
+                          <RefreshCw size={12} /> Top up defaults
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            setCreatingSound({ ...emptySoundClip, sortOrder: sounds.length });
+                            setEditingSound(null);
+                            setSoundFormError(null);
+                            setSoundFormSuccess(null);
+                          }}
+                          className="gap-2"
+                        >
+                          <Plus size={14} /> Add Sound
+                        </Button>
+                      </div>
+                    </div>
+
+                    {soundFormError && (
+                      <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-xs font-bold text-red-500">
+                        <AlertTriangle size={14} /> {soundFormError}
+                      </div>
+                    )}
+                    {soundFormSuccess && (
+                      <div className="mb-4 flex items-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-xs font-bold text-green-500">
+                        <CheckCircle2 size={14} /> {soundFormSuccess}
+                      </div>
+                    )}
+
+                    {sounds.length === 0 ? (
+                      <div className="rounded-lg border border-dashed border-[var(--color-border)] p-8 text-center text-sm text-[var(--color-text-muted)] space-y-3">
+                        <p>
+                          No custom sounds yet — the homepage is showing the 6 built-in defaults.
+                        </p>
+                        <p className="text-xs">
+                          Load the defaults into the database so you can edit them, or start fresh with <strong>Add Sound</strong>.
+                        </p>
+                        <Button onClick={handleSeedSounds} variant="outline" size="sm" className="gap-2">
+                          <Plus size={12} /> Load default sounds
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <p className="text-[11px] text-[var(--color-text-muted)] mb-1">
+                          The homepage shows the first <strong>{PUBLIC_SOUND_LIMIT}</strong> rows (by sort order). Anything beyond that lives in the DB but stays hidden from visitors.
+                        </p>
+                        {sounds.map((s, i) => {
+                          const isPublic = i < PUBLIC_SOUND_LIMIT;
+                          return (
+                          <div
+                            key={s.id}
+                            className={`flex items-center gap-4 p-3 rounded-lg border bg-[var(--color-surface)] ${
+                              isPublic ? "border-[var(--color-border)]" : "border-dashed border-[var(--color-border)] opacity-60"
+                            }`}
+                          >
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[var(--color-surface-2)] text-2xl shrink-0">
+                              {s.emoji}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-bold text-sm text-[var(--color-text)] truncate flex items-center gap-2">
+                                <span className="truncate">{s.name}</span>
+                                {!isPublic && (
+                                  <Badge variant="secondary" className="text-[9px] shrink-0">Hidden</Badge>
+                                )}
+                                {s.source === "upload" && (
+                                  <Badge variant="primary" className="text-[9px] shrink-0">Audio</Badge>
+                                )}
+                              </p>
+                              <p className="text-xs text-[var(--color-text-muted)] truncate">
+                                <span className="uppercase font-mono text-[10px] mr-2">{s.type}</span>
+                                {s.description}
+                              </p>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setEditingSound(s);
+                                setCreatingSound(null);
+                                setSoundFormError(null);
+                                setSoundFormSuccess(null);
+                              }}
+                              className="gap-1.5"
+                            >
+                              <UserCog size={12} /> Edit
+                            </Button>
+                            <button
+                              onClick={() => handleDeleteSound(s.id, s.name)}
+                              className="p-2 rounded-lg text-red-500 hover:bg-red-500/10 transition cursor-pointer"
+                              aria-label={`Delete ${s.name}`}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </Card>
+
+                  {(editingSound || creatingSound) && (
+                    <Card className="p-6 border-[var(--color-border)]">
+                      <h4 className="font-display font-extrabold text-lg text-[var(--color-text)] mb-4">
+                        {editingSound ? "Edit sound" : "New sound"}
+                      </h4>
+                      {(() => {
+                        const draft = (editingSound || creatingSound) as SoundClip | typeof emptySoundClip;
+                        const setDraft = (patch: Partial<SoundClip>) => {
+                          if (editingSound) {
+                            setEditingSound({ ...editingSound, ...patch });
+                          } else if (creatingSound) {
+                            setCreatingSound({ ...creatingSound, ...patch });
+                          }
+                        };
+                        return (
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <Input
+                                label="Name"
+                                value={draft.name}
+                                onChange={(e) => setDraft({ name: e.target.value })}
+                                placeholder="e.g. Triple Kill"
+                                maxLength={60}
+                              />
+                              <EmojiPicker
+                                value={draft.emoji}
+                                onChange={(next) => setDraft({ emoji: next })}
+                              />
+                            </div>
+
+                            {/* Source toggle — synth vs uploaded audio file */}
+                            <div>
+                              <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)] mb-1.5">
+                                Sound source
+                              </label>
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setDraft({ source: "synth" })}
+                                  className={`flex-1 px-3 py-2 rounded-lg border text-xs font-bold uppercase tracking-wider transition cursor-pointer ${
+                                    draft.source === "synth"
+                                      ? "border-[#ff0033] bg-[#ff0033]/10 text-[#ff4b5f]"
+                                      : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                                  }`}
+                                >
+                                  Synth waveform
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setDraft({ source: "upload" })}
+                                  className={`flex-1 px-3 py-2 rounded-lg border text-xs font-bold uppercase tracking-wider transition cursor-pointer ${
+                                    draft.source === "upload"
+                                      ? "border-[#ff0033] bg-[#ff0033]/10 text-[#ff4b5f]"
+                                      : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                                  }`}
+                                >
+                                  Uploaded audio
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              {draft.source === "synth" ? (
+                                <div>
+                                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)] mb-1.5">
+                                    Synth waveform
+                                  </label>
+                                  <select
+                                    value={draft.type}
+                                    onChange={(e) => setDraft({ type: e.target.value })}
+                                    className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-2 text-sm text-[var(--color-text)] focus:border-[#ff0033] focus:outline-none"
+                                  >
+                                    {SOUND_TYPE_OPTIONS.map((opt) => (
+                                      <option key={opt.value} value={opt.value}>
+                                        {opt.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              ) : (
+                                <div>
+                                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)] mb-1.5">
+                                    Audio file (mp3 / wav / ogg, max 3MB)
+                                  </label>
+                                  {editingSound ? (
+                                    <div className="space-y-2">
+                                      <input
+                                        type="file"
+                                        accept="audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/webm"
+                                        onChange={(e) => {
+                                          const f = e.target.files?.[0];
+                                          if (f) handleUploadSoundAudio(editingSound.id, f);
+                                          e.target.value = "";
+                                        }}
+                                        disabled={audioUploading}
+                                        className="block w-full text-xs text-[var(--color-text-muted)] file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border file:border-[var(--color-border)] file:bg-[var(--color-surface-2)] file:text-[var(--color-text)] file:font-bold file:cursor-pointer hover:file:bg-[var(--color-surface)]"
+                                      />
+                                      {draft.audioUrl && (
+                                        <audio controls src={draft.audioUrl} className="w-full h-8" />
+                                      )}
+                                      {audioUploading && (
+                                        <p className="text-[10px] text-[var(--color-text-muted)]">Uploading…</p>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <p className="text-[11px] text-[var(--color-text-muted)] leading-relaxed p-2 rounded-lg border border-dashed border-[var(--color-border)]">
+                                      Save the sound first, then re-open it to upload an audio file.
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                              <Input
+                                label="Sort order"
+                                type="number"
+                                value={String(draft.sortOrder)}
+                                onChange={(e) => setDraft({ sortOrder: Number(e.target.value) || 0 })}
+                              />
+                            </div>
+                            <Input
+                              label="Description"
+                              value={draft.description}
+                              onChange={(e) => setDraft({ description: e.target.value })}
+                              placeholder="One-line caption shown under the button"
+                              maxLength={200}
+                            />
+                            <div className="flex justify-end gap-2 pt-2">
+                              <Button
+                                variant="ghost"
+                                onClick={() => {
+                                  setEditingSound(null);
+                                  setCreatingSound(null);
+                                  setSoundFormError(null);
+                                }}
+                              >
+                                Cancel
+                              </Button>
+                              <Button
+                                onClick={() => handleSaveSound(draft, !editingSound)}
+                              >
+                                {editingSound ? "Save changes" : "Create sound"}
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </Card>
+                  )}
+                </div>
+              )}
+
+              {/* Tab: Highlights moderation queue */}
+              {activeTab === "highlights" && (
+                <div className="space-y-6">
+                  <Card className="p-6 border-[var(--color-border)]">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+                      <div>
+                        <h3 className="font-display font-extrabold text-xl text-[var(--color-text)] flex items-center gap-2">
+                          <Sparkles size={20} className="text-[#ff4b5f]" />
+                          Community Highlights
+                        </h3>
+                        <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                          Review viewer-submitted clips. Only <strong>approved</strong> rows show up publicly.
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {(["pending", "approved", "rejected", "all"] as const).map((f) => (
+                          <button
+                            key={f}
+                            onClick={() => setHighlightFilter(f)}
+                            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider border transition ${
+                              highlightFilter === f
+                                ? "border-[#ff0033] bg-[#ff0033]/10 text-[#ff4b5f]"
+                                : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                            }`}
+                          >
+                            {f}
+                          </button>
+                        ))}
+                        <Button variant="outline" size="sm" onClick={fetchHighlights} className="gap-1.5">
+                          <RefreshCw size={12} /> Refresh
+                        </Button>
+                      </div>
+                    </div>
+
+                    {highlightError && (
+                      <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-xs font-bold text-red-500">
+                        <AlertTriangle size={14} /> {highlightError}
+                      </div>
+                    )}
+                    {highlightSuccess && (
+                      <div className="mb-4 flex items-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-xs font-bold text-green-500">
+                        <CheckCircle2 size={14} /> {highlightSuccess}
+                      </div>
+                    )}
+
+                    {highlights.length === 0 ? (
+                      <div className="rounded-lg border border-dashed border-[var(--color-border)] p-8 text-center text-sm text-[var(--color-text-muted)]">
+                        Nothing here right now. {highlightFilter === "pending" ? "No clips waiting for review." : `No ${highlightFilter} highlights.`}
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {highlights.map((h) => {
+                          const watchUrl = h.source === "youtube" && h.youtubeId
+                            ? `https://www.youtube.com/watch?v=${h.youtubeId}`
+                            : h.videoUrl || "";
+                          const isBusy = highlightActionId === h.id;
+                          return (
+                            <div
+                              key={h.id}
+                              className="flex flex-col sm:flex-row sm:items-center gap-4 p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]"
+                            >
+                              <div className="relative h-16 w-28 rounded-lg overflow-hidden border border-[var(--color-border)] bg-[var(--color-surface-2)] shrink-0">
+                                {h.thumbnailUrl ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img src={h.thumbnailUrl} alt="" className="h-full w-full object-cover" />
+                                ) : (
+                                  <div className="h-full w-full flex items-center justify-center text-[var(--color-text-muted)]">
+                                    <Play size={20} />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex flex-wrap items-center gap-2 mb-1">
+                                  <Badge variant={h.status === "approved" ? "success" : h.status === "rejected" ? "danger" : "primary"} className="text-[9px]">
+                                    {h.status}
+                                  </Badge>
+                                  {h.game && (
+                                    <Badge variant="secondary" className="text-[9px]">{h.game}</Badge>
+                                  )}
+                                  <span className="text-[10px] text-[var(--color-text-muted)] font-mono">
+                                    {h.source === "youtube" ? "YouTube" : "Uploaded"}
+                                  </span>
+                                </div>
+                                <p className="font-bold text-sm text-[var(--color-text)] truncate">{h.title}</p>
+                                <p className="text-xs text-[var(--color-text-muted)] truncate">
+                                  By {h.submittedByName}
+                                  {h.submittedByUserId ? "" : " (anonymous)"}
+                                  {" · "}
+                                  {new Date(h.createdAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                                {watchUrl && (
+                                  <a
+                                    href={watchUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-[11px] font-bold text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:border-[#ff0033]/40 transition"
+                                  >
+                                    <Play size={12} /> Watch
+                                  </a>
+                                )}
+                                {h.status !== "approved" && (
+                                  <button
+                                    disabled={isBusy}
+                                    onClick={() => handleReviewHighlight(h.id, "approved")}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-[11px] font-bold text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 transition cursor-pointer"
+                                  >
+                                    <Check size={12} /> Approve
+                                  </button>
+                                )}
+                                {h.status !== "rejected" && (
+                                  <button
+                                    disabled={isBusy}
+                                    onClick={() => handleReviewHighlight(h.id, "rejected")}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-[11px] font-bold text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:border-[#ff4b5f]/40 disabled:opacity-50 transition cursor-pointer"
+                                  >
+                                    <XCircle size={12} /> Reject
+                                  </button>
+                                )}
+                                <button
+                                  disabled={isBusy}
+                                  onClick={() => handleDeleteHighlight(h.id, h.title)}
+                                  className="p-1.5 rounded-lg text-red-500 hover:bg-red-500/10 disabled:opacity-50 transition cursor-pointer"
+                                  aria-label={`Delete ${h.title}`}
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </Card>
                 </div>
               )}
 

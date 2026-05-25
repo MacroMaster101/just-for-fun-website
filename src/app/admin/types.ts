@@ -73,6 +73,56 @@ export const emptyStreamSlot: Omit<StreamSlot, "id" | "createdAt" | "updatedAt">
   sortOrder: 0,
 };
 
+export type SoundSource = "synth" | "upload";
+
+export interface SoundClip {
+  id: string;
+  name: string;
+  emoji: string;
+  source: SoundSource;
+  type: string;
+  audioUrl: string;
+  description: string;
+  color: string;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const emptySoundClip: Omit<SoundClip, "id" | "createdAt" | "updatedAt"> = {
+  name: "",
+  emoji: "🎮",
+  source: "synth",
+  type: "laser",
+  audioUrl: "",
+  description: "",
+  color: "hover:border-[#ff0033] hover:shadow-[0_0_15px_rgba(255,0,51,0.25)] text-[#ff4b5f]",
+  sortOrder: 0,
+};
+
+export type HighlightStatus = "pending" | "approved" | "rejected";
+export type HighlightSource = "youtube" | "upload";
+
+export interface Highlight {
+  id: string;
+  title: string;
+  game: string;
+  description: string;
+  duration: string;
+  source: HighlightSource;
+  youtubeId: string | null;
+  videoUrl: string | null;
+  thumbnailUrl: string;
+  status: HighlightStatus;
+  submittedByUserId: string | null;
+  submittedByName: string;
+  submittedByAvatar: string;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface SquadMember {
   id: string;
   name: string;

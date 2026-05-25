@@ -1,113 +1,162 @@
 "use client";
 
-import React, { useState } from "react";
-import { Play, Volume2, ShieldAlert, Sparkles, Flame, Share2 } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import {
+  Play,
+  Volume2,
+  ShieldAlert,
+  Sparkles,
+  Flame,
+  Share2,
+  Upload,
+  Link2,
+  AlertTriangle,
+  CheckCircle2,
+  X,
+} from "lucide-react";
 import Image from "next/image";
 import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { useAuth } from "@/components/auth/AuthProvider";
+import {
+  DEFAULT_SOUNDS,
+  PUBLIC_SOUND_LIMIT,
+  type SoundDefinition,
+  type SoundType,
+} from "@/lib/soundboardDefaults";
 
-interface SoundItem {
+interface ApiSound {
   id: string;
   name: string;
   emoji: string;
-  type: "laser" | "chime" | "powerup" | "fanfare" | "buzzer" | "subbass";
+  source: "synth" | "upload";
+  type: string;
+  audioUrl: string;
   color: string;
   description: string;
 }
 
-interface CustomClip {
+interface ApiHighlight {
   id: string;
   title: string;
-  duration: string;
   game: string;
-  thumbnail: string;
-  videoUrl: string;
-  likes: number;
+  description: string;
+  duration: string;
+  source: "youtube" | "upload";
+  youtubeId: string | null;
+  videoUrl: string | null;
+  thumbnailUrl: string;
+  submittedByName: string;
+  submittedByAvatar: string;
+  createdAt: string;
 }
 
-export const Soundboard = () => {
-  const sounds: SoundItem[] = [
-    {
-      id: "sound-1",
-      name: "Pew Laser",
-      emoji: "💥",
-      type: "laser",
-      color: "hover:border-[#ff0033] hover:shadow-[0_0_15px_rgba(255,0,51,0.25)] text-[#ff4b5f]",
-      description: "Valorant sidearm headshot",
-    },
-    {
-      id: "sound-2",
-      name: "Level Up",
-      emoji: "🛡️",
-      type: "powerup",
-      color: "hover:border-white hover:shadow-[0_0_15px_rgba(255,255,255,0.18)] text-white",
-      description: "Valheim base expansion complete",
-    },
-    {
-      id: "sound-3",
-      name: "Double Kill",
-      emoji: "⚔️",
-      type: "chime",
-      color: "hover:border-[#ff4b5f] hover:shadow-[0_0_15px_rgba(255,75,95,0.25)] text-[#ff6b6b]",
-      description: "Ultimate double kill combo",
-    },
-    {
-      id: "sound-4",
-      name: "Epic Victory",
-      emoji: "🏆",
-      type: "fanfare",
-      color: "hover:border-[#ff0033] hover:shadow-[0_0_15px_rgba(255,0,51,0.25)] text-white",
-      description: "Match Point / Victory fanfare",
-    },
-    {
-      id: "sound-5",
-      name: "Epic Fail",
-      emoji: "💀",
-      type: "buzzer",
-      color: "hover:border-[#ff4b5f] hover:shadow-[0_0_15px_rgba(255,75,95,0.25)] text-[#ff4b5f]",
-      description: "Troll smashed our builds",
-    },
-    {
-      id: "sound-6",
-      name: "Sub Bass Drop",
-      emoji: "🔊",
-      type: "subbass",
-      color: "hover:border-white hover:shadow-[0_0_15px_rgba(255,255,255,0.18)] text-white",
-      description: "Dynamic gaming clutch mode drop",
-    },
-  ];
+type SubmitMode = "youtube" | "upload";
 
-  const highlights: CustomClip[] = [
-    {
-      id: "clip-1",
-      title: "EPIC 1v5 Jett Clutch in Valorant Ranked! 🏆",
-      duration: "0:45",
-      game: "Valorant",
-      thumbnail: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80",
-      videoUrl: "https://www.youtube.com/watch?v=ScMzIvxBSi4",
-      likes: 142,
-    },
-    {
-      id: "clip-2",
-      title: "When Trolls Invaded Our Valheim Castle (FAIL) 💀🔥",
-      duration: "1:12",
-      game: "Valheim",
-      thumbnail: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=600&q=80",
-      videoUrl: "https://www.youtube.com/watch?v=F3XN-V7p2W0",
-      likes: 98,
-    },
-    {
-      id: "clip-3",
-      title: "Chasing 300kmh on GTA V Highway! 🏎️💨",
-      duration: "0:58",
-      game: "GTA V",
-      thumbnail: "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?auto=format&fit=crop&w=600&q=80",
-      videoUrl: "https://www.youtube.com/watch?v=k85mRPQMb14",
-      likes: 187,
-    },
-  ];
+const SOUND_TYPE_SET = new Set<SoundType>([
+  "laser",
+  "chime",
+  "powerup",
+  "fanfare",
+  "buzzer",
+  "subbass",
+]);
+
+export const Soundboard = () => {
+  const { user } = useAuth();
+
+  const [sounds, setSounds] = useState<SoundDefinition[]>(DEFAULT_SOUNDS);
+  const [highlights, setHighlights] = useState<ApiHighlight[]>([]);
+  const [highlightsLoading, setHighlightsLoading] = useState(true);
 
   const [lovedClips, setLovedClips] = useState<Record<string, boolean>>({});
   const [clipLikes, setClipLikes] = useState<Record<string, number>>({});
+
+  // Submission modal state
+  const [showSubmit, setShowSubmit] = useState(false);
+  const [submitMode, setSubmitMode] = useState<SubmitMode>("youtube");
+  const [formTitle, setFormTitle] = useState("");
+  const [formGame, setFormGame] = useState("");
+  const [formDescription, setFormDescription] = useState("");
+  const [formDuration, setFormDuration] = useState("");
+  const [formYoutubeUrl, setFormYoutubeUrl] = useState("");
+  const [formAnonName, setFormAnonName] = useState("");
+  const [formFile, setFormFile] = useState<File | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
+
+  // Load sounds + highlights on mount.
+  useEffect(() => {
+    let active = true;
+
+    const loadSounds = async () => {
+      try {
+        const res = await fetch("/api/sounds", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = (await res.json()) as { sounds: ApiSound[] };
+        if (!active) return;
+        if (Array.isArray(data.sounds) && data.sounds.length > 0) {
+          setSounds(
+            data.sounds.slice(0, PUBLIC_SOUND_LIMIT).map((s) => ({
+              id: s.id,
+              name: s.name,
+              emoji: s.emoji,
+              source: s.source === "upload" ? "upload" : "synth",
+              type: (SOUND_TYPE_SET.has(s.type as SoundType) ? s.type : "laser") as SoundType,
+              audioUrl: s.audioUrl || "",
+              color: s.color,
+              description: s.description,
+            }))
+          );
+        }
+      } catch (err) {
+        console.warn("Failed to load sounds:", err);
+      }
+    };
+
+    const loadHighlights = async () => {
+      try {
+        const res = await fetch("/api/highlights", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = (await res.json()) as { highlights: ApiHighlight[] };
+        if (!active) return;
+        setHighlights(Array.isArray(data.highlights) ? data.highlights : []);
+      } catch (err) {
+        console.warn("Failed to load highlights:", err);
+      } finally {
+        if (active) setHighlightsLoading(false);
+      }
+    };
+
+    loadSounds();
+    loadHighlights();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  /** Plays an uploaded audio file. Each click creates a fresh Audio element
+   *  so rapid taps overlap instead of restarting the same playhead. */
+  const playUploadedAudio = (url: string) => {
+    if (typeof window === "undefined" || !url) return;
+    try {
+      const audio = new Audio(url);
+      audio.volume = 0.85;
+      void audio.play();
+    } catch (e) {
+      console.warn("Audio playback failed:", e);
+    }
+  };
+
+  const triggerSound = (sound: SoundDefinition) => {
+    if (sound.source === "upload" && sound.audioUrl) {
+      playUploadedAudio(sound.audioUrl);
+    } else {
+      playSynthesizedSound(sound.type);
+    }
+  };
 
   const getAudioContextClass = () =>
     window.AudioContext ||
@@ -131,7 +180,6 @@ export const Soundboard = () => {
       const now = ctx.currentTime;
 
       if (type === "laser") {
-        // Laser Gun Shoot Effect
         osc.type = "sawtooth";
         osc.frequency.setValueAtTime(880, now);
         osc.frequency.exponentialRampToValueAtTime(110, now + 0.35);
@@ -140,39 +188,35 @@ export const Soundboard = () => {
         osc.start(now);
         osc.stop(now + 0.35);
       } else if (type === "chime") {
-        // Double Kill High bell chime
         osc.type = "sine";
-        osc.frequency.setValueAtTime(587.33, now); // D5
-        osc.frequency.setValueAtTime(880.00, now + 0.1); // A5
-        osc.frequency.setValueAtTime(1174.66, now + 0.2); // D6
+        osc.frequency.setValueAtTime(587.33, now);
+        osc.frequency.setValueAtTime(880.0, now + 0.1);
+        osc.frequency.setValueAtTime(1174.66, now + 0.2);
         gain.gain.setValueAtTime(0.15, now);
         gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
         osc.start(now);
         osc.stop(now + 0.5);
       } else if (type === "powerup") {
-        // Arpeggiated Level Up sound
         osc.type = "triangle";
-        osc.frequency.setValueAtTime(261.63, now); // C4
-        osc.frequency.setValueAtTime(329.63, now + 0.08); // E4
-        osc.frequency.setValueAtTime(392.00, now + 0.16); // G4
-        osc.frequency.setValueAtTime(523.25, now + 0.24); // C5
+        osc.frequency.setValueAtTime(261.63, now);
+        osc.frequency.setValueAtTime(329.63, now + 0.08);
+        osc.frequency.setValueAtTime(392.0, now + 0.16);
+        osc.frequency.setValueAtTime(523.25, now + 0.24);
         gain.gain.setValueAtTime(0.2, now);
         gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
         osc.start(now);
         osc.stop(now + 0.45);
       } else if (type === "fanfare") {
-        // Epic game victory trumpet
         osc.type = "square";
-        osc.frequency.setValueAtTime(392.00, now); // G4
-        osc.frequency.setValueAtTime(523.25, now + 0.12); // C5
-        osc.frequency.setValueAtTime(659.25, now + 0.24); // E5
-        osc.frequency.setValueAtTime(783.99, now + 0.36); // G5
+        osc.frequency.setValueAtTime(392.0, now);
+        osc.frequency.setValueAtTime(523.25, now + 0.12);
+        osc.frequency.setValueAtTime(659.25, now + 0.24);
+        osc.frequency.setValueAtTime(783.99, now + 0.36);
         gain.gain.setValueAtTime(0.12, now);
         gain.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
         osc.start(now);
         osc.stop(now + 0.8);
       } else if (type === "buzzer") {
-        // Sad retro failure buzz
         osc.type = "sawtooth";
         osc.frequency.setValueAtTime(180, now);
         osc.frequency.linearRampToValueAtTime(80, now + 0.65);
@@ -181,7 +225,6 @@ export const Soundboard = () => {
         osc.start(now);
         osc.stop(now + 0.75);
       } else if (type === "subbass") {
-        // Deep kinetic gaming bass drop
         osc.type = "sine";
         osc.frequency.setValueAtTime(90, now);
         osc.frequency.exponentialRampToValueAtTime(35, now + 0.8);
@@ -204,16 +247,100 @@ export const Soundboard = () => {
     }));
   };
 
+  const resetForm = () => {
+    setFormTitle("");
+    setFormGame("");
+    setFormDescription("");
+    setFormDuration("");
+    setFormYoutubeUrl("");
+    setFormAnonName("");
+    setFormFile(null);
+    setSubmitError(null);
+    setSubmitSuccess(null);
+  };
+
+  const closeSubmit = () => {
+    setShowSubmit(false);
+    resetForm();
+  };
+
+  const handleSubmitHighlight = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitError(null);
+    setSubmitSuccess(null);
+
+    if (!formTitle.trim()) {
+      setSubmitError("Title is required.");
+      return;
+    }
+    if (submitMode === "youtube" && !formYoutubeUrl.trim()) {
+      setSubmitError("Paste a YouTube link.");
+      return;
+    }
+    if (submitMode === "upload" && !formFile) {
+      setSubmitError("Choose a video file to upload.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      let res: Response;
+      if (submitMode === "youtube") {
+        res = await fetch("/api/highlights", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: formTitle,
+            game: formGame,
+            description: formDescription,
+            duration: formDuration,
+            youtubeUrl: formYoutubeUrl,
+            submittedByName: user ? "" : formAnonName,
+          }),
+        });
+      } else {
+        const fd = new FormData();
+        fd.append("title", formTitle);
+        fd.append("game", formGame);
+        fd.append("description", formDescription);
+        fd.append("duration", formDuration);
+        if (formFile) fd.append("file", formFile);
+        if (!user && formAnonName) fd.append("submittedByName", formAnonName);
+        res = await fetch("/api/highlights", { method: "POST", body: fd });
+      }
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setSubmitError(data.error || "Submission failed.");
+        return;
+      }
+      setSubmitSuccess(
+        "Submitted! An admin will review your clip before it appears on the page."
+      );
+      // Clear form fields but keep success message visible for a moment.
+      setFormTitle("");
+      setFormGame("");
+      setFormDescription("");
+      setFormDuration("");
+      setFormYoutubeUrl("");
+      setFormFile(null);
+    } catch {
+      setSubmitError("Network error. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <section id="arena" className="relative py-24 bg-[#060606] overflow-hidden">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ff0033]/45 to-transparent" />
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
-        
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
           <h2 className="font-display font-extrabold text-3xl sm:text-4xl text-white tracking-tight flex items-center justify-center gap-3">
-            <span className="text-[#ff0033] filter drop-shadow-[0_0_8px_rgba(255,0,51,0.5)]">🔥</span> Highlights & Sound Arena
+            <span className="text-[#ff0033] filter drop-shadow-[0_0_8px_rgba(255,0,51,0.5)]">🔥</span>{" "}
+            Highlights &amp; Sound Arena
           </h2>
           <p className="text-neutral-400 text-sm tracking-wider uppercase font-semibold">
             Click to trigger stream audio effects or enjoy community clutch highlights!
@@ -222,7 +349,6 @@ export const Soundboard = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          
           {/* Left Column: Stream Soundboard (Synth Audio) */}
           <div className="lg:col-span-6 space-y-6">
             <div>
@@ -238,7 +364,7 @@ export const Soundboard = () => {
               {sounds.map((sound) => (
                 <button
                   key={sound.id}
-                  onClick={() => playSynthesizedSound(sound.type)}
+                  onClick={() => triggerSound(sound)}
                   className={`p-5 rounded-lg border border-white/10 bg-[#181818]/70 backdrop-blur-md text-center transition-all duration-300 flex flex-col items-center justify-center gap-3 cursor-pointer group hover:bg-[#202020]/70 active:scale-95 ${sound.color}`}
                 >
                   <span className="text-3xl transition-transform duration-300 group-hover:scale-125">
@@ -266,89 +392,301 @@ export const Soundboard = () => {
 
           {/* Right Column: Mini Highlights Arena */}
           <div className="lg:col-span-6 space-y-6">
-            <div>
-              <h3 className="font-display font-extrabold text-lg sm:text-xl text-white tracking-wide flex items-center gap-2">
-                <Sparkles className="text-[#ff4b5f]" /> Community Highlights
-              </h3>
-              <p className="text-xs text-neutral-400 mt-1">
-                Check out trending funny stream moments and epic plays!
-              </p>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="font-display font-extrabold text-lg sm:text-xl text-white tracking-wide flex items-center gap-2">
+                  <Sparkles className="text-[#ff4b5f]" /> Community Highlights
+                </h3>
+                <p className="text-xs text-neutral-400 mt-1">
+                  Share your clutch plays — submissions show up here after admin review.
+                </p>
+              </div>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setShowSubmit(true)}
+                className="gap-1.5 shrink-0"
+              >
+                <Upload size={12} /> Submit clip
+              </Button>
             </div>
 
-            <div className="space-y-4">
-              {highlights.map((clip) => {
-                const isLoved = lovedClips[clip.id];
-                const activeLikes = clipLikes[clip.id] ?? clip.likes;
-                return (
-                  <Card
-                    key={clip.id}
-                    className="p-4 border border-white/10 bg-[#181818]/70 hover:border-[#ff0033]/25 transition-all duration-300 flex gap-4 items-center"
+            <div className="space-y-4 max-h-[640px] overflow-y-auto pr-2 highlights-scroll">
+              {highlightsLoading ? (
+                <Card className="p-8 border border-white/10 bg-[#181818]/70 text-center text-xs text-neutral-500">
+                  Loading highlights…
+                </Card>
+              ) : highlights.length === 0 ? (
+                <Card className="p-8 border border-dashed border-white/10 bg-[#181818]/40 text-center space-y-3">
+                  <Sparkles size={28} className="mx-auto text-[#ff4b5f]/70" />
+                  <p className="font-display font-bold text-sm text-white">
+                    No highlights yet
+                  </p>
+                  <p className="text-xs text-neutral-500 leading-relaxed">
+                    Be the first to share a clutch clip — submissions go to an admin for quick review.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowSubmit(true)}
+                    className="gap-1.5"
                   >
-                    {/* Thumbnail */}
-                    <div className="relative w-28 aspect-video rounded-lg overflow-hidden border border-white/5 shrink-0 bg-neutral-900 group">
-                      <Image
-                        src={clip.thumbnail}
-                        alt={clip.title}
-                        fill
-                        sizes="112px"
-                        className="object-cover"
-                      />
-                      <a
-                        href={clip.videoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="absolute inset-0 bg-[#000]/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
-                      >
-                        <Play size={16} className="text-white fill-white" />
-                      </a>
-                      <span className="absolute bottom-1 right-1 bg-black/85 text-[8px] font-bold text-[#ffffff] px-1.5 py-0.5 rounded image-overlay-badge">
-                        {clip.duration}
-                      </span>
-                    </div>
-
-                    {/* Clip details */}
-                    <div className="flex-grow space-y-2">
-                      <div>
-                        <span className="text-[9px] uppercase font-bold text-white bg-white/10 px-2 py-0.5 rounded border border-white/20">
-                          {clip.game}
-                        </span>
-                        <h4 className="font-semibold text-xs sm:text-sm text-white line-clamp-1 leading-snug mt-1.5">
-                          {clip.title}
-                        </h4>
-                      </div>
-
-                      {/* Action buttons */}
-                      <div className="flex items-center gap-4 text-[10px] text-neutral-500">
-                        <button
-                          onClick={() => handleLoveClip(clip.id, clip.likes)}
-                          className={`flex items-center gap-1.5 font-bold transition-all cursor-pointer ${
-                            isLoved ? "text-[#ff0033]" : "hover:text-neutral-300"
-                          }`}
-                        >
-                          <Flame size={12} className={isLoved ? "fill-[#ff0033] text-[#ff0033]" : ""} />
-                          {activeLikes} Lit
-                        </button>
-
+                    <Upload size={12} /> Submit the first clip
+                  </Button>
+                </Card>
+              ) : (
+                highlights.map((clip) => {
+                  const isLoved = lovedClips[clip.id];
+                  const activeLikes = clipLikes[clip.id] ?? 0;
+                  const watchUrl =
+                    clip.source === "youtube" && clip.youtubeId
+                      ? `https://www.youtube.com/watch?v=${clip.youtubeId}`
+                      : clip.videoUrl || "#";
+                  return (
+                    <Card
+                      key={clip.id}
+                      className="p-4 border border-white/10 bg-[#181818]/70 hover:border-[#ff0033]/25 transition-all duration-300 flex gap-4 items-center"
+                    >
+                      <div className="relative w-28 aspect-video rounded-lg overflow-hidden border border-white/5 shrink-0 bg-neutral-900 group">
+                        {clip.thumbnailUrl ? (
+                          <Image
+                            src={clip.thumbnailUrl}
+                            alt={clip.title}
+                            fill
+                            sizes="112px"
+                            className="object-cover"
+                            unoptimized
+                          />
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center text-neutral-600">
+                            <Play size={20} />
+                          </div>
+                        )}
                         <a
-                          href={clip.videoUrl}
+                          href={watchUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-1.5 hover:text-neutral-300 font-bold"
+                          className="absolute inset-0 bg-[#000]/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
                         >
-                          <Share2 size={12} />
-                          Share Link
+                          <Play size={16} className="text-white fill-white" />
                         </a>
+                        {clip.duration && (
+                          <span className="absolute bottom-1 right-1 bg-black/85 text-[8px] font-bold text-[#ffffff] px-1.5 py-0.5 rounded image-overlay-badge">
+                            {clip.duration}
+                          </span>
+                        )}
                       </div>
-                    </div>
-                  </Card>
-                );
-              })}
+
+                      <div className="flex-grow space-y-2 min-w-0">
+                        <div>
+                          {clip.game && (
+                            <span className="text-[9px] uppercase font-bold text-white bg-white/10 px-2 py-0.5 rounded border border-white/20">
+                              {clip.game}
+                            </span>
+                          )}
+                          <h4 className="font-semibold text-xs sm:text-sm text-white line-clamp-1 leading-snug mt-1.5">
+                            {clip.title}
+                          </h4>
+                          <p className="text-[10px] text-neutral-500 mt-1 flex items-center gap-1.5 truncate">
+                            {clip.submittedByAvatar && (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={clip.submittedByAvatar}
+                                alt=""
+                                className="w-3.5 h-3.5 rounded-full object-cover"
+                              />
+                            )}
+                            <span className="truncate">by {clip.submittedByName}</span>
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-4 text-[10px] text-neutral-500">
+                          <button
+                            onClick={() => handleLoveClip(clip.id, 0)}
+                            className={`flex items-center gap-1.5 font-bold transition-all cursor-pointer ${
+                              isLoved ? "text-[#ff0033]" : "hover:text-neutral-300"
+                            }`}
+                          >
+                            <Flame size={12} className={isLoved ? "fill-[#ff0033] text-[#ff0033]" : ""} />
+                            {activeLikes} Lit
+                          </button>
+
+                          <a
+                            href={watchUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 hover:text-neutral-300 font-bold"
+                          >
+                            <Share2 size={12} />
+                            Watch
+                          </a>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })
+              )}
             </div>
           </div>
-
         </div>
-
       </div>
+
+      {/* Submission modal */}
+      {showSubmit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
+          <Card
+            glass
+            className="max-w-xl w-full p-7 border-white/10 bg-[#0c0c0c]/95 backdrop-blur-2xl relative shadow-[0_20px_50px_rgba(0,0,0,0.5)] animate-fade-in-up max-h-[90vh] overflow-y-auto"
+          >
+            <button
+              onClick={closeSubmit}
+              className="absolute top-4 right-4 p-2 rounded-full bg-white/5 border border-white/10 text-neutral-400 hover:text-white transition cursor-pointer"
+              aria-label="Close"
+            >
+              <X size={16} />
+            </button>
+
+            <div className="space-y-5">
+              <div>
+                <h3 className="font-display font-extrabold text-xl text-white tracking-wide flex items-center gap-2">
+                  <Sparkles size={18} className="text-[#ff4b5f]" /> Submit a Highlight
+                </h3>
+                <p className="text-[11px] text-neutral-500 mt-1">
+                  YouTube link or a short video file (mp4/webm/mov, max 50&nbsp;MB). An admin will review before it goes live.
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSubmitMode("youtube")}
+                  className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-xs font-bold uppercase tracking-wider transition ${
+                    submitMode === "youtube"
+                      ? "border-[#ff0033] bg-[#ff0033]/10 text-[#ff4b5f]"
+                      : "border-white/10 text-neutral-400 hover:text-white"
+                  }`}
+                >
+                  <Link2 size={13} /> YouTube link
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSubmitMode("upload")}
+                  className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-xs font-bold uppercase tracking-wider transition ${
+                    submitMode === "upload"
+                      ? "border-[#ff0033] bg-[#ff0033]/10 text-[#ff4b5f]"
+                      : "border-white/10 text-neutral-400 hover:text-white"
+                  }`}
+                >
+                  <Upload size={13} /> Upload file
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmitHighlight} className="space-y-4">
+                {submitError && (
+                  <div className="flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-xs font-bold text-red-400">
+                    <AlertTriangle size={14} className="shrink-0 mt-0.5" /> {submitError}
+                  </div>
+                )}
+                {submitSuccess && (
+                  <div className="flex items-start gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs font-bold text-emerald-400">
+                    <CheckCircle2 size={14} className="shrink-0 mt-0.5" /> {submitSuccess}
+                  </div>
+                )}
+
+                <Input
+                  label="Title"
+                  required
+                  placeholder="e.g. 1v5 Jett Clutch in Ranked"
+                  value={formTitle}
+                  onChange={(e) => setFormTitle(e.target.value)}
+                  maxLength={160}
+                />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Input
+                    label="Game"
+                    placeholder="Valorant"
+                    value={formGame}
+                    onChange={(e) => setFormGame(e.target.value)}
+                    maxLength={60}
+                  />
+                  <Input
+                    label="Duration"
+                    placeholder="0:45"
+                    value={formDuration}
+                    onChange={(e) => setFormDuration(e.target.value)}
+                    maxLength={12}
+                  />
+                </div>
+
+                {submitMode === "youtube" ? (
+                  <Input
+                    label="YouTube URL"
+                    required
+                    placeholder="https://youtu.be/ScMzIvxBSi4"
+                    value={formYoutubeUrl}
+                    onChange={(e) => setFormYoutubeUrl(e.target.value)}
+                  />
+                ) : (
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1.5">
+                      Video file (mp4 / webm / mov, max 50MB)
+                    </label>
+                    <input
+                      type="file"
+                      accept="video/mp4,video/webm,video/quicktime"
+                      onChange={(e) => setFormFile(e.target.files?.[0] ?? null)}
+                      className="block w-full text-xs text-neutral-400 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border file:border-white/10 file:bg-white/5 file:text-white file:font-bold file:cursor-pointer hover:file:bg-white/10"
+                    />
+                    {formFile && (
+                      <p className="mt-1.5 text-[10px] text-neutral-500 font-mono">
+                        {formFile.name} · {(formFile.size / 1024 / 1024).toFixed(1)} MB
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1.5">
+                    Notes (optional)
+                  </label>
+                  <textarea
+                    value={formDescription}
+                    onChange={(e) => setFormDescription(e.target.value)}
+                    maxLength={500}
+                    rows={2}
+                    placeholder="Anything the moderators should know?"
+                    className="w-full rounded-lg border border-white/10 bg-[#181818]/80 px-3 py-2 text-sm text-white placeholder:text-neutral-600 focus:border-[#ff0033] focus:outline-none focus:ring-1 focus:ring-[#ff0033]/30 resize-none"
+                  />
+                </div>
+
+                {!user && (
+                  <Input
+                    label="Your name (optional)"
+                    placeholder="Leave blank to post anonymously"
+                    value={formAnonName}
+                    onChange={(e) => setFormAnonName(e.target.value)}
+                    maxLength={60}
+                  />
+                )}
+
+                <div className="flex justify-end gap-2 pt-2 border-t border-white/5">
+                  <Button type="button" variant="ghost" onClick={closeSubmit}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={submitting} className="gap-2">
+                    {submitting ? "Submitting…" : (
+                      <>
+                        <Upload size={14} /> Submit for review
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </Card>
+        </div>
+      )}
     </section>
   );
 };
