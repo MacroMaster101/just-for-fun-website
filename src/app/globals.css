@@ -98,14 +98,55 @@
 @layer base {
   html { scroll-behavior: smooth; }
 
+  /* Theme tokens — dark is default */
+  :root,
+  html.dark {
+    --color-bg: #060606;
+    --color-bg-soft: #0c0c0c;
+    --color-surface: #131313;
+    --color-surface-2: #1c1c1c;
+    --color-border: rgba(255, 255, 255, 0.08);
+    --color-text: #f1f1f1;
+    --color-text-muted: #a3a3a3;
+    --color-text-subtle: #737373;
+    --scrollbar-track: #060606;
+  }
+
+  html.light {
+    --color-bg: #f5f5f7;
+    --color-bg-soft: #ffffff;
+    --color-surface: #ffffff;
+    --color-surface-2: #f0f0f3;
+    --color-border: rgba(0, 0, 0, 0.10);
+    --color-text: #0a0a0a;
+    --color-text-muted: #525252;
+    --color-text-subtle: #737373;
+    --scrollbar-track: #e5e5e7;
+  }
+
   body {
-    background-color: #060606;
-    color: #f1f1f1;
+    background-color: var(--color-bg);
+    color: var(--color-text);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+
+  /* Page-wide transition effect during theme switch.
+     Uses View Transitions API when available (single cheap snapshot fade),
+     falls back to a body-only color tween. Per-element transitions were
+     too expensive on this site (many gradients/blurs/shadows). */
+  html.theme-switching body {
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html.theme-switching,
+    html.theme-switching * {
+      transition: none !important;
+    }
   }
 
   ::-webkit-scrollbar { width: 8px; height: 8px; }
-  ::-webkit-scrollbar-track { background: #060606; }
+  ::-webkit-scrollbar-track { background: var(--scrollbar-track); }
   ::-webkit-scrollbar-thumb {
     background: linear-gradient(180deg, #ff0033, #b30024);
     border-radius: 9999px;
@@ -116,6 +157,989 @@
 
   /* Selection */
   ::selection { background: #ff0033; color: #fff; }
+}
+
+/* View Transitions cross-fade between themes.
+   Browsers that support it (Chrome/Edge) get a snapshot fade.
+   Firefox/Safari fall back to the body-color transition above. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.35s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+::view-transition-old(root) {
+  animation-name: fade-out;
+}
+::view-transition-new(root) {
+  animation-name: fade-in;
+}
+@keyframes fade-out { to { opacity: 0; } }
+@keyframes fade-in { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
+}
+
+/* ============================================================
+   LIGHT MODE OVERRIDES
+   Remaps hardcoded dark colors throughout the app to light
+   equivalents when html.light is active. Keeps crimson accents.
+   ============================================================ */
+html.light {
+  color-scheme: light;
+}
+
+/* Section/background surfaces — flip near-black to off-white */
+html.light [class*="bg-[#060606]"] { background-color: #f5f5f7 !important; }
+html.light [class*="bg-[#0a0a0a]"] { background-color: #ffffff !important; }
+html.light [class*="bg-[#0c0c0c]"] { background-color: #fafafa !important; }
+html.light [class*="bg-[#131313]"] { background-color: #ffffff !important; }
+html.light [class*="bg-[#181818]"] { background-color: #ffffff !important; }
+html.light [class*="bg-[#1c1c1c]"] { background-color: #f0f0f3 !important; }
+html.light [class*="bg-[#0f0f0f]"] { background-color: #f5f5f7 !important; }
+html.light [class*="bg-[#0f0f0f]/"] { background-color: rgba(245, 245, 247, 0.9) !important; }
+
+/* Translucent dark surfaces (e.g. bg-[#060606]/90) */
+html.light [class*="bg-[#060606]/"] { background-color: rgba(245, 245, 247, 0.9) !important; }
+html.light [class*="bg-[#0c0c0c]/"] { background-color: rgba(250, 250, 250, 0.9) !important; }
+html.light [class*="bg-[#131313]/"] { background-color: rgba(255, 255, 255, 0.85) !important; }
+html.light [class*="bg-[#181818]/"] { background-color: rgba(255, 255, 255, 0.85) !important; }
+
+/* bg-white/X (used as subtle overlays on dark) -> dark/X on light */
+html.light .bg-white\/5 { background-color: rgba(0, 0, 0, 0.04) !important; }
+html.light .bg-white\/10 { background-color: rgba(0, 0, 0, 0.06) !important; }
+html.light .bg-white\/15 { background-color: rgba(0, 0, 0, 0.08) !important; }
+html.light .bg-white\/20 { background-color: rgba(0, 0, 0, 0.10) !important; }
+html.light .bg-white\/\[0\.02\] { background-color: rgba(0, 0, 0, 0.02) !important; }
+html.light .bg-white\/\[0\.05\] { background-color: rgba(0, 0, 0, 0.04) !important; }
+
+/* border-white/X */
+html.light .border-white\/5 { border-color: rgba(0, 0, 0, 0.06) !important; }
+html.light .border-white\/10 { border-color: rgba(0, 0, 0, 0.10) !important; }
+html.light .border-white\/15 { border-color: rgba(0, 0, 0, 0.12) !important; }
+html.light .border-white\/20 { border-color: rgba(0, 0, 0, 0.14) !important; }
+
+/* Text colors — flip whites/light-grays to dark equivalents */
+html.light .text-white { color: #0a0a0a !important; }
+html.light .text-neutral-100 { color: #171717 !important; }
+html.light .text-neutral-200 { color: #262626 !important; }
+html.light .text-neutral-300 { color: #404040 !important; }
+html.light .text-neutral-400 { color: #525252 !important; }
+html.light .text-neutral-500 { color: #737373 !important; }
+
+/* Text-white with opacity */
+html.light .text-white\/60 { color: rgba(0, 0, 0, 0.6) !important; }
+html.light .text-white\/70 { color: rgba(0, 0, 0, 0.7) !important; }
+html.light .text-white\/80 { color: rgba(0, 0, 0, 0.8) !important; }
+html.light .text-white\/90 { color: rgba(0, 0, 0, 0.85) !important; }
+
+/* Body classes from layout */
+html.light body.bg-\[\#060606\] { background-color: #f5f5f7 !important; }
+html.light body.text-neutral-100 { color: #0a0a0a !important; }
+
+/* Scrollbar track */
+html.light ::-webkit-scrollbar-track { background: #e5e5e7; }
+
+/* Soften the noise/grid overlays in light mode (they were tuned for dark) */
+html.light .bg-noise { opacity: 0.35; }
+html.light .bg-grid-subtle {
+  background-image:
+    linear-gradient(to right, rgba(0, 0, 0, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 0, 51, 0.08) 1px, transparent 1px);
+}
+html.light .bg-dot-pattern {
+  background-image: radial-gradient(circle, rgba(255, 0, 51, 0.12) 1px, transparent 1px);
+}
+html.light .bg-cyber-matrix {
+  background-image:
+    linear-gradient(rgba(255, 0, 51, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 0, 51, 0.08) 1px, transparent 1px);
+}
+
+/* Glass component */
+html.light .glass {
+  background: rgba(255, 255, 255, 0.7) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Giant outlined "Just For Fun" text in footer — strengthen stroke for light bg */
+html.light [class*="[-webkit-text-stroke"] {
+  -webkit-text-stroke: 1px rgba(255, 0, 51, 0.35) !important;
+}
+
+/* Chip default */
+html.light .chip {
+  border-color: rgba(0, 0, 0, 0.10);
+  background: rgba(0, 0, 0, 0.04);
+  color: #404040;
+}
+
+/* Subtle gradient backdrops that were dark — give them a light wash */
+html.light .from-black { --tw-gradient-from: #ffffff var(--tw-gradient-from-position) !important; }
+html.light .via-black { --tw-gradient-via: #f5f5f7 var(--tw-gradient-via-position) !important; }
+html.light .to-black { --tw-gradient-to: #ffffff var(--tw-gradient-to-position) !important; }
+
+/* Tailwind gradients that fade to hex dark colors */
+html.light [class*="to-[#060606]"] {
+  --tw-gradient-to: #f5f5f7 var(--tw-gradient-to-position) !important;
+}
+html.light [class*="from-[#060606]"] {
+  --tw-gradient-from: #f5f5f7 var(--tw-gradient-from-position) !important;
+}
+
+/* Arbitrary CSS gradients with hardcoded near-black stops
+   (Hero radial, LatestVideos vertical band) */
+html.light .bg-\[linear-gradient\(180deg\,\#060606_0\%\,\#0c0c0c_48\%\,\#060606_100\%\)\] {
+  background-image: linear-gradient(180deg, #f5f5f7 0%, #ffffff 48%, #f5f5f7 100%) !important;
+}
+
+/* Neutral-900 surface (Merch grade chip, Soundboard thumb) */
+html.light .bg-neutral-900 { background-color: #f0f0f3 !important; }
+html.light .bg-neutral-800 { background-color: #e5e5e7 !important; }
+html.light .bg-neutral-950 { background-color: #fafafa !important; }
+
+/* Translucent rose/pink/indigo/blue/amber 950 hovers from Socials/Contact
+   — keep them but tone for light bg */
+html.light .bg-rose-950\/10 { background-color: rgba(244, 63, 94, 0.06) !important; }
+html.light .bg-rose-950\/40 { background-color: rgba(244, 63, 94, 0.12) !important; }
+html.light .bg-pink-950\/10 { background-color: rgba(236, 72, 153, 0.06) !important; }
+html.light .bg-indigo-950\/10 { background-color: rgba(99, 102, 241, 0.06) !important; }
+html.light .bg-blue-950\/10 { background-color: rgba(59, 130, 246, 0.06) !important; }
+html.light .bg-amber-950\/10 { background-color: rgba(245, 158, 11, 0.08) !important; }
+html.light .bg-purple-950\/10 { background-color: rgba(145, 70, 255, 0.08) !important; }
+
+/* bg-black with opacity (used as modal/overlay backdrops, dark badges) */
+html.light .bg-black { background-color: #0a0a0a !important; } /* keep dark for things like the video player */
+html.light .bg-black\/30 { background-color: rgba(0, 0, 0, 0.04) !important; }
+html.light .bg-black\/45 { background-color: rgba(0, 0, 0, 0.30) !important; } /* hover dim on thumbs - keep dim */
+html.light .bg-black\/80 { background-color: rgba(0, 0, 0, 0.75) !important; } /* close button - keep dark */
+html.light .bg-black\/85 { background-color: rgba(0, 0, 0, 0.78) !important; } /* duration badge on thumbs */
+html.light .bg-black\/90 { background-color: rgba(0, 0, 0, 0.85) !important; }
+html.light .bg-black\/\[0\.92\] { background-color: rgba(0, 0, 0, 0.55) !important; } /* video modal scrim */
+
+/* Inputs and form controls — keep readable in light mode */
+html.light input,
+html.light textarea,
+html.light select {
+  color: #0a0a0a;
+}
+html.light input::placeholder,
+html.light textarea::placeholder {
+  color: #737373;
+}
+
+/* Red-tinted alert/error banners — soften for light bg, keep red intent */
+html.light .bg-red-950\/40 { background-color: rgba(254, 226, 226, 0.7) !important; }
+html.light .bg-red-950\/50 { background-color: rgba(254, 226, 226, 0.8) !important; }
+html.light .text-red-300 { color: #b91c1c !important; }
+html.light .text-red-400 { color: #dc2626 !important; }
+html.light .text-rose-300 { color: #be123c !important; }
+
+/* Footer giant outline text — slightly stronger in light mode for visibility */
+html.light footer .text-transparent {
+  -webkit-text-stroke-color: rgba(255, 0, 51, 0.4);
+}
+
+/* ============================================================
+   LIGHT MODE — TARGETED FIXES
+   ============================================================ */
+
+/* Gradient text containing white half — make the white half dark
+   so the text stays readable on light bg */
+html.light .from-white { --tw-gradient-from: #1a1a1a var(--tw-gradient-from-position) !important; }
+html.light .to-white { --tw-gradient-to: #1a1a1a var(--tw-gradient-to-position) !important; }
+
+/* Decorative dividers using via-white become invisible on light bg.
+   Swap to a visible mid-gray. */
+html.light .via-white { --tw-gradient-via: #525252 var(--tw-gradient-via-position) !important; }
+
+/* ============================================================
+   HERO — full light mode (was previously kept dark; user wants
+   the entire page to flip cleanly)
+   ============================================================ */
+/* Soften the Hero's red radial backdrop so it reads as a light
+   page with a tinted glow, not a dark stage */
+html.light section#hero {
+  background-color: #f5f5f7 !important;
+}
+/* The Hero's bottom fade `to-[#060606]` should fade to light */
+html.light section#hero [class*="to-[#060606]"] {
+  --tw-gradient-to: #f5f5f7 !important;
+}
+/* The cyber-matrix grid inside the Hero needs to be visible on light */
+html.light section#hero .bg-cyber-matrix {
+  background-image:
+    linear-gradient(rgba(255, 0, 51, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 0, 51, 0.08) 1px, transparent 1px) !important;
+}
+/* Hero's "Latest Videos" outlined button uses bg-white/5 + text-white.
+   The generic remap makes bg dark/5 + text dark — but the result is muddy.
+   Give it explicit light-mode styling. */
+html.light section#hero a[class*="bg-white/5"],
+html.light section#hero button[class*="bg-white/5"] {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  color: #0a0a0a !important;
+}
+html.light section#hero a[class*="bg-white/5"] *,
+html.light section#hero button[class*="bg-white/5"] * {
+  color: #0a0a0a !important;
+}
+
+/* Stats cards in Hero (subscribers, videos, views) use bg-[#0a0a0a]/[#131313]
+   — already remapped generically. But the icon backgrounds inside use
+   bg-[#ff0033]/15 which is fine. Just ensure card text reads on white. */
+
+/* ============================================================
+   CONTACT — "Let's Talk" topic chips were near-invisible
+   The Card uses bg-[#181818]/70 which became white, but the
+   inner chips need readable contrast.
+   ============================================================ */
+html.light #contact button.bg-white\/5,
+html.light #contact .bg-white\/5 {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+  color: #404040 !important;
+}
+
+/* ============================================================
+   CHALLENGE WHEEL — right panel was blank because text-white
+   on white card. The CSS already flips text-white but the panel
+   uses inner text-neutral-400/500 that may not be readable.
+   Plus the "Press Spin" placeholder uses very faint text.
+   ============================================================ */
+html.light #wheel .text-neutral-500 { color: #525252 !important; }
+html.light #wheel .border-white\/5 { border-color: rgba(0, 0, 0, 0.08) !important; }
+
+/* ============================================================
+   Misc — chips on light bg
+   ============================================================ */
+html.light .chip {
+  border-color: rgba(0, 0, 0, 0.10) !important;
+  background: rgba(0, 0, 0, 0.04) !important;
+  color: #404040 !important;
+}
+
+/* Section headers with red drop-shadow on red text look muddy on light bg.
+   This is fine for emoji, but the divider lines need extra visibility. */
+html.light .divider-red {
+  background: linear-gradient(90deg, transparent, rgba(255, 0, 51, 0.8), rgba(0, 0, 0, 0.3), rgba(179, 0, 36, 0.7), transparent);
+}
+
+/* CursorSpotlight overlay was tuned for dark — tone down so it doesn't
+   look like a stain on light bg. Targets the inline-styled radial. */
+html.light [data-cursor-spotlight] {
+  opacity: 0.25;
+}
+
+/* ============================================================
+   HEADER — force solid light bg in light mode so it doesn't
+   appear dark/red while overlaying the dark Hero section.
+   ============================================================ */
+html.light header.fixed {
+  background-color: rgba(255, 255, 255, 0.92) !important;
+  border-bottom-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06) !important;
+}
+html.light header.fixed [class*="bg-[var(--color-bg)]"] {
+  background-color: rgba(255, 255, 255, 0.92) !important;
+}
+
+/* ============================================================
+   LIGHT MODE — COMPREHENSIVE COVERAGE PASS
+   Fixes invisibility issues found in screenshots:
+   - text-[#ffffff] literal hex (not matched by .text-white)
+   - via-[#ffffff] gradient stops
+   - additional dark surfaces (#202020, #272727, #0a0a0a, #181818 inputs)
+   - placeholder-neutral-XXX classes
+   - text-gradient-* custom utilities
+   ============================================================ */
+
+/* Literal white hex used in classnames — covers text-[#ffffff], etc. */
+html.light [class*="text-[#ffffff]"] { color: #0a0a0a !important; }
+html.light [class*="text-[#fff]"] { color: #0a0a0a !important; }
+
+/* via-[#ffffff] gradient stops — make visible mid-gray on light bg
+   (Hero also light now, so no exception needed) */
+html.light [class*="via-[#ffffff]"] {
+  --tw-gradient-via: #525252 var(--tw-gradient-via-position) !important;
+}
+
+/* Additional dark surfaces missed earlier */
+html.light [class*="bg-[#202020]"] { background-color: #f0f0f3 !important; }
+html.light [class*="bg-[#202020]/"] { background-color: rgba(240, 240, 243, 0.7) !important; }
+html.light [class*="bg-[#272727]"] { background-color: #e5e5e7 !important; }
+html.light [class*="bg-[#3f3f3f]"] { background-color: #d4d4d4 !important; }
+
+/* placeholder colors — were tuned for white text on dark */
+html.light .placeholder-neutral-500::placeholder,
+html.light .placeholder-neutral-600::placeholder { color: #737373 !important; }
+html.light input.placeholder-neutral-500::placeholder,
+html.light input.placeholder-neutral-600::placeholder,
+html.light textarea.placeholder-neutral-500::placeholder,
+html.light textarea.placeholder-neutral-600::placeholder { color: #737373 !important; }
+
+/* Custom gradient text utilities — text-gradient-animated (Hero "Fun BoYs",
+   maybe elsewhere) and text-gradient-red. Both interpolate through white
+   which becomes invisible on light bg. Hero is exempt. */
+html.light .text-gradient-red {
+  background-image: linear-gradient(135deg, #1a1a1a 0%, #ff2d55 45%, #ff0033 100%) !important;
+}
+html.light .text-gradient-animated {
+  background-image: linear-gradient(90deg, #1a1a1a, #ff0033, #ff2d55, #1a1a1a) !important;
+}
+
+/* About section's inline gradient text uses Tailwind classes from-white to-[#ff0033].
+   We already remap from-white to #1a1a1a globally, but the original
+   drop-shadow rgba(255,0,51,0.2) bleeds and makes it look muddy.
+   Tighten the gradient + drop-shadow specifically here. */
+html.light #about h3 .bg-gradient-to-r.from-white {
+  background-image: linear-gradient(90deg, #1a1a1a 0%, #ff0033 100%) !important;
+}
+
+/* AuthModal dark inputs — bg-[#0a0a0a] already gets light-treated, but
+   make sure the input border is visible too. */
+html.light input[class*="bg-[#0a0a0a]"],
+html.light textarea[class*="bg-[#0a0a0a]"] {
+  background-color: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.10) !important;
+}
+
+/* Soundboard active hover surface */
+html.light [class*="bg-[#202020]/70"] { background-color: rgba(240, 240, 243, 0.7) !important; }
+
+/* Marquee strip with "VALORANT · VALHEIM · ..." had a dark band feel —
+   text-neutral-* in the strip should be readable on light. Already handled
+   by generic rules but ensure surrounding bg is light. */
+html.light .border-y { border-color: rgba(0, 0, 0, 0.10) !important; }
+
+/* Final catch: any element relying purely on white text inside a SOLID red
+   chip/button (not the translucent /10 /20 light tints). Match only the
+   solid forms — bg-[#ff0033] without a trailing /digit.
+   The negation `:not([class*="..."])` is used so we exclude translucent variants. */
+html.light .text-white.bg-\[\#ff0033\],
+html.light .bg-\[\#ff0033\] > .text-white,
+html.light .text-white.bg-\[\#b30024\],
+html.light .bg-\[\#b30024\] > .text-white,
+html.light .text-white.bg-\[\#ff2d55\],
+html.light .bg-\[\#ff2d55\] > .text-white,
+html.light .text-white.bg-\[\#ff4b5f\],
+html.light .bg-\[\#ff4b5f\] > .text-white {
+  color: #ffffff !important;
+}
+
+/* Same for buttons that have red gradient backgrounds */
+html.light button[class*="from-[#ff0033]"].text-white,
+html.light button[class*="from-[#ff0033]"] .text-white,
+html.light a[class*="from-[#ff0033]"].text-white,
+html.light a[class*="from-[#ff0033]"] .text-white {
+  color: #ffffff !important;
+}
+
+/* ============================================================
+   LIGHT MODE — MORE LITERAL HEX VARIANTS
+   Final cleanup catching `#ffffff` and `#030303` patterns
+   used in some sections (SquadRoster, LoadingScreen).
+   ============================================================ */
+
+/* bg-[#ffffff]/X — soft white glow blobs/badges; flip to soft dark tints */
+html.light [class*="bg-[#ffffff]/5"] { background-color: rgba(0, 0, 0, 0.04) !important; }
+html.light [class*="bg-[#ffffff]/10"] { background-color: rgba(0, 0, 0, 0.06) !important; }
+html.light [class*="bg-[#ffffff]/15"] { background-color: rgba(0, 0, 0, 0.08) !important; }
+html.light [class*="bg-[#ffffff]/20"] { background-color: rgba(0, 0, 0, 0.10) !important; }
+html.light [class*="bg-[#ffffff]/40"] { background-color: rgba(0, 0, 0, 0.18) !important; }
+/* Solid bg-[#ffffff] (a tiny pulse dot in SquadRoster) — flip to dark dot */
+html.light .bg-\[\#ffffff\] { background-color: #404040 !important; }
+
+/* border-[#ffffff]/X */
+html.light [class*="border-[#ffffff]/10"] { border-color: rgba(0, 0, 0, 0.08) !important; }
+html.light [class*="border-[#ffffff]/20"] { border-color: rgba(0, 0, 0, 0.10) !important; }
+html.light [class*="border-[#ffffff]/40"] { border-color: rgba(0, 0, 0, 0.18) !important; }
+
+/* SquadRoster operator card has a dark gradient overlay
+   `from-transparent via-[#030303]/10 to-[#030303]/40`
+   which makes the card look gray/dark on light bg. Neutralize. */
+html.light [class*="via-[#030303]"] {
+  --tw-gradient-via: rgba(0, 0, 0, 0) !important;
+}
+html.light [class*="to-[#030303]"] {
+  --tw-gradient-to: rgba(0, 0, 0, 0.04) !important;
+}
+html.light [class*="from-[#030303]"] {
+  --tw-gradient-from: rgba(0, 0, 0, 0) !important;
+}
+
+/* LoadingScreen floating blobs — bg-[#ffffff]/20 already handled above.
+   No extra work needed. */
+
+/* Footer giant "JUST FOR" outlined text — strengthen stroke for visibility on light bg */
+html.light footer .text-transparent[class*="webkit-text-stroke"],
+html.light footer .text-transparent {
+  -webkit-text-stroke: 1.5px rgba(255, 0, 51, 0.5) !important;
+}
+
+/* ============================================================
+   BUTTON CONTRAST FIXES IN LIGHT MODE
+   Outline/secondary/cart buttons with bg-white/5 + text-white
+   end up as black/04 + black — too faint on white. Give them
+   stronger contrast.
+   ============================================================ */
+
+/* Hero "Channel" button (Button variant=outline, border-white/20 text-white) */
+html.light section#hero a button[class*="border-white/20"],
+html.light section#hero a button[class*="border-white/20"] * {
+  color: #0a0a0a !important;
+}
+html.light section#hero a button[class*="border-white/20"] {
+  border-color: rgba(0, 0, 0, 0.25) !important;
+  background-color: #ffffff !important;
+}
+
+/* Hero "Latest Videos" button (Button variant=secondary uses bg-[#272727]) */
+html.light section#hero a button[class*="bg-[#272727]"] {
+  background-color: #1a1a1a !important;
+  color: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+}
+html.light section#hero a button[class*="bg-[#272727]"] * {
+  color: #ffffff !important;
+}
+
+/* Merch "View Arsenal Cart" button — bg-white/5 + border-white/20 + text-white
+   Needs higher contrast. Use solid dark bg with white text. */
+html.light #merch button[class*="bg-white/5"] {
+  background-color: #1a1a1a !important;
+  border-color: #1a1a1a !important;
+  color: #ffffff !important;
+}
+html.light #merch button[class*="bg-white/5"] * {
+  color: #ffffff !important;
+}
+
+/* LatestVideos "Visit Channel" outline button — same treatment */
+html.light #latest a button[class*="border-white/20"],
+html.light #videos a button[class*="border-white/20"] {
+  border-color: rgba(0, 0, 0, 0.25) !important;
+  color: #0a0a0a !important;
+  background-color: #ffffff !important;
+}
+html.light #latest a button[class*="border-white/20"] *,
+html.light #videos a button[class*="border-white/20"] * {
+  color: #0a0a0a !important;
+}
+
+/* Cart drawer — was rendering dark overlays on light page. Make it
+   a proper light drawer with dark text. */
+html.light [class*="bg-[#020208]"] { background-color: rgba(0, 0, 0, 0.5) !important; }
+html.light [class*="bg-[#0d0d26]"] { background-color: #f5f5f7 !important; }
+html.light [class*="bg-[#0d0d26]/"] { background-color: rgba(245, 245, 247, 0.85) !important; }
+
+/* Generic safety net for any button with bg-white/5 + text-white outside
+   the explicit overrides — push it to a visible state */
+html.light button[class*="bg-white/5"][class*="text-white"],
+html.light a[class*="bg-white/5"][class*="text-white"] {
+  background-color: #1a1a1a !important;
+  color: #ffffff !important;
+}
+html.light button[class*="bg-white/5"][class*="text-white"] *,
+html.light a[class*="bg-white/5"][class*="text-white"] * {
+  color: #ffffff !important;
+}
+
+/* ============================================================
+   SOCIALS GRID — hover state was washing out text in light mode
+   because the CursorSpotlight glow plus tinted hover bg made
+   text low-contrast. Force readable colors on hover.
+   ============================================================ */
+html.light #socials a:hover h3,
+html.light #socials a:hover p,
+html.light #socials a:hover span {
+  color: #0a0a0a !important;
+}
+/* The "CONNECT VECTOR ->" text uses text-[#ff4b5f] — keep red but readable */
+html.light #socials a span.text-\[\#ff4b5f\],
+html.light #socials a:hover span.text-\[\#ff4b5f\] {
+  color: #ff0033 !important;
+}
+/* Card itself — make sure hover tint doesn't wash everything */
+html.light #socials a .border {
+  background-color: #ffffff !important;
+}
+html.light #socials a:hover .border {
+  background-color: #fafafa !important;
+  border-color: rgba(0, 0, 0, 0.15) !important;
+}
+
+/* ============================================================
+   CUSTOM CURSOR — kill the big blurred red glow on light bg.
+   Multiple selectors for safety; the cursor uses mix-blend-screen
+   which obliterates text under it on light backgrounds.
+   ============================================================ */
+html.light .pointer-events-none.fixed.h-\[320px\] {
+  display: none !important;
+  opacity: 0 !important;
+  background: none !important;
+}
+/* Belt-and-suspenders: any fixed pointer-events-none with mix-blend-screen */
+html.light [style*="mix-blend"][style*="screen"] {
+  display: none !important;
+}
+
+/* ============================================================
+   LIGHT MODE — TEXT CONTRAST PASS
+   Many text colors were tuned for white text on dark bg.
+   On light bg they end up too faint. Push them darker.
+   ============================================================ */
+
+/* Pink/light-red accent text — pretty on dark, invisible on white.
+   Darken to a richer red that reads on white.
+   Use plain class selector (with escaped brackets) so we don't
+   accidentally match elements that have bg-[#ff4b5f] in their class. */
+html.light .text-\[\#ff4b5f\] { color: #dc2626 !important; }
+html.light .text-\[\#ff2d55\] { color: #e11d48 !important; }
+
+/* text-[#ff0033] is the brand red — keep as-is, it reads on white. */
+
+/* Mid-gray labels (text-neutral-500) — too pale on white bg.
+   Bump to #525252 globally for readability. */
+html.light .text-neutral-500 { color: #525252 !important; }
+html.light .text-neutral-600 { color: #404040 !important; }
+
+/* Translucent white text (text-white/60 etc.) — my generic remap
+   makes them translucent black, which is still faint. Push darker. */
+html.light .text-white\/50 { color: rgba(0, 0, 0, 0.75) !important; }
+html.light .text-white\/60 { color: rgba(0, 0, 0, 0.78) !important; }
+html.light .text-white\/70 { color: rgba(0, 0, 0, 0.82) !important; }
+html.light .text-white\/80 { color: rgba(0, 0, 0, 0.86) !important; }
+html.light .text-white\/90 { color: rgba(0, 0, 0, 0.9) !important; }
+
+/* Platform-colored icons on Socials cards — darken light variants for
+   contrast (Twitch purple-500, Discord indigo-400, Facebook blue-400,
+   YouTube rose-500). Twitch already deep. Bump the 400 variants. */
+html.light .text-indigo-400 { color: #4f46e5 !important; }
+html.light .text-blue-400 { color: #2563eb !important; }
+html.light .text-amber-400 { color: #d97706 !important; }
+html.light .text-pink-400 { color: #db2777 !important; }
+html.light .text-rose-400 { color: #e11d48 !important; }
+html.light .text-rose-500 { color: #e11d48 !important; }
+html.light .text-purple-400 { color: #7c3aed !important; }
+html.light .text-purple-500 { color: #7c3aed !important; }
+
+/* Difficulty chips in ChallengeWheel use colored hex text on
+   matching /10 bg. Those need stronger contrast on light cards. */
+html.light [class*="text-[#22c55e]"] { color: #16a34a !important; }
+html.light [class*="text-[#eab308]"] { color: #ca8a04 !important; }
+html.light [class*="text-[#ff4757]"] { color: #dc2626 !important; }
+
+/* Small uppercase "tracking-widest" labels in cards are often
+   text-neutral-500 — bumping at the parent card level too */
+html.light .bg-\[\#181818\] .text-neutral-500,
+html.light [class*="bg-[#181818]"] .text-neutral-500,
+html.light [class*="bg-[#0f0f0f]"] .text-neutral-500 {
+  color: #525252 !important;
+}
+
+/* Hero stats card numbers were text-white -> text-#0a0a0a (good)
+   but the labels (text-neutral-500) need bump too — already covered. */
+
+/* "Visit →" CTA on Socials cards — uses text-[#ff4b5f] -> now #dc2626.
+   On hover swaps to text-white -> our override makes it #0a0a0a.
+   Force it to stay red on hover for contrast against tint bg. */
+html.light #socials a:hover span:last-child {
+  color: #b91c1c !important;
+}
+
+/* "Channel Story" small chip in About uses text-white on bg-white/10.
+   In light mode bg becomes black/06 (light gray pill) and text
+   becomes black. That's readable. */
+
+/* Footer copyright / small caps text */
+html.light footer .text-neutral-500 { color: #525252 !important; }
+html.light footer .text-neutral-400 { color: #404040 !important; }
+
+/* ============================================================
+   hover:text-white — would be invisible on light bg.
+   Flip to dark on hover when NOT inside a red/dark element.
+   ============================================================ */
+html.light .hover\:text-white:hover {
+  color: #0a0a0a !important;
+}
+/* But if the hover ALSO swaps to a red gradient/bg, keep white */
+html.light .hover\:text-white.hover\:bg-\[\#ff0033\]:hover,
+html.light .hover\:text-white[class*="hover:from-[#ff0033]"]:hover,
+html.light .hover\:text-white[class*="hover:to-[#ff0033]"]:hover {
+  color: #ffffff !important;
+}
+/* Socials "Visit →" — has group-hover:text-white. On red-card hover,
+   the bg is light tinted, text should stay readable (dark or red). */
+html.light .group:hover .group-hover\:text-white {
+  color: #b91c1c !important;
+}
+
+/* cursor-default forces system arrow over custom cursor.
+   Remove it in interactive regions so custom cursor stays active. */
+html.light .cursor-default {
+  cursor: none !important;
+}
+
+/* ============================================================
+   BADGE CHIPS — pink-on-pink and white-on-white-tint
+   Badges use translucent tinted bg + light-shade text, which
+   becomes invisible in light mode. Force darker variants.
+   ============================================================ */
+
+/* Primary badge: bg-[#ff0033]/12 + text-[#ff4b5f] → pink on pink.
+   Match the exact combo so we don't break Hero/dark contexts. */
+html.light span.bg-\[\#ff0033\]\/12.text-\[\#ff4b5f\] {
+  background-color: rgba(255, 0, 51, 0.10) !important;
+  color: #b91c1c !important;
+  border-color: rgba(255, 0, 51, 0.4) !important;
+}
+
+/* Secondary badge: bg-white/10 + text-white → pale on pale */
+html.light span.bg-white\/10.text-white {
+  background-color: rgba(0, 0, 0, 0.06) !important;
+  color: #0a0a0a !important;
+  border-color: rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Generic chip class fix — color-aware on light */
+html.light .chip-red {
+  background: rgba(255, 0, 51, 0.10) !important;
+  color: #b91c1c !important;
+  border-color: rgba(255, 0, 51, 0.35) !important;
+}
+
+/* ============================================================
+   SQUAD ROSTER — selected operator card
+   The selected state uses bg-[#ff0033]/10 (light pink in light mode).
+   Inner text-white was being forced white by an old rule. Now flips
+   to dark via generic .text-white -> #0a0a0a. Belt-and-suspenders. */
+html.light #squad button .text-white,
+html.light #squad button h4,
+html.light #squad button p {
+  color: inherit;
+}
+html.light #squad button.border-\[\#ff0033\] h4,
+html.light #squad button[class*="bg-[#ff0033]/10"] h4 {
+  color: #0a0a0a !important;
+}
+html.light #squad button.border-\[\#ff0033\] p,
+html.light #squad button[class*="bg-[#ff0033]/10"] p {
+  color: #525252 !important;
+}
+
+/* "Aggressive" / play-style chip & primary badge inside SquadRoster */
+html.light #squad span[class*="bg-[#ff0033]/15"],
+html.light #squad span[class*="bg-[#ff0033]/12"] {
+  background-color: rgba(255, 0, 51, 0.08) !important;
+  color: #b91c1c !important;
+}
+
+/* "AGENT PICK" chip uses bg-[#ffffff]/10 + text-white */
+html.light #squad span[class*="bg-[#ffffff]/10"] {
+  background-color: rgba(0, 0, 0, 0.06) !important;
+  color: #0a0a0a !important;
+  border-color: rgba(0, 0, 0, 0.15) !important;
+}
+
+/* ============================================================
+   MERCH — brand values footer strip needs more presence on light bg
+   Give the strip a subtle pill-bg so it doesn't float in space.
+   ============================================================ */
+html.light #merch .border-t.border-white\/5 {
+  background-color: #ffffff;
+  border-radius: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+  padding: 1.5rem 1rem !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+html.light #merch .border-t.border-white\/5 .text-white {
+  color: #404040 !important;
+}
+/* Bump the strip's mid-gray text to dark for readability */
+html.light #merch .text-neutral-500.font-bold {
+  color: #404040 !important;
+}
+/* Section divider line going INTO socials — make it visible */
+html.light #socials > .absolute.inset-x-0.top-0,
+html.light #merch > .absolute.inset-x-0.top-0 {
+  background: linear-gradient(to right, transparent, rgba(255, 0, 51, 0.6), transparent) !important;
+}
+
+/* ============================================================
+   MERCH — price badges (bg-black/85) on top of thumbnail were
+   left dark (correct for over-image use), but the "View Arsenal
+   Cart" button was forced black via my generic safety net —
+   that's too heavy for the light page. Give it a light pill style.
+   ============================================================ */
+html.light #merch > div > div > div > button.bg-white\/5,
+html.light section#merch button.bg-white\/5[class*="border-white/20"] {
+  background-color: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.15) !important;
+  color: #0a0a0a !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+}
+html.light section#merch button.bg-white\/5[class*="border-white/20"] * {
+  color: #0a0a0a !important;
+}
+/* On hover the button gets a red gradient + white text — that's already
+   handled by Tailwind hover: classes. Just make sure default state reads. */
+
+/* Merch price badges (bg-black/85 text-white over product image) — keep dark.
+   Those are over a photo, so dark badge with white text works in light mode too.
+   But my earlier override softened bg-black/85 to 0.78 — that's fine.
+   The duration badges in LatestVideos use the same pattern — also fine. */
+
+/* ============================================================
+   LIGHT MODE — OVER-IMAGE BADGES (FORCE READABLE)
+   Duration on video thumbs, price on merch thumbs, key on soundboard.
+   These sit on photos, so they must stay dark-bg + white-text in BOTH
+   themes. Earlier overrides made text dark on dark bg = invisible.
+
+   Markup uses `.image-overlay-badge` to opt out of the global flip.
+   We use a high-specificity selector (html.light + class) and !important
+   to beat the generic `[class*="text-[#ffffff]"]` rule.
+   ============================================================ */
+html.light span.image-overlay-badge,
+html.light .image-overlay-badge {
+  color: #ffffff !important;
+  background-color: rgba(0, 0, 0, 0.85) !important;
+}
+
+/* ============================================================
+   LIGHT MODE — AUTH SURFACES (dropdowns + modals)
+   Components opt in via `.auth-surface`. All children get sane
+   light-mode treatment without us having to hunt every Tailwind
+   class. Scoped tightly so the rest of the site isn't affected.
+   ============================================================ */
+html.light div.auth-surface,
+html.light .auth-surface[class] {
+  background-color: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12) !important;
+  color: #0a0a0a !important;
+}
+
+/* Text inside the panel */
+html.light .auth-surface,
+html.light .auth-surface p,
+html.light .auth-surface span,
+html.light .auth-surface label,
+html.light .auth-surface h1,
+html.light .auth-surface h2,
+html.light .auth-surface h3 {
+  color: #0a0a0a;
+}
+html.light .auth-surface .text-white,
+html.light .auth-surface [class*="text-[#ffffff]"] {
+  color: #0a0a0a !important;
+}
+html.light .auth-surface .text-neutral-500 {
+  color: #6b6b6b !important;
+}
+html.light .auth-surface .text-neutral-400,
+html.light .auth-surface .text-neutral-300,
+html.light .auth-surface .text-neutral-200 {
+  color: #404040 !important;
+}
+html.light .auth-surface .text-neutral-600 {
+  color: #525252 !important;
+}
+
+/* Inner surfaces (input fields, list rows, separators) */
+html.light .auth-surface .bg-\[\#0a0a0a\],
+html.light .auth-surface [class*="bg-[#0a0a0a]"],
+html.light .auth-surface [class*="bg-[#0c0c0c]"] {
+  background-color: #f5f5f7 !important;
+}
+html.light .auth-surface .bg-white\/5,
+html.light .auth-surface .bg-white\/\[0\.02\] {
+  background-color: rgba(0, 0, 0, 0.03) !important;
+}
+html.light .auth-surface .bg-white\/10 {
+  background-color: rgba(0, 0, 0, 0.06) !important;
+}
+html.light .auth-surface .border-white\/5,
+html.light .auth-surface .border-white\/10,
+html.light .auth-surface .border-white\/15,
+html.light .auth-surface .border-white\/20 {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+html.light .auth-surface .bg-white\/5 {
+  background-color: rgba(0, 0, 0, 0.03) !important;
+}
+
+/* ----- Menu items inside auth surfaces ---------------------- */
+/* Default (dark mode) — solid white label, dark icon chip with mid-gray icon */
+.auth-surface .menu-item {
+  color: #f1f1f1;
+}
+.auth-surface .menu-item .menu-item-label {
+  color: #ffffff;
+}
+.auth-surface .menu-item .menu-item-icon {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+.auth-surface .menu-item .menu-item-icon svg {
+  color: #d4d4d4;
+}
+.auth-surface .menu-item .menu-item-trailing {
+  color: #737373;
+  font-size: 11px;
+  font-weight: 700;
+}
+.auth-surface .menu-item:hover .menu-item-icon {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Danger variant (Sign out) — crimson everywhere */
+.auth-surface .menu-item-danger,
+.auth-surface .menu-item-danger .menu-item-label {
+  color: #ff4b5f;
+}
+.auth-surface .menu-item-danger .menu-item-icon {
+  background-color: rgba(255, 0, 51, 0.12);
+}
+.auth-surface .menu-item-danger .menu-item-icon svg {
+  color: #ff4b5f;
+}
+
+/* ----- LIGHT MODE overrides — high contrast ----------------- */
+/* Force transparent base so the white panel shows through.
+   The high-specificity selectors here override the page-wide
+   `html.light .bg-white\/5` rule that would otherwise make the
+   row backgrounds dark via Tailwind's hover utility. */
+html.light .auth-surface button.menu-item,
+html.light .auth-surface button.menu-item[class] {
+  background-color: transparent !important;
+  color: #0a0a0a !important;
+}
+html.light .auth-surface button.menu-item .menu-item-label {
+  color: #0a0a0a !important;
+}
+html.light .auth-surface button.menu-item .menu-item-icon {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+  color: #404040 !important;
+}
+html.light .auth-surface button.menu-item .menu-item-icon svg,
+html.light .auth-surface button.menu-item .menu-item-icon svg * {
+  color: #404040 !important;
+  stroke: #404040 !important;
+}
+html.light .auth-surface button.menu-item .menu-item-trailing {
+  color: #737373 !important;
+}
+html.light .auth-surface button.menu-item:hover,
+html.light .auth-surface button.menu-item:hover[class] {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+html.light .auth-surface button.menu-item:hover .menu-item-icon {
+  background-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Danger row — readable red on white */
+html.light .auth-surface button.menu-item-danger,
+html.light .auth-surface button.menu-item-danger[class] {
+  background-color: transparent !important;
+  color: #dc2626 !important;
+}
+html.light .auth-surface button.menu-item-danger .menu-item-label {
+  color: #dc2626 !important;
+}
+html.light .auth-surface button.menu-item-danger .menu-item-icon {
+  background-color: rgba(255, 0, 51, 0.1) !important;
+  color: #dc2626 !important;
+}
+html.light .auth-surface button.menu-item-danger .menu-item-icon svg,
+html.light .auth-surface button.menu-item-danger .menu-item-icon svg * {
+  color: #dc2626 !important;
+  stroke: #dc2626 !important;
+}
+html.light .auth-surface button.menu-item-danger:hover,
+html.light .auth-surface button.menu-item-danger:hover[class] {
+  background-color: rgba(255, 0, 51, 0.08) !important;
+  color: #b91c1c !important;
+}
+html.light .auth-surface button.menu-item-danger:hover .menu-item-label {
+  color: #b91c1c !important;
+}
+
+/* OAuth buttons — Google button stays white-on-black-text, force it */
+html.light .auth-surface button.bg-white {
+  background-color: #ffffff !important;
+  color: #0a0a0a !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+}
+html.light .auth-surface button.bg-white * {
+  color: #0a0a0a !important;
+}
+/* Facebook button keeps brand blue + white text */
+html.light .auth-surface button.bg-\[\#1877f2\] {
+  background-color: #1877f2 !important;
+  color: #ffffff !important;
+}
+html.light .auth-surface button.bg-\[\#1877f2\] * {
+  color: #ffffff !important;
+}
+
+/* Discord button keeps brand blurple + white text */
+html.light .auth-surface button.bg-\[\#5865f2\] {
+  background-color: #5865f2 !important;
+  color: #ffffff !important;
+}
+html.light .auth-surface button.bg-\[\#5865f2\] * {
+  color: #ffffff !important;
+}
+
+/* Primary red gradient submit button — keep white text */
+html.light .auth-surface button[class*="from-[#ff0033]"] {
+  color: #ffffff !important;
+}
+html.light .auth-surface button[class*="from-[#ff0033]"] * {
+  color: #ffffff !important;
+}
+
+/* Inputs */
+html.light .auth-surface input,
+html.light .auth-surface textarea {
+  background-color: #ffffff !important;
+  color: #0a0a0a !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+}
+html.light .auth-surface input::placeholder,
+html.light .auth-surface textarea::placeholder {
+  color: #9a9a9a !important;
+}
+
+/* Active tab underline already crimson — leave it */
+
+/* Scrim behind modals — slightly lighter on light mode */
+html.light .fixed.inset-0.bg-black\/80 {
+  background-color: rgba(0, 0, 0, 0.45) !important;
+}
+
+/* ============================================================
+   LIGHT MODE — FAVORITE HEART BUTTON ON VIDEO CARDS
+   `.bg-black/70` button on photo thumbnail. Keep dark in both
+   themes so the heart is visible against the image.
+   ============================================================ */
+html.light button[aria-label="Add to favorites"],
+html.light button[aria-label="Remove from favorites"] {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+html.light button[aria-label="Add to favorites"]:hover,
+html.light button[aria-label="Remove from favorites"]:hover {
+  background-color: #ff0033 !important;
+  color: #ffffff !important;
+}
+/* The filled heart (favorited) — keep brand red even on dark bg */
+html.light button[aria-label="Remove from favorites"] svg {
+  color: #ff0033 !important;
+  fill: #ff0033 !important;
 }
 
 @layer utilities {

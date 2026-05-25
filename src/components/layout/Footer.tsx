@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Heart } from "lucide-react";
-import { Youtube, Twitter, Discord, Twitch, Instagram } from "@/components/ui/Icons";
+import { Youtube, Discord, Twitch, Facebook } from "@/components/ui/Icons";
 
 const watchLinks = [
   { label: "Home", href: "#hero" },
@@ -22,9 +22,8 @@ const communityLinks = [
 const socials = [
   { icon: <Youtube size={16} />, href: "https://www.youtube.com/@JustForFun-BoYs", label: "YouTube" },
   { icon: <Twitch size={16} />, href: "https://www.twitch.tv/justforfunggez", label: "Twitch" },
-  { icon: <Discord size={16} />, href: "https://discord.gg/yourserver", label: "Discord" },
-  { icon: <Instagram size={16} />, href: "https://instagram.com/justforfun", label: "Instagram" },
-  { icon: <Twitter size={16} />, href: "https://twitter.com/justforfun", label: "X / Twitter" },
+  { icon: <Discord size={16} />, href: "https://discord.gg/YGEKC2xazD", label: "Discord" },
+  { icon: <Facebook size={16} />, href: "https://www.facebook.com/profile.php?id=61577941642888", label: "Facebook" },
 ];
 
 export const Footer = () => {
@@ -51,7 +50,7 @@ export const Footer = () => {
             </span>
             <div>
               <p className="font-display text-base font-black uppercase tracking-wider text-white">
-                Just For Fun BoYs
+                Just For Fun
               </p>
               <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-[#ff2d55]">
                 @JustForFun-BoYs
@@ -112,13 +111,13 @@ export const Footer = () => {
       </div>
 
       <div className="relative z-10 mx-auto flex max-w-7xl flex-col gap-3 border-t border-white/10 px-5 py-6 text-[11px] font-bold uppercase tracking-[0.22em] text-neutral-500 sm:px-6 md:flex-row md:items-center md:justify-between">
-        <span>&copy; {year} Just For Fun BoYs</span>
+        <span>&copy; {year} Just For Fun</span>
         <span className="flex items-center gap-2">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#ff0033]" />
           Live YouTube Data
         </span>
         <span className="flex items-center gap-2 text-neutral-400">
-          Built with <Heart size={12} className="fill-[#ff0033] text-[#ff0033]" /> & Spline 3D
+          Built with <Heart size={12} className="fill-[#ff0033] text-[#ff0033]" />
         </span>
       </div>
     </footer>

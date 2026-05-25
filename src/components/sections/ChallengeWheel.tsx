@@ -254,7 +254,7 @@ export const ChallengeWheel = () => {
 
                     <div className="pt-4 border-t border-white/5 flex flex-col sm:flex-row gap-3">
                       <a
-                        href="https://discord.gg/yourserver"
+                        href="https://discord.gg/YGEKC2xazD"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex flex-grow"

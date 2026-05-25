@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Gamepad2, Monitor, Cpu, Shield, Activity, Zap } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -25,63 +25,122 @@ interface TeamMember {
   combatStyle: string;
 }
 
-export const SquadRoster = () => {
-  const members: TeamMember[] = [
-    {
-      id: "member-1",
-      name: "Kavisha (GGEZ)",
-      role: "Founder / Main Duelist",
-      avatar: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?auto=format&fit=crop&w=400&q=80",
-      favoriteGames: ["Valorant", "Valheim", "GTA V"],
-      signatureAgent: "Jett / Reyna",
-      twitchUrl: "https://www.twitch.tv/justforfunggez",
-      specs: {
-        cpu: "AMD Ryzen 7 7800X3D",
-        gpu: "NVIDIA RTX 4070 Ti Super",
-        ram: "32GB DDR5 6000MHz",
-        monitor: "ASUS ROG 240Hz IPS",
-        mouse: "Logitech G Pro X Superlight 2",
-      },
-      bio: "Started JustForFun-BoYs to capture hilarious gaming sessions with the crew. Always clutching the 1v5 or dying in the first 5 seconds. No in-between.",
-      combatStyle: "Aggressive / W-Key Warrior",
-    },
-    {
-      id: "member-2",
-      name: "Chathu (Sniper)",
-      role: "Co-Founder / Main Sentinel",
-      avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80",
-      favoriteGames: ["Valorant", "Battlefield V", "Rust"],
-      signatureAgent: "Chamber / Cypher",
-      specs: {
-        cpu: "Intel Core i7-14700K",
-        gpu: "NVIDIA RTX 4070",
-        ram: "32GB DDR5 5600MHz",
-        monitor: "BenQ ZOWIE 240Hz",
-        mouse: "Razer DeathAdder V3 Pro",
-      },
-      bio: "The calm mastermind of the squad. Can hit cross-map sniper shots but will somehow get lost in a straight hallway. Holds down sites like a fortress.",
-      combatStyle: "Calculated / Tactical",
-    },
-    {
-      id: "member-3",
-      name: "Prabhash (Survival)",
-      role: "Co-Builder / Survival Specialist",
-      avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=400&q=80",
-      favoriteGames: ["Valheim", "Minecraft", "GTA V"],
-      signatureAgent: "Omen / Sage",
-      specs: {
-        cpu: "AMD Ryzen 5 7600X",
-        gpu: "NVIDIA RTX 4060 Ti",
-        ram: "16GB DDR5 5200MHz",
-        monitor: "MSI Optix 144Hz Curved",
-        mouse: "HyperX Pulsefire Haste",
-      },
-      bio: "Architect of our epic Valheim fortresses. Spends 20 hours building a perfect house only for it to be smashed by a troll. Best support gamer ever.",
-      combatStyle: "Defensive / Architect",
-    },
-  ];
+interface ApiSquadMember {
+  id: string;
+  name: string;
+  role: string;
+  avatarUrl: string;
+  favoriteGames: string[];
+  signatureAgent: string;
+  twitchUrl: string | null;
+  cpu: string;
+  gpu: string;
+  ram: string;
+  monitor: string;
+  mouse: string;
+  bio: string;
+  combatStyle: string;
+}
 
-  const [selectedMember, setSelectedMember] = useState<TeamMember>(members[0]);
+const FALLBACK_MEMBERS: TeamMember[] = [
+  {
+    id: "member-1",
+    name: "Kavisha (GGEZ)",
+    role: "Founder / Main Duelist",
+    avatar: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?auto=format&fit=crop&w=400&q=80",
+    favoriteGames: ["Valorant", "Valheim", "GTA V"],
+    signatureAgent: "Jett / Reyna",
+    twitchUrl: "https://www.twitch.tv/justforfunggez",
+    specs: {
+      cpu: "AMD Ryzen 7 7800X3D",
+      gpu: "NVIDIA RTX 4070 Ti Super",
+      ram: "32GB DDR5 6000MHz",
+      monitor: "ASUS ROG 240Hz IPS",
+      mouse: "Logitech G Pro X Superlight 2",
+    },
+    bio: "Started Just For Fun to capture hilarious gaming sessions with the crew. Always clutching the 1v5 or dying in the first 5 seconds. No in-between.",
+    combatStyle: "Aggressive / W-Key Warrior",
+  },
+  {
+    id: "member-2",
+    name: "Chathu (Sniper)",
+    role: "Co-Founder / Main Sentinel",
+    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80",
+    favoriteGames: ["Valorant", "Battlefield V", "Rust"],
+    signatureAgent: "Chamber / Cypher",
+    specs: {
+      cpu: "Intel Core i7-14700K",
+      gpu: "NVIDIA RTX 4070",
+      ram: "32GB DDR5 5600MHz",
+      monitor: "BenQ ZOWIE 240Hz",
+      mouse: "Razer DeathAdder V3 Pro",
+    },
+    bio: "The calm mastermind of the squad. Can hit cross-map sniper shots but will somehow get lost in a straight hallway. Holds down sites like a fortress.",
+    combatStyle: "Calculated / Tactical",
+  },
+  {
+    id: "member-3",
+    name: "Prabhash (Survival)",
+    role: "Co-Builder / Survival Specialist",
+    avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=400&q=80",
+    favoriteGames: ["Valheim", "Minecraft", "GTA V"],
+    signatureAgent: "Omen / Sage",
+    specs: {
+      cpu: "AMD Ryzen 5 7600X",
+      gpu: "NVIDIA RTX 4060 Ti",
+      ram: "16GB DDR5 5200MHz",
+      monitor: "MSI Optix 144Hz Curved",
+      mouse: "HyperX Pulsefire Haste",
+    },
+    bio: "Architect of our epic Valheim fortresses. Spends 20 hours building a perfect house only for it to be smashed by a troll. Best support gamer ever.",
+    combatStyle: "Defensive / Architect",
+  },
+];
+
+function mapApiToTeamMember(m: ApiSquadMember): TeamMember {
+  return {
+    id: m.id,
+    name: m.name,
+    role: m.role,
+    avatar: m.avatarUrl || "",
+    favoriteGames: m.favoriteGames || [],
+    signatureAgent: m.signatureAgent,
+    twitchUrl: m.twitchUrl || undefined,
+    specs: {
+      cpu: m.cpu,
+      gpu: m.gpu,
+      ram: m.ram,
+      monitor: m.monitor,
+      mouse: m.mouse,
+    },
+    bio: m.bio,
+    combatStyle: m.combatStyle,
+  };
+}
+
+export const SquadRoster = () => {
+  const [members, setMembers] = useState<TeamMember[]>(FALLBACK_MEMBERS);
+  const [selectedMember, setSelectedMember] = useState<TeamMember>(FALLBACK_MEMBERS[0]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/squad")
+      .then((r) => (r.ok ? r.json() : { members: [] }))
+      .then((data: { members?: ApiSquadMember[] }) => {
+        if (cancelled) return;
+        const list = (data.members || []).map(mapApiToTeamMember);
+        if (list.length > 0) {
+          setMembers(list);
+          setSelectedMember(list[0]);
+        }
+      })
+      .catch(() => {
+        // Keep the fallback list rendered.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <section id="squad" className="relative py-24 bg-[#060606] overflow-hidden">
@@ -129,14 +188,20 @@ export const SquadRoster = () => {
                     )}
 
                     {/* Operator Avatar */}
-                    <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-white/10 shrink-0">
-                      <Image
-                        src={member.avatar}
-                        alt={member.name}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform"
-                        sizes="48px"
-                      />
+                    <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-white/10 shrink-0 bg-[#0f0f0f] flex items-center justify-center">
+                      {member.avatar ? (
+                        <Image
+                          src={member.avatar}
+                          alt={member.name}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform"
+                          sizes="48px"
+                        />
+                      ) : (
+                        <span className="font-display text-sm font-black text-white">
+                          {member.name.charAt(0).toUpperCase()}
+                        </span>
+                      )}
                     </div>
 
                     {/* Details */}

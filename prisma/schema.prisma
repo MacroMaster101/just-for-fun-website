@@ -1,34 +1,248 @@
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
 }
 
 generator client {
   provider = "prisma-client-js"
 }
 
-model User {
+model ContactMessage {
+  id         String    @id @default(uuid())
+  name       String
+  email      String
+  message    String
+  userId     String?   // optional link to auth.users.id when submitted by logged-in user
+  /// Admin reply text. Null until an admin sends a reply via the inbox.
+  replyText  String?
+  /// When the reply was sent. Used to sort recent activity in the inbox.
+  repliedAt  DateTime?
+  /// Email of the admin who sent the reply. Stored for audit, not auth.
+  repliedBy  String?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+}
+
+/// In-app notifications shown in the user's UserMenu dropdown. Created
+/// when an admin replies to a contact message from a logged-in user. The
+/// notification stores the full reply text so the consumer can render it
+/// without joining back to ContactMessage.
+model Notification {
+  id           String   @id @default(uuid())
+  userId       String   // auth.users.id of the recipient
+  kind         String   // "contact_reply" for now; future kinds welcome
+  title        String
+  body         String
+  /// Optional link to the source row (e.g. ContactMessage.id). Not an FK
+  /// because we don't want a notification cascade-deleted when the
+  /// underlying message is wiped from the admin inbox.
+  sourceId     String?
+  readAt       DateTime?
+  createdAt    DateTime @default(now())
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
+}
+
+model YouTubeCache {
+  key       String   @id
+  payload   Json
+  updatedAt DateTime @updatedAt
+}
+
+/// Generic key/value site config for fields that should be editable from
+/// the admin console without a redeploy. First user: `hero.splineScene`
+/// (the URL of the Spline 3D scene rendered in the Hero section). Add
+/// new keys ad-hoc; consumers fall back to a hardcoded default when the
+/// row is missing so the site never breaks on a fresh DB.
+model SiteSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+/// Per-user profile data. id MUST equal auth.users.id (Supabase user id, uuid).
+/// We don't link via FK because auth.users lives in the `auth` schema which
+/// Prisma can't manage cleanly. The application is responsible for the link.
+model Profile {
+  id        String   @id // = auth.users.id
+  email     String?
+  name      String?
+  avatarUrl String?
+  bio       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  favorites Favorite[]
+}
+
+enum FavoriteKind {
+  video
+  sound
+}
+
+model Favorite {
+  id        String       @id @default(uuid())
+  userId    String
+  kind      FavoriteKind
+  itemId    String       // YouTube video id, or sound clip id
+  itemTitle String?
+  createdAt DateTime     @default(now())
+
+  profile   Profile      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, kind, itemId])
+  @@index([userId])
+}
+
+model AdminEmail {
+  email     String   @id
+  createdAt DateTime @default(now())
+}
+
+model MusicTrack {
+  id        String   @id @default(uuid())
+  title     String
+  youtubeId String   @unique
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+/// One row per stream slot rendered on the homepage Schedule section.
+/// Empty table → the public component shows a "Coming soon" placeholder.
+/// `featured` marks the one slot rendered with the prime-event styling
+/// (only one should be featured at a time; nothing enforces this in DB).
+/// Games the channel actively plays. Rendered in the hero bottom-strip
+/// marquee with each entry showing its logo + name. Empty table falls
+/// back to the text-only DEFAULT_MARQUEE in src/lib/heroDefaults.ts.
+model Game {
+  id        String   @id @default(uuid())
+  name      String
+  /// Public URL of the logo image. Hosted in the `game-logos` Supabase
+  /// bucket via the admin upload route, or any external https URL.
+  logoUrl   String   @default("")
+  /// Manual ordering — lower = earlier in the marquee. Defaults to creation time.
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model StreamSlot {
   id          String   @id @default(uuid())
-  email       String   @unique
-  name        String?
-  avatarUrl   String?
-  bio         String?
+  /// 3-letter day badge, e.g. "FRI", "SAT", "SUN".
+  day         String
+  title       String
+  /// Free-form time string, e.g. "8:00 PM – 11:00 PM" or "Anytime (Surprise!)".
+  time        String
+  description String   @default("")
+  /// Emoji shown next to the title. Free-form so admins can use whatever.
+  icon        String   @default("🎮")
+  featured    Boolean  @default(false)
+  /// Manual ordering — lower = earlier in the grid. Defaults to creation time.
+  sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
 
-model ContactMessage {
-  id        String   @id @default(uuid())
-  name      String
-  email     String
-  message   String
-  createdAt DateTime @default(now())
+/// One button on the Soundboard. Synth waveform driven entirely from these
+/// fields — empty table falls back to the built-in DEFAULT_SOUNDS list in
+/// src/lib/soundboardDefaults.ts so the homepage never goes blank.
+enum SoundSource {
+  synth
+  upload
 }
 
-model Video {
-  id          String   @id
-  title       String
-  thumbnail   String
-  publishedAt DateTime
-  description String?
-  cachedAt    DateTime @default(now())
+model SoundClip {
+  id          String   @id @default(uuid())
+  name        String
+  /// Single emoji (or short text) rendered as the button face.
+  emoji       String   @default("🎮")
+  /// "synth" plays the built-in waveform identified by `type`. "upload"
+  /// plays the audio file at `audioUrl` instead.
+  source      SoundSource @default(synth)
+  /// One of the synth waveforms in Soundboard.tsx (laser, chime, powerup,
+  /// fanfare, buzzer, subbass). Ignored when source=upload.
+  type        String   @default("laser")
+  /// Public URL of the uploaded audio file in the "sound-clips" bucket.
+  /// Only populated when source=upload.
+  audioUrl    String   @default("")
+  description String   @default("")
+  /// Tailwind class string applied to the button — admin can tweak the
+  /// hover glow per-clip.
+  color       String   @default("hover:border-[#ff0033] hover:shadow-[0_0_15px_rgba(255,0,51,0.25)] text-[#ff4b5f]")
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
+
+enum HighlightStatus {
+  pending
+  approved
+  rejected
+}
+
+enum HighlightSource {
+  youtube
+  upload
+}
+
+/// Community-submitted gameplay highlights surfaced on the homepage's
+/// Highlights arena. Logged-in users get attribution via submittedByUserId;
+/// anonymous submissions store submittedByName only. Public list only
+/// renders rows with status="approved".
+model Highlight {
+  id                String          @id @default(uuid())
+  title             String
+  game              String          @default("")
+  description       String          @default("")
+  /// Display length, e.g. "1:24". Optional; submission form can skip it.
+  duration          String          @default("")
+  /// "youtube" for a pasted link, "upload" for a file in the highlights bucket.
+  source            HighlightSource @default(youtube)
+  /// YouTube video id (when source=youtube), e.g. "ScMzIvxBSi4".
+  youtubeId         String?
+  /// Public URL of the uploaded mp4 in the highlights bucket (when source=upload).
+  videoUrl          String?
+  /// Thumbnail image URL. Auto-derived from YouTube for youtube source,
+  /// optionally uploaded for upload source.
+  thumbnailUrl      String          @default("")
+  status            HighlightStatus @default(pending)
+  /// auth.users.id of the submitter; null for anonymous submissions.
+  submittedByUserId String?
+  /// Display name shown publicly. Pulled from Profile.name for logged-in
+  /// users, or typed by anonymous submitters.
+  submittedByName   String          @default("Anonymous")
+  /// Avatar URL captured at submission time. Cached so the public card
+  /// renders without joining back to Profile.
+  submittedByAvatar String          @default("")
+  /// Email of the admin who approved/rejected. Audit only.
+  reviewedBy        String?
+  reviewedAt        DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([status, createdAt])
+  @@index([submittedByUserId])
+}
+
+model SquadMember {
+  id              String   @id @default(uuid())
+  name            String
+  role            String
+  avatarUrl       String   @default("")
+  favoriteGames   String[] @default([])
+  signatureAgent  String   @default("")
+  twitchUrl       String?
+  cpu             String   @default("")
+  gpu             String   @default("")
+  ram             String   @default("")
+  monitor         String   @default("")
+  mouse           String   @default("")
+  bio             String   @default("")
+  combatStyle     String   @default("")
+  /// Manual ordering — lower = earlier in roster. Defaults to creation time.
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
