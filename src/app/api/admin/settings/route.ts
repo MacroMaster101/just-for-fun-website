@@ -28,6 +28,42 @@ const ALLOWED_KEYS: Record<string, (v: string) => string | null> = {
     }
     return null;
   },
+  "hero.floatingGames": (v) => {
+    if (v === "") return null;
+    try {
+      const parsed = JSON.parse(v);
+      if (!Array.isArray(parsed)) return "Must be an array.";
+      for (const item of parsed) {
+        if (typeof item.name !== "string" || item.name.trim() === "") {
+          return "Each game must have a name.";
+        }
+        if (typeof item.logoUrl !== "string") {
+          return "Each game must have a logoUrl.";
+        }
+      }
+      return null;
+    } catch {
+      return "Must be valid JSON.";
+    }
+  },
+  "hero.floatingWords": (v) => {
+    if (v === "") return null;
+    try {
+      const parsed = JSON.parse(v);
+      if (!Array.isArray(parsed)) return "Must be an array.";
+      for (const item of parsed) {
+        if (typeof item.text !== "string" || item.text.trim() === "") {
+          return "Each word must have a text value.";
+        }
+        if (item.style !== "outline" && item.style !== "glassy") {
+          return "Style must be 'outline' or 'glassy'.";
+        }
+      }
+      return null;
+    } catch {
+      return "Must be valid JSON.";
+    }
+  },
 };
 
 export async function GET() {

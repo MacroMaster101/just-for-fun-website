@@ -58,6 +58,43 @@ import {
 } from "./types";
 import { PUBLIC_SOUND_LIMIT, SOUND_TYPE_OPTIONS } from "@/lib/soundboardDefaults";
 
+const DEFAULT_FLOATING_GAMES = [
+  {
+    id: "default-game-1",
+    name: "Valorant",
+    logoUrl: "https://media.rawg.io/media/games/b11/b11127b9ee3c3701bd15b9af3286d20e.jpg",
+  },
+  {
+    id: "default-game-2",
+    name: "Valheim",
+    logoUrl: "https://media.rawg.io/media/games/adb/adb59be81367b19c2544457424bcf086.jpg",
+  },
+  {
+    id: "default-game-3",
+    name: "Grand Theft Auto V",
+    logoUrl: "https://media.rawg.io/media/games/20a/20aa03a10cda45239fe22d035c0ebe64.jpg",
+  },
+  {
+    id: "default-game-4",
+    name: "Minecraft",
+    logoUrl: "https://media.rawg.io/media/games/b4e/b4e4c73d5aa4ec66bbf75375c4847a2b.jpg",
+  },
+  {
+    id: "default-game-5",
+    name: "Battlefield 6",
+    logoUrl: "https://media.rawg.io/media/games/dcc/dcc38d78ab1f1a90fdc4ba1bea3a73ff.jpg",
+  },
+];
+
+const DEFAULT_SYSTEM_WORDS: Array<{ text: string; style: "outline" | "glassy"; dot?: string }> = [
+  { text: "J4FN SQUAD", style: "outline" },
+  { text: "CLUTCH TIME", style: "glassy", dot: "#ff0033" },
+  { text: "GG EZ", style: "outline" },
+  { text: "MELTDOWN", style: "glassy", dot: "#00ff66" },
+  { text: "AIM BOT", style: "glassy", dot: "#ffffff" },
+  { text: "GAME ON", style: "outline" },
+];
+
 export default function AdminPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -66,9 +103,9 @@ export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [checking, setChecking] = useState(true);
   const [countdown, setCountdown] = useState(5);
-  
+
   // Dashboard states
-  const [activeTab, setActiveTab] = useState<"command" | "inbox" | "admins" | "cache" | "music" | "squad" | "schedule" | "sounds" | "highlights" | "settings">("command");
+  const [activeTab, setActiveTab] = useState<"command" | "inbox" | "admins" | "cache" | "music" | "squad" | "schedule" | "sounds" | "highlights" | "settings" | "games">("command");
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [admins, setAdmins] = useState<AdminEmail[]>([]);
   const [tracks, setTracks] = useState<MusicTrack[]>([]);
@@ -85,6 +122,12 @@ export default function AdminPage() {
   const [gameUploadingFor, setGameUploadingFor] = useState<string | null>(null);
   const [gameError, setGameError] = useState<string | null>(null);
   const [gameSuccess, setGameSuccess] = useState<string | null>(null);
+
+  // RAWG auto-suggest states
+  const [gameSuggestions, setGameSuggestions] = useState<Array<{ id: number; name: string; backgroundImage: string }>>([]);
+  const [searchingGames, setSearchingGames] = useState(false);
+  const [selectedGame, setSelectedGame] = useState<{ name: string; logoUrl: string } | null>(null);
+  const [showGameSuggestions, setShowGameSuggestions] = useState(false);
 
   // Schedule (stream slots) state
   const [streamSlots, setStreamSlots] = useState<StreamSlot[]>([]);
@@ -132,12 +175,12 @@ export default function AdminPage() {
     setReplySuccess(null);
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [openedMessageId]);
-  
+
   // Admin form state
   const [newAdminEmail, setNewAdminEmail] = useState("");
   const [adminFormError, setAdminFormError] = useState<string | null>(null);
   const [adminFormSuccess, setAdminFormSuccess] = useState<string | null>(null);
-  
+
   // Site settings form state (Spline scene URL etc.)
   const [splineSceneUrl, setSplineSceneUrl] = useState("");
   const [splineSceneSaved, setSplineSceneSaved] = useState(""); // tracks original for diff
@@ -145,12 +188,155 @@ export default function AdminPage() {
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [settingsSuccess, setSettingsSuccess] = useState<string | null>(null);
 
+  // Floating settings state
+  const [floatingGames, setFloatingGames] = useState<any[]>([]);
+  const [floatingGamesSaved, setFloatingGamesSaved] = useState<string>("");
+  const [floatingWords, setFloatingWords] = useState<Array<{ text: string; style: "outline" | "glassy"; dot?: string }>>([]);
+  const [floatingWordsSaved, setFloatingWordsSaved] = useState<string>("");
+
+  // Floating Games RAWG suggestions state
+  const [newFloatingGameName, setNewFloatingGameName] = useState("");
+  const [floatingGameSuggestions, setFloatingGameSuggestions] = useState<Array<{ id: number; name: string; backgroundImage: string }>>([]);
+  const [searchingFloatingGames, setSearchingFloatingGames] = useState(false);
+  const [selectedFloatingGame, setSelectedFloatingGame] = useState<{ name: string; logoUrl: string } | null>(null);
+  const [showFloatingGameSuggestions, setShowFloatingGameSuggestions] = useState(false);
+  const [floatingGameUploadingFor, setFloatingGameUploadingFor] = useState<string | null>(null);
+
+  // Floating Words adding state
+  const [newWordText, setNewWordText] = useState("");
+  const [newWordStyle, setNewWordStyle] = useState<"outline" | "glassy">("outline");
+  const [newWordDotColor, setNewWordDotColor] = useState("#ff0033");
+
+  // Debounced search for RAWG games inside Floating Games editor
+  useEffect(() => {
+    const query = newFloatingGameName.trim();
+    if (!query) {
+      /* eslint-disable react-hooks/set-state-in-effect */
+      setFloatingGameSuggestions([]);
+      /* eslint-enable react-hooks/set-state-in-effect */
+      return;
+    }
+
+    if (selectedFloatingGame && selectedFloatingGame.name.toLowerCase() === query.toLowerCase()) {
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setSearchingFloatingGames(true);
+      try {
+        const res = await fetch(`/api/admin/games/search?q=${encodeURIComponent(query)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setFloatingGameSuggestions(data.results || []);
+          setShowFloatingGameSuggestions(true);
+        }
+      } catch (err) {
+        console.error("Error searching floating games:", err);
+      } finally {
+        setSearchingFloatingGames(false);
+      }
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [newFloatingGameName, selectedFloatingGame]);
+
+  // Save Floating Games Setting
+  const [floatingGamesSaving, setFloatingGamesSaving] = useState(false);
+  const handleSaveFloatingGames = async (list: any[]) => {
+    setSettingsError(null);
+    setSettingsSuccess(null);
+    setFloatingGamesSaving(true);
+    try {
+      const value = list.length > 0 ? JSON.stringify(list) : "";
+      const res = await fetch("/api/admin/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: "hero.floatingGames", value }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setSettingsError(data.error || "Failed to save floating games.");
+        return;
+      }
+      setFloatingGamesSaved(value);
+      if (value === "") {
+        setFloatingGames(DEFAULT_FLOATING_GAMES);
+      }
+      setSettingsSuccess("Floating games list updated successfully.");
+      setTimeout(() => setSettingsSuccess(null), 3000);
+    } catch {
+      setSettingsError("Network error.");
+    } finally {
+      setFloatingGamesSaving(false);
+    }
+  };
+
+  // Upload Floating Game Logo
+  const handleUploadFloatingGameLogo = async (idx: number, file: File) => {
+    setFloatingGameUploadingFor(String(idx));
+    setSettingsError(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("gameId", `floating-game-${idx}`); // Bypasses DB update, returns public URL directly
+      const res = await fetch("/api/admin/games/logo", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setSettingsError(data.error || "Floating game logo upload failed.");
+        return;
+      }
+
+      const updatedList = floatingGames.map((g, i) => i === idx ? { ...g, logoUrl: data.logoUrl } : g);
+      setFloatingGames(updatedList);
+      setSettingsSuccess("Logo uploaded successfully.");
+      setTimeout(() => setSettingsSuccess(null), 2500);
+    } catch {
+      setSettingsError("Network error.");
+    } finally {
+      setFloatingGameUploadingFor(null);
+    }
+  };
+
+  // Save Floating Words Setting
+  const [floatingWordsSaving, setFloatingWordsSaving] = useState(false);
+  const handleSaveFloatingWords = async (list: any[]) => {
+    setSettingsError(null);
+    setSettingsSuccess(null);
+    setFloatingWordsSaving(true);
+    try {
+      const value = list.length > 0 ? JSON.stringify(list) : "";
+      const res = await fetch("/api/admin/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: "hero.floatingWords", value }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setSettingsError(data.error || "Failed to save floating words.");
+        return;
+      }
+      setFloatingWordsSaved(value);
+      if (value === "") {
+        setFloatingWords(DEFAULT_SYSTEM_WORDS);
+      }
+      setSettingsSuccess("Floating words list updated successfully.");
+      setTimeout(() => setSettingsSuccess(null), 3000);
+    } catch {
+      setSettingsError("Network error.");
+    } finally {
+      setFloatingWordsSaving(false);
+    }
+  };
+
   // Music form state
   const [newTrackTitle, setNewTrackTitle] = useState("");
   const [newTrackYoutubeId, setNewTrackYoutubeId] = useState("");
   const [musicFormError, setMusicFormError] = useState<string | null>(null);
   const [musicFormSuccess, setMusicFormSuccess] = useState<string | null>(null);
-  
+
   // Syncing states
   const [syncing, setSyncing] = useState(false);
   const [syncSuccess, setSyncSuccess] = useState<string | null>(null);
@@ -193,7 +379,7 @@ export default function AdminPage() {
   // Handle redirect if not admin
   useEffect(() => {
     if (isAdmin !== false) return;
-    
+
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
@@ -207,6 +393,40 @@ export default function AdminPage() {
 
     return () => clearInterval(timer);
   }, [isAdmin, router]);
+
+  // Debounced search for RAWG games
+  useEffect(() => {
+    const query = newGameName.trim();
+    if (!query) {
+      /* eslint-disable react-hooks/set-state-in-effect */
+      setGameSuggestions([]);
+      /* eslint-enable react-hooks/set-state-in-effect */
+      return;
+    }
+
+    // If the input exactly matches the selected game name, don't re-trigger a search
+    if (selectedGame && selectedGame.name.toLowerCase() === query.toLowerCase()) {
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setSearchingGames(true);
+      try {
+        const res = await fetch(`/api/admin/games/search?q=${encodeURIComponent(query)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setGameSuggestions(data.results || []);
+          setShowGameSuggestions(true);
+        }
+      } catch (err) {
+        console.error("Error searching games:", err);
+      } finally {
+        setSearchingGames(false);
+      }
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [newGameName, selectedGame]);
 
   const fetchMessages = async () => {
     try {
@@ -265,6 +485,27 @@ export default function AdminPage() {
       setSplineSceneUrl(sceneUrl);
       setSplineSceneSaved(sceneUrl);
 
+      const fg = (data.settings?.["hero.floatingGames"] as string | undefined) ?? "";
+      setFloatingGamesSaved(fg);
+      if (fg) {
+        try {
+          const parsed = JSON.parse(fg);
+          if (Array.isArray(parsed)) setFloatingGames(parsed);
+        } catch { }
+      } else {
+        setFloatingGames(DEFAULT_FLOATING_GAMES);
+      }
+
+      const fw = (data.settings?.["hero.floatingWords"] as string | undefined) ?? "";
+      setFloatingWordsSaved(fw);
+      if (fw) {
+        try {
+          const parsed = JSON.parse(fw);
+          if (Array.isArray(parsed)) setFloatingWords(parsed);
+        } catch { }
+      } else {
+        setFloatingWords(DEFAULT_SYSTEM_WORDS);
+      }
     } catch (err) {
       console.error("Failed to fetch settings:", err);
     }
@@ -294,11 +535,17 @@ export default function AdminPage() {
       setGameError("Name is required.");
       return;
     }
+
+    let logoUrl = "";
+    if (selectedGame && selectedGame.name.toLowerCase() === name.toLowerCase()) {
+      logoUrl = selectedGame.logoUrl;
+    }
+
     try {
       const res = await fetch("/api/admin/games", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, sortOrder: games.length }),
+        body: JSON.stringify({ name, logoUrl, sortOrder: games.length }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -306,7 +553,13 @@ export default function AdminPage() {
         return;
       }
       setNewGameName("");
-      flashGameSuccess("Game added. Upload a logo next.");
+      setSelectedGame(null);
+      setGameSuggestions([]);
+      flashGameSuccess(
+        logoUrl
+          ? "Game added with logo successfully!"
+          : "Game added. Upload a logo next."
+      );
       await fetchGames();
     } catch {
       setGameError("Network error.");
@@ -741,9 +994,10 @@ export default function AdminPage() {
       fetchSounds();
     } else if (activeTab === "highlights") {
       fetchHighlights();
+    } else if (activeTab === "games") {
+      fetchGames();
     } else if (activeTab === "settings") {
       fetchSettings();
-      fetchGames();
     }
     /* eslint-enable react-hooks/set-state-in-effect */
     // fetchHighlights closes over highlightFilter; listing the filter in deps
@@ -1002,7 +1256,7 @@ export default function AdminPage() {
         <div className="absolute inset-0 bg-grid-subtle opacity-30" />
         <Card className="max-w-md w-full p-8 border-[#ff0033]/20 bg-[var(--color-bg-soft)]/80 backdrop-blur-xl text-center space-y-6 relative overflow-hidden shadow-[0_0_50px_rgba(255,0,51,0.15)]">
           <div className="absolute top-0 left-0 right-0 h-1 bg-[#ff0033]" />
-          
+
           <div className="inline-flex p-4 rounded-full bg-red-950/40 border border-red-500/20 text-[#ff2d55] animate-pulse">
             <ShieldAlert size={40} />
           </div>
@@ -1019,9 +1273,9 @@ export default function AdminPage() {
             </p>
           </div>
 
-          <Button 
-            variant="outline" 
-            fullWidth 
+          <Button
+            variant="outline"
+            fullWidth
             onClick={() => router.push("/")}
             className="gap-2"
           >
@@ -1047,7 +1301,7 @@ export default function AdminPage() {
       <Header />
       <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)] bg-grid-subtle pt-28 pb-16 relative transition-colors duration-300">
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ff0033]/45 to-transparent" />
-        
+
         <div className="max-w-7xl mx-auto px-5 sm:px-6">
           {/* Top Header */}
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-[var(--color-border)] pb-8 mb-10">
@@ -1060,8 +1314,8 @@ export default function AdminPage() {
                 Manage administrators, review client communications, and coordinate platform operations.
               </p>
             </div>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               onClick={() => router.push("/")}
               className="gap-2"
@@ -1082,17 +1336,17 @@ export default function AdminPage() {
                 { id: "schedule", name: "Stream Schedule", icon: <Calendar size={16} /> },
                 { id: "sounds", name: "Soundboard", icon: <Volume2 size={16} /> },
                 { id: "highlights", name: "Highlights Queue", icon: <Sparkles size={16} /> },
+                { id: "games", name: "Manage Games", icon: <Gamepad2 size={16} /> },
                 { id: "settings", name: "Site Settings", icon: <Settings size={16} /> },
                 { id: "cache", name: "YouTube Cache", icon: <RefreshCw size={16} /> },
               ].map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                  className={`flex w-full items-center gap-3.5 px-4 py-3.5 rounded-xl font-bold text-sm tracking-wide transition-all duration-300 border text-left cursor-pointer ${
-                    activeTab === tab.id
+                  className={`flex w-full items-center gap-3.5 px-4 py-3.5 rounded-xl font-bold text-sm tracking-wide transition-all duration-300 border text-left cursor-pointer ${activeTab === tab.id
                       ? "border-[#ff0033] bg-[#ff0033]/10 text-[#ff0033] shadow-[0_0_20px_rgba(255,0,51,0.12)]"
                       : "border-[var(--color-border)] bg-[var(--color-bg-soft)]/50 text-[var(--color-text-muted)] hover:border-[#ff0033]/30 hover:text-[var(--color-text)] hover:bg-[var(--color-surface)]"
-                  }`}
+                    }`}
                 >
                   {tab.icon}
                   {tab.name}
@@ -1102,7 +1356,7 @@ export default function AdminPage() {
 
             {/* Right Column: Dynamic Content cards */}
             <div className="lg:col-span-9">
-              
+
               {/* Tab 1: Command Center Overview */}
               {activeTab === "command" && (
                 <div className="space-y-6">
@@ -1225,8 +1479,8 @@ export default function AdminPage() {
                             </tr>
                           ) : (
                             filteredMessages.map((msg) => (
-                              <tr 
-                                key={msg.id} 
+                              <tr
+                                key={msg.id}
                                 className="border-b border-[var(--color-border)] hover:bg-[var(--color-surface-2)]/40 transition-colors group/row cursor-pointer"
                                 onClick={() => setSelectedMessage(msg)}
                               >
@@ -1247,7 +1501,7 @@ export default function AdminPage() {
                                 </td>
                                 <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
                                   <div className="flex items-center justify-end gap-2">
-                                    <a 
+                                    <a
                                       href={`mailto:${msg.email}?subject=Reply from JFF Gaming Channel&body=Hi ${msg.name},%0D%0A%0D%0A`}
                                       className="p-2 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-[#ff0033]/50 hover:text-[var(--color-text)] transition"
                                       title="Reply via Email"
@@ -1286,7 +1540,7 @@ export default function AdminPage() {
                         <RefreshCw size={12} />
                       </Button>
                     </div>
-                    
+
                     <Card className="border-[var(--color-border)] overflow-hidden">
                       <div className="divide-y divide-[var(--color-border)]">
                         {admins.length === 0 ? (
@@ -1334,7 +1588,7 @@ export default function AdminPage() {
                             <span>{adminFormError}</span>
                           </div>
                         )}
-                        
+
                         {adminFormSuccess && (
                           <div className="flex items-start gap-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/20 p-4 text-xs text-emerald-300">
                             <CheckCircle2 size={15} className="shrink-0 mt-0.5" />
@@ -1374,7 +1628,7 @@ export default function AdminPage() {
                         <RefreshCw size={12} />
                       </Button>
                     </div>
-                    
+
                     <Card className="border-[var(--color-border)] overflow-hidden">
                       <div className="divide-y divide-[var(--color-border)]">
                         {tracks.length === 0 ? (
@@ -1393,11 +1647,11 @@ export default function AdminPage() {
                                   Video ID: {track.youtubeId} · Added: {new Date(track.createdAt).toLocaleDateString()}
                                 </p>
                               </div>
-                              
+
                               <div className="flex items-center gap-2">
                                 {!track.isActive && (
-                                  <Button 
-                                    variant="outline" 
+                                  <Button
+                                    variant="outline"
                                     size="sm"
                                     onClick={() => handleActivateTrack(track.id)}
                                     className="px-3.5 py-1 text-[10px]"
@@ -1433,7 +1687,7 @@ export default function AdminPage() {
                             <span>{musicFormError}</span>
                           </div>
                         )}
-                        
+
                         {musicFormSuccess && (
                           <div className="flex items-start gap-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/20 p-4 text-xs text-emerald-300">
                             <CheckCircle2 size={15} className="shrink-0 mt-0.5" />
@@ -1464,7 +1718,7 @@ export default function AdminPage() {
                         </Button>
                       </form>
                     </Card>
-                    
+
                     {/* Tips box */}
                     <Card className="p-4 border-[var(--color-border)] bg-[var(--color-surface-2)]/30 text-xs text-[var(--color-text-muted)] space-y-2">
                       <p className="font-black uppercase tracking-wider text-[9px] text-[#ff0033]">💡 How to find the YouTube Video ID?</p>
@@ -1776,11 +2030,10 @@ export default function AdminPage() {
                       </div>
                       <div className="flex items-center gap-3">
                         <span
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[11px] font-bold font-mono tracking-wider ${
-                            Math.min(sounds.length, PUBLIC_SOUND_LIMIT) === PUBLIC_SOUND_LIMIT
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[11px] font-bold font-mono tracking-wider ${Math.min(sounds.length, PUBLIC_SOUND_LIMIT) === PUBLIC_SOUND_LIMIT
                               ? "border-[#ff0033]/40 bg-[#ff0033]/10 text-[#ff4b5f]"
                               : "border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text-muted)]"
-                          }`}
+                            }`}
                           title="Public sounds / homepage limit"
                         >
                           <Volume2 size={12} />
@@ -1840,51 +2093,50 @@ export default function AdminPage() {
                         {sounds.map((s, i) => {
                           const isPublic = i < PUBLIC_SOUND_LIMIT;
                           return (
-                          <div
-                            key={s.id}
-                            className={`flex items-center gap-4 p-3 rounded-lg border bg-[var(--color-surface)] ${
-                              isPublic ? "border-[var(--color-border)]" : "border-dashed border-[var(--color-border)] opacity-60"
-                            }`}
-                          >
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[var(--color-surface-2)] text-2xl shrink-0">
-                              {s.emoji}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-bold text-sm text-[var(--color-text)] truncate flex items-center gap-2">
-                                <span className="truncate">{s.name}</span>
-                                {!isPublic && (
-                                  <Badge variant="secondary" className="text-[9px] shrink-0">Hidden</Badge>
-                                )}
-                                {s.source === "upload" && (
-                                  <Badge variant="primary" className="text-[9px] shrink-0">Audio</Badge>
-                                )}
-                              </p>
-                              <p className="text-xs text-[var(--color-text-muted)] truncate">
-                                <span className="uppercase font-mono text-[10px] mr-2">{s.type}</span>
-                                {s.description}
-                              </p>
-                            </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setEditingSound(s);
-                                setCreatingSound(null);
-                                setSoundFormError(null);
-                                setSoundFormSuccess(null);
-                              }}
-                              className="gap-1.5"
+                            <div
+                              key={s.id}
+                              className={`flex items-center gap-4 p-3 rounded-lg border bg-[var(--color-surface)] ${isPublic ? "border-[var(--color-border)]" : "border-dashed border-[var(--color-border)] opacity-60"
+                                }`}
                             >
-                              <UserCog size={12} /> Edit
-                            </Button>
-                            <button
-                              onClick={() => handleDeleteSound(s.id, s.name)}
-                              className="p-2 rounded-lg text-red-500 hover:bg-red-500/10 transition cursor-pointer"
-                              aria-label={`Delete ${s.name}`}
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
+                              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[var(--color-surface-2)] text-2xl shrink-0">
+                                {s.emoji}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-bold text-sm text-[var(--color-text)] truncate flex items-center gap-2">
+                                  <span className="truncate">{s.name}</span>
+                                  {!isPublic && (
+                                    <Badge variant="secondary" className="text-[9px] shrink-0">Hidden</Badge>
+                                  )}
+                                  {s.source === "upload" && (
+                                    <Badge variant="primary" className="text-[9px] shrink-0">Audio</Badge>
+                                  )}
+                                </p>
+                                <p className="text-xs text-[var(--color-text-muted)] truncate">
+                                  <span className="uppercase font-mono text-[10px] mr-2">{s.type}</span>
+                                  {s.description}
+                                </p>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingSound(s);
+                                  setCreatingSound(null);
+                                  setSoundFormError(null);
+                                  setSoundFormSuccess(null);
+                                }}
+                                className="gap-1.5"
+                              >
+                                <UserCog size={12} /> Edit
+                              </Button>
+                              <button
+                                onClick={() => handleDeleteSound(s.id, s.name)}
+                                className="p-2 rounded-lg text-red-500 hover:bg-red-500/10 transition cursor-pointer"
+                                aria-label={`Delete ${s.name}`}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
                           );
                         })}
                       </div>
@@ -1930,22 +2182,20 @@ export default function AdminPage() {
                                 <button
                                   type="button"
                                   onClick={() => setDraft({ source: "synth" })}
-                                  className={`flex-1 px-3 py-2 rounded-lg border text-xs font-bold uppercase tracking-wider transition cursor-pointer ${
-                                    draft.source === "synth"
+                                  className={`flex-1 px-3 py-2 rounded-lg border text-xs font-bold uppercase tracking-wider transition cursor-pointer ${draft.source === "synth"
                                       ? "border-[#ff0033] bg-[#ff0033]/10 text-[#ff4b5f]"
                                       : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
-                                  }`}
+                                    }`}
                                 >
                                   Synth waveform
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => setDraft({ source: "upload" })}
-                                  className={`flex-1 px-3 py-2 rounded-lg border text-xs font-bold uppercase tracking-wider transition cursor-pointer ${
-                                    draft.source === "upload"
+                                  className={`flex-1 px-3 py-2 rounded-lg border text-xs font-bold uppercase tracking-wider transition cursor-pointer ${draft.source === "upload"
                                       ? "border-[#ff0033] bg-[#ff0033]/10 text-[#ff4b5f]"
                                       : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
-                                  }`}
+                                    }`}
                                 >
                                   Uploaded audio
                                 </button>
@@ -2060,11 +2310,10 @@ export default function AdminPage() {
                           <button
                             key={f}
                             onClick={() => setHighlightFilter(f)}
-                            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider border transition ${
-                              highlightFilter === f
+                            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider border transition ${highlightFilter === f
                                 ? "border-[#ff0033] bg-[#ff0033]/10 text-[#ff4b5f]"
                                 : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
-                            }`}
+                              }`}
                           >
                             {f}
                           </button>
@@ -2179,7 +2428,7 @@ export default function AdminPage() {
                 </div>
               )}
 
-              {/* Tab 7: Site Settings — Hero Robot + Games (logos) */}
+              {/* Tab 7: Site Settings — Hero Robot */}
               {activeTab === "settings" && (
                 <div className="space-y-6">
                   {/* Hero Robot — Spline scene URL editor with live preview. */}
@@ -2256,6 +2505,456 @@ export default function AdminPage() {
                     </div>
                   </Card>
 
+                  {/* Floating Game Logos Card — Custom floating items around robot */}
+                  <Card className="p-8 border-[var(--color-border)] relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-1.5 h-full bg-[#ff0033]" />
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#ff0033]/15 text-[#ff4b5f]">
+                          <Gamepad2 size={18} />
+                        </div>
+                        <div>
+                          <h3 className="font-display font-extrabold text-xl text-[var(--color-text)]">
+                            Floating Game Logos
+                          </h3>
+                          <p className="text-xs text-[var(--color-text-muted)]">
+                            Custom game logos that float around the 3D robot on the right side.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row gap-2 relative">
+                        <div className="flex-grow relative">
+                          <Input
+                            placeholder="e.g. Minecraft (Search floating games...)"
+                            value={newFloatingGameName}
+                            onChange={(e) => setNewFloatingGameName(e.target.value)}
+                            onFocus={() => {
+                              if (floatingGameSuggestions.length > 0) {
+                                setShowFloatingGameSuggestions(true);
+                              }
+                            }}
+                            onBlur={() => {
+                              setTimeout(() => setShowFloatingGameSuggestions(false), 200);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                const name = newFloatingGameName.trim();
+                                if (name) {
+                                  let logoUrl = "";
+                                  if (selectedFloatingGame && selectedFloatingGame.name.toLowerCase() === name.toLowerCase()) {
+                                    logoUrl = selectedFloatingGame.logoUrl;
+                                  }
+                                  const newGameItem = { id: `floating-${Date.now()}`, name, logoUrl };
+                                  setFloatingGames((prev) => [...prev, newGameItem]);
+                                  setNewFloatingGameName("");
+                                  setSelectedFloatingGame(null);
+                                  setFloatingGameSuggestions([]);
+                                }
+                              }
+                            }}
+                            maxLength={60}
+                            className="w-full"
+                          />
+
+                          {showFloatingGameSuggestions && floatingGameSuggestions.length > 0 && (
+                            <div className="absolute left-0 right-0 top-full z-20 mt-2 p-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-soft)] shadow-[0_10px_30px_rgba(0,0,0,0.45)] backdrop-blur-xl max-h-64 overflow-y-auto">
+                              {floatingGameSuggestions.map((s) => (
+                                <button
+                                  key={s.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setNewFloatingGameName(s.name);
+                                    setSelectedFloatingGame({ name: s.name, logoUrl: s.backgroundImage });
+                                    setShowFloatingGameSuggestions(false);
+                                  }}
+                                  className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-xs font-bold text-[var(--color-text)] transition hover:bg-[#ff0033]/15 hover:text-white cursor-pointer"
+                                >
+                                  <div className="h-8 w-8 rounded-md overflow-hidden border border-[var(--color-border)] bg-[var(--color-surface-2)] flex items-center justify-center shrink-0">
+                                    {s.backgroundImage ? (
+                                      <img
+                                        src={s.backgroundImage}
+                                        alt={s.name}
+                                        className="h-full w-full object-cover"
+                                      />
+                                    ) : (
+                                      <Gamepad2 size={12} className="text-[var(--color-text-muted)]" />
+                                    )}
+                                  </div>
+                                  <div className="flex-grow min-w-0">
+                                    <p className="truncate text-sm font-bold text-[var(--color-text)]">{s.name}</p>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+
+                          {searchingFloatingGames && (
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
+                              <RefreshCw size={14} className="animate-spin text-[var(--color-text-muted)]" />
+                            </div>
+                          )}
+                        </div>
+                        <Button
+                          onClick={() => {
+                            const name = newFloatingGameName.trim();
+                            if (name) {
+                              let logoUrl = "";
+                              if (selectedFloatingGame && selectedFloatingGame.name.toLowerCase() === name.toLowerCase()) {
+                                logoUrl = selectedFloatingGame.logoUrl;
+                              }
+                              const newGameItem = { id: `floating-${Date.now()}`, name, logoUrl };
+                              setFloatingGames((prev) => [...prev, newGameItem]);
+                              setNewFloatingGameName("");
+                              setSelectedFloatingGame(null);
+                              setFloatingGameSuggestions([]);
+                            }
+                          }}
+                          disabled={!newFloatingGameName.trim()}
+                          className="gap-2 shrink-0"
+                        >
+                          <Plus size={14} /> Add
+                        </Button>
+                      </div>
+
+                      {floatingGames.length === 0 ? (
+                        <div className="rounded-lg border border-dashed border-[var(--color-border)] p-6 text-center text-xs text-[var(--color-text-muted)]">
+                          No custom floating games. (Currently falling back to the marquee list below).
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {floatingGames.map((g, idx) => (
+                            <div
+                              key={g.id}
+                              className="flex items-center gap-3 p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]"
+                            >
+                              <div className="h-12 w-12 rounded-lg overflow-hidden border border-[var(--color-border)] bg-[var(--color-surface-2)] flex items-center justify-center shrink-0">
+                                {g.logoUrl ? (
+                                  <img
+                                    src={g.logoUrl}
+                                    alt={g.name}
+                                    className="h-full w-full object-contain"
+                                  />
+                                ) : (
+                                  <Gamepad2 size={18} className="text-[var(--color-text-muted)]" />
+                                )}
+                              </div>
+                              <input
+                                type="text"
+                                value={g.name}
+                                onChange={(e) => {
+                                  const newName = e.target.value;
+                                  setFloatingGames((prev) =>
+                                    prev.map((x, i) =>
+                                      i === idx ? { ...x, name: newName } : x
+                                    )
+                                  );
+                                }}
+                                maxLength={60}
+                                className="flex-1 min-w-0 bg-transparent border-0 outline-none text-sm font-bold text-[var(--color-text)] focus:underline"
+                              />
+                              <label className="cursor-pointer shrink-0">
+                                <input
+                                  type="file"
+                                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                                  onChange={(e) => {
+                                    const f = e.target.files?.[0];
+                                    if (f) handleUploadFloatingGameLogo(idx, f);
+                                    e.target.value = "";
+                                  }}
+                                  disabled={floatingGameUploadingFor === String(idx)}
+                                  className="hidden"
+                                />
+                                <span
+                                  className={`inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-2.5 py-1.5 text-[11px] font-bold transition ${floatingGameUploadingFor === String(idx)
+                                      ? "opacity-50 cursor-not-allowed"
+                                      : "text-[var(--color-text-muted)] hover:border-[#ff0033]/40 hover:text-[var(--color-text)]"
+                                    }`}
+                                >
+                                  <Plus size={12} />
+                                  {floatingGameUploadingFor === String(idx)
+                                    ? "Uploading…"
+                                    : g.logoUrl
+                                      ? "Replace"
+                                      : "Upload"}
+                                </span>
+                              </label>
+                              <button
+                                onClick={() => {
+                                  setFloatingGames((prev) => prev.filter((_, i) => i !== idx));
+                                }}
+                                className="p-2 rounded-lg text-red-500 hover:bg-red-500/10 transition cursor-pointer shrink-0"
+                                aria-label={`Delete ${g.name}`}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="flex flex-wrap items-center justify-end gap-2 pt-2">
+                        <Button
+                          variant="ghost"
+                          onClick={() => handleSaveFloatingGames([])}
+                          disabled={floatingGamesSaving || floatingGamesSaved === ""}
+                        >
+                          Use default
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          onClick={() => {
+                            if (floatingGamesSaved) {
+                              try {
+                                setFloatingGames(JSON.parse(floatingGamesSaved));
+                              } catch { }
+                            } else {
+                              setFloatingGames(DEFAULT_FLOATING_GAMES);
+                            }
+                          }}
+                          disabled={
+                            floatingGamesSaving ||
+                            JSON.stringify(floatingGames) === (floatingGamesSaved ? JSON.stringify(JSON.parse(floatingGamesSaved)) : JSON.stringify(DEFAULT_FLOATING_GAMES))
+                          }
+                        >
+                          Revert
+                        </Button>
+                        <Button
+                          onClick={() => handleSaveFloatingGames(floatingGames)}
+                          disabled={
+                            floatingGamesSaving ||
+                            JSON.stringify(floatingGames) === (floatingGamesSaved ? JSON.stringify(JSON.parse(floatingGamesSaved)) : JSON.stringify(DEFAULT_FLOATING_GAMES))
+                          }
+                          className="gap-2"
+                        >
+                          {floatingGamesSaving ? "Saving…" : "Save Floating Games"}
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+
+                  {/* Floating Sci-Fi Words Card — Custom drift text pill capsules */}
+                  <Card className="p-8 border-[var(--color-border)] relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-1.5 h-full bg-[#ff0033]" />
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#ff0033]/15 text-[#ff4b5f]">
+                          <Sparkles size={18} />
+                        </div>
+                        <div>
+                          <h3 className="font-display font-extrabold text-xl text-[var(--color-text)]">
+                            Floating Sci-Fi Words
+                          </h3>
+                          <p className="text-xs text-[var(--color-text-muted)]">
+                            Custom sci-fi label capsules that drift around the 3D robot.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Add Word Form */}
+                      <div className="flex flex-col gap-3 p-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)]">
+                        <h4 className="text-xs font-extrabold uppercase tracking-wider text-[var(--color-text)]">
+                          Add Sci-Fi Capsule Word
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <Input
+                            placeholder="e.g. CLUTCH"
+                            value={newWordText}
+                            onChange={(e) => setNewWordText(e.target.value.toUpperCase())}
+                            maxLength={16}
+                          />
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Style Option</label>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setNewWordStyle("outline")}
+                                className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold border transition ${newWordStyle === "outline"
+                                    ? "border-[#ff0033] bg-[#ff0033]/10 text-[#ff4b5f]"
+                                    : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-white"
+                                  }`}
+                              >
+                                Outline Pink
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setNewWordStyle("glassy")}
+                                className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold border transition ${newWordStyle === "glassy"
+                                    ? "border-white bg-white/10 text-white"
+                                    : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-white"
+                                  }`}
+                              >
+                                Glassy Capsule
+                              </button>
+                            </div>
+                          </div>
+                          {newWordStyle === "glassy" && (
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Status Dot Color</label>
+                              <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                                {["#ff0033", "#ffffff", "#ffd700", "#00ff66", "#00e5ff"].map((c) => (
+                                  <button
+                                    key={c}
+                                    type="button"
+                                    onClick={() => setNewWordDotColor(c)}
+                                    className="w-5 h-5 rounded-full border transition shrink-0 relative flex items-center justify-center"
+                                    style={{
+                                      backgroundColor: c,
+                                      borderColor: newWordDotColor === c ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.3)"
+                                    }}
+                                  >
+                                    {newWordDotColor === c && (
+                                      <span className="w-1.5 h-1.5 rounded-full bg-black/60 block" />
+                                    )}
+                                  </button>
+                                ))}
+                                <input
+                                  type="color"
+                                  value={newWordDotColor}
+                                  onChange={(e) => setNewWordDotColor(e.target.value)}
+                                  className="w-5 h-5 rounded overflow-hidden cursor-pointer border-0 p-0 shrink-0"
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex justify-end pt-1">
+                          <Button
+                            onClick={() => {
+                              const txt = newWordText.trim().toUpperCase();
+                              if (!txt) return;
+                              const newWord = {
+                                text: txt,
+                                style: newWordStyle,
+                                dot: newWordStyle === "glassy" ? newWordDotColor : undefined
+                              };
+                              setFloatingWords((prev) => [...prev, newWord]);
+                              setNewWordText("");
+                            }}
+                            disabled={!newWordText.trim()}
+                            size="sm"
+                            className="gap-1.5"
+                          >
+                            <Plus size={12} /> Add Word Capsule
+                          </Button>
+                        </div>
+                      </div>
+
+                      {floatingWords.length === 0 ? (
+                        <div className="rounded-lg border border-dashed border-[var(--color-border)] p-6 text-center text-xs text-[var(--color-text-muted)]">
+                          No custom floating words. (Currently falling back to JFF defaults: CHAOS, CLUTCH, JFF SQUAD, CO-OP, MELTDOWNS).
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {floatingWords.map((w, idx) => (
+                            <div
+                              key={idx}
+                              className="flex flex-col gap-2 p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] relative"
+                            >
+                              <button
+                                onClick={() => {
+                                  setFloatingWords((prev) => prev.filter((_, i) => i !== idx));
+                                }}
+                                className="absolute top-2 right-2 p-1 rounded-md text-red-400 hover:text-red-500 hover:bg-red-500/10 transition cursor-pointer"
+                                aria-label="Remove word"
+                              >
+                                <X size={12} />
+                              </button>
+                              <div className="flex flex-col gap-1.5">
+                                <label className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Capsule Text</label>
+                                <input
+                                  type="text"
+                                  value={w.text}
+                                  onChange={(e) => {
+                                    const txt = e.target.value.toUpperCase();
+                                    setFloatingWords((prev) =>
+                                      prev.map((x, i) =>
+                                        i === idx ? { ...x, text: txt } : x
+                                      )
+                                    );
+                                  }}
+                                  maxLength={16}
+                                  className="bg-transparent border-0 outline-none text-xs font-black tracking-widest text-[var(--color-text)] focus:underline uppercase font-mono"
+                                />
+                              </div>
+                              <div className="flex items-center justify-between border-t border-[var(--color-border)] pt-2 mt-1">
+                                <span className="text-[9px] font-mono uppercase tracking-wider text-[var(--color-text-muted)]">
+                                  Style: {w.style === "glassy" ? "Glassy" : "Outline"}
+                                </span>
+                                {w.style === "glassy" && (
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-[9px] font-mono uppercase tracking-wider text-[var(--color-text-muted)]">Dot:</span>
+                                    <span
+                                      className="w-2.5 h-2.5 rounded-full border border-black/20"
+                                      style={{ backgroundColor: w.dot || "#ff0033" }}
+                                    />
+                                    <input
+                                      type="color"
+                                      value={w.dot || "#ff0033"}
+                                      onChange={(e) => {
+                                        const c = e.target.value;
+                                        setFloatingWords((prev) =>
+                                          prev.map((x, i) =>
+                                            i === idx ? { ...x, dot: c } : x
+                                          )
+                                        );
+                                      }}
+                                      className="w-4 h-4 rounded-full overflow-hidden cursor-pointer border-0 p-0 shrink-0"
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="flex flex-wrap items-center justify-end gap-2 pt-2">
+                        <Button
+                          variant="ghost"
+                          onClick={() => handleSaveFloatingWords([])}
+                          disabled={floatingWordsSaving || floatingWordsSaved === ""}
+                        >
+                          Use default
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          onClick={() => {
+                            if (floatingWordsSaved) {
+                              try {
+                                setFloatingWords(JSON.parse(floatingWordsSaved));
+                              } catch { }
+                            } else {
+                              setFloatingWords(DEFAULT_SYSTEM_WORDS);
+                            }
+                          }}
+                          disabled={
+                            floatingWordsSaving ||
+                            JSON.stringify(floatingWords) === (floatingWordsSaved ? JSON.stringify(JSON.parse(floatingWordsSaved)) : JSON.stringify(DEFAULT_SYSTEM_WORDS))
+                          }
+                        >
+                          Revert
+                        </Button>
+                        <Button
+                          onClick={() => handleSaveFloatingWords(floatingWords)}
+                          disabled={
+                            floatingWordsSaving ||
+                            JSON.stringify(floatingWords) === (floatingWordsSaved ? JSON.stringify(JSON.parse(floatingWordsSaved)) : JSON.stringify(DEFAULT_SYSTEM_WORDS))
+                          }
+                          className="gap-2"
+                        >
+                          {floatingWordsSaving ? "Saving…" : "Save Floating Words"}
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              )}
+
+              {/* Tab 8: Manage Games (logos & names marquee) */}
+              {activeTab === "games" && (
+                <div className="space-y-6">
                   {/* Games with logos — drives the hero bottom marquee. */}
                   <Card className="p-8 border-[var(--color-border)] relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-1.5 h-full bg-[#ff0033]" />
@@ -2274,24 +2973,75 @@ export default function AdminPage() {
                         </div>
                       </div>
 
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <Input
-                          placeholder="e.g. Valorant"
-                          value={newGameName}
-                          onChange={(e) => setNewGameName(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              handleAddGame();
-                            }
-                          }}
-                          maxLength={60}
-                          className="flex-1"
-                        />
+                      <div className="flex flex-col sm:flex-row gap-2 relative">
+                        <div className="flex-grow relative">
+                          <Input
+                            placeholder="e.g. Valorant (Search games...)"
+                            value={newGameName}
+                            onChange={(e) => setNewGameName(e.target.value)}
+                            onFocus={() => {
+                              if (gameSuggestions.length > 0) {
+                                setShowGameSuggestions(true);
+                              }
+                            }}
+                            onBlur={() => {
+                              // Small delay to allow clicking on dropdown suggestions
+                              setTimeout(() => setShowGameSuggestions(false), 200);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleAddGame();
+                              }
+                            }}
+                            maxLength={60}
+                            className="w-full"
+                          />
+
+                          {/* Dropdown Suggestions */}
+                          {showGameSuggestions && gameSuggestions.length > 0 && (
+                            <div className="absolute left-0 right-0 top-full z-20 mt-2 p-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-soft)] shadow-[0_10px_30px_rgba(0,0,0,0.45)] backdrop-blur-xl max-h-64 overflow-y-auto">
+                              {gameSuggestions.map((s) => (
+                                <button
+                                  key={s.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setNewGameName(s.name);
+                                    setSelectedGame({ name: s.name, logoUrl: s.backgroundImage });
+                                    setShowGameSuggestions(false);
+                                  }}
+                                  className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-xs font-bold text-[var(--color-text)] transition hover:bg-[#ff0033]/15 hover:text-white cursor-pointer"
+                                >
+                                  <div className="h-8 w-8 rounded-md overflow-hidden border border-[var(--color-border)] bg-[var(--color-surface-2)] flex items-center justify-center shrink-0">
+                                    {s.backgroundImage ? (
+                                      // eslint-disable-next-line @next/next/no-img-element
+                                      <img
+                                        src={s.backgroundImage}
+                                        alt={s.name}
+                                        className="h-full w-full object-cover"
+                                      />
+                                    ) : (
+                                      <Gamepad2 size={12} className="text-[var(--color-text-muted)]" />
+                                    )}
+                                  </div>
+                                  <div className="flex-grow min-w-0">
+                                    <p className="truncate text-sm font-bold text-[var(--color-text)]">{s.name}</p>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+
+                          {searchingGames && (
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
+                              <RefreshCw size={14} className="animate-spin text-[var(--color-text-muted)]" />
+                            </div>
+                          )}
+                        </div>
                         <Button
                           onClick={handleAddGame}
                           disabled={!newGameName.trim()}
-                          className="gap-2"
+                          className="gap-2 shrink-0"
                         >
                           <Plus size={14} /> Add
                         </Button>
@@ -2363,11 +3113,10 @@ export default function AdminPage() {
                                   className="hidden"
                                 />
                                 <span
-                                  className={`inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-2.5 py-1.5 text-[11px] font-bold transition ${
-                                    gameUploadingFor === g.id
+                                  className={`inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-2.5 py-1.5 text-[11px] font-bold transition ${gameUploadingFor === g.id
                                       ? "opacity-50 cursor-not-allowed"
                                       : "text-[var(--color-text-muted)] hover:border-[#ff0033]/40 hover:text-[var(--color-text)]"
-                                  }`}
+                                    }`}
                                 >
                                   <Plus size={12} />
                                   {gameUploadingFor === g.id
@@ -2404,7 +3153,7 @@ export default function AdminPage() {
                           🔄 YouTube Data Caching & Management
                         </h3>
                         <p className="text-sm text-[var(--color-text-muted)] leading-relaxed">
-                          To prevent your site from exhausting the daily YouTube API quota (10,000 units), video data is cached in PostgreSQL and served directly to viewers. 
+                          To prevent your site from exhausting the daily YouTube API quota (10,000 units), video data is cached in PostgreSQL and served directly to viewers.
                         </p>
                       </div>
 
@@ -2459,7 +3208,7 @@ export default function AdminPage() {
       {selectedMessage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
           <Card glass className="max-w-2xl w-full p-8 border-[var(--color-border)] bg-[var(--color-bg-soft)]/95 backdrop-blur-2xl relative shadow-[0_20px_50px_rgba(0,0,0,0.5)] animate-fade-in-up">
-            <button 
+            <button
               onClick={() => setSelectedMessage(null)}
               className="absolute top-4 right-4 p-2 rounded-full bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition cursor-pointer"
             >

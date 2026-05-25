@@ -58,9 +58,12 @@ export async function POST(request: Request) {
     );
   }
 
-  const game = await prisma.game.findUnique({ where: { id: gameId } });
-  if (!game) {
-    return NextResponse.json({ error: "Game not found." }, { status: 404 });
+  const isFloating = gameId === "floating" || gameId.startsWith("floating-");
+  if (!isFloating) {
+    const game = await prisma.game.findUnique({ where: { id: gameId } });
+    if (!game) {
+      return NextResponse.json({ error: "Game not found." }, { status: 404 });
+    }
   }
 
   const ext =
@@ -96,9 +99,11 @@ export async function POST(request: Request) {
   const { data: pub } = admin.storage.from(BUCKET).getPublicUrl(path);
   const logoUrl = pub.publicUrl;
 
-  const updated = await prisma.game.update({
-    where: { id: gameId },
-    data: { logoUrl },
-  });
-  return NextResponse.json({ success: true, logoUrl, game: updated });
+  if (!isFloating) {
+    await prisma.game.update({
+      where: { id: gameId },
+      data: { logoUrl },
+    });
+  }
+  return NextResponse.json({ success: true, logoUrl });
 }

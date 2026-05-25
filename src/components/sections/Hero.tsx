@@ -7,6 +7,7 @@ import { Youtube } from "@/components/ui/Icons";
 import { Button } from "@/components/ui/Button";
 import { SplineRobot } from "@/components/ui/SplineRobot";
 import { CursorSpotlight } from "@/components/ui/CursorSpotlight";
+import { FloatingGameLogos } from "@/components/ui/FloatingGameLogos";
 import { useYouTube } from "@/components/providers/YouTubeProvider";
 import { DEFAULT_MARQUEE } from "@/lib/heroDefaults";
 
@@ -52,7 +53,7 @@ export const Hero = () => {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/settings")
+    fetch("/api/settings", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : { settings: {} }))
       .then((data: { settings?: Record<string, string> }) => {
         if (cancelled) return;
@@ -286,17 +287,35 @@ export const Hero = () => {
               />
             </div>
 
+            {/* Floating game logos — drifting behind the robot */}
+            <FloatingGameLogos games={games} />
+
             <SplineRobot scene={splineScene} className="relative z-10" />
           </div>
 
-          {/* HUD callouts */}
-          <div className="absolute left-0 top-4 hidden flex-col gap-2 lg:flex">
-            <span className="chip chip-red">SYS ONLINE</span>
-            <span className="chip">AI · v4.7</span>
-          </div>
-          <div className="absolute bottom-6 right-4 hidden flex-col items-end gap-2 lg:flex">
-            <span className="chip">3D · WebGL</span>
-            <span className="chip chip-red">LIVE LINK</span>
+          {/* Scroll Down mouse wheel indicator centered under the robot */}
+          <div
+            onClick={() => {
+              document.getElementById("about")?.scrollIntoView({ behavior: "smooth" });
+            }}
+            className="absolute -bottom-20 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 cursor-pointer group select-none transition-all duration-300 hover:scale-105"
+          >
+            <style>{`
+              @keyframes scrollDotMove {
+                0% { transform: translateY(0); opacity: 1; }
+                50% { transform: translateY(6px); opacity: 0.3; }
+                100% { transform: translateY(0); opacity: 1; }
+              }
+              .animate-scroll-dot-move {
+                animation: scrollDotMove 1.6s ease-in-out infinite;
+              }
+            `}</style>
+            <div className="w-5 h-8 border border-neutral-400 rounded-full flex justify-center p-1.5 group-hover:border-[#ff0033] group-hover:shadow-[0_0_10px_rgba(255,0,51,0.25)] transition-all duration-300">
+              <div className="w-1 h-2 bg-[#ff0033] rounded-full animate-scroll-dot-move shadow-[0_0_8px_rgba(255,0,51,0.8)]" />
+            </div>
+            <span className="text-[9px] font-black uppercase tracking-[0.24em] text-neutral-400 group-hover:text-glow-red group-hover:text-white transition-all duration-300 whitespace-nowrap">
+              Scroll to Deploy
+            </span>
           </div>
         </div>
       </div>
@@ -315,16 +334,7 @@ export const Hero = () => {
                     key={`${i}-${g.id}`}
                     className="flex shrink-0 items-center gap-2.5"
                   >
-                    {g.logoUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={g.logoUrl}
-                        alt={g.name}
-                        className="h-6 w-6 rounded object-contain"
-                      />
-                    ) : (
-                      <span className="text-[#ff0033]">★</span>
-                    )}
+                    <span className="text-[#ff0033]">★</span>
                     <span className="font-display text-sm font-black uppercase tracking-[0.28em] text-neutral-400 whitespace-nowrap">
                       {g.name}
                     </span>
