@@ -17,15 +17,20 @@ export async function GET(request: Request) {
   }
 
   const kind = new URL(request.url).searchParams.get("kind");
-  const favorites = await prisma.favorite.findMany({
-    where: {
-      userId: user.id,
-      ...(kind && KINDS.has(kind) ? { kind: kind as "video" | "sound" } : {}),
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  try {
+    const favorites = await prisma.favorite.findMany({
+      where: {
+        userId: user.id,
+        ...(kind && KINDS.has(kind) ? { kind: kind as "video" | "sound" } : {}),
+      },
+      orderBy: { createdAt: "desc" },
+    });
 
-  return NextResponse.json({ favorites });
+    return NextResponse.json({ favorites });
+  } catch (error) {
+    console.error("GET Favorites Error:", error);
+    return NextResponse.json({ favorites: [] }, { status: 200 });
+  }
 }
 
 /** POST — add a favorite. Body: { kind: "video"|"sound", itemId, itemTitle? } */
@@ -45,33 +50,38 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid body" }, { status: 400 });
   }
 
-  // Ensure profile exists (first-favorite-before-profile-load case).
-  await prisma.profile.upsert({
-    where: { id: user.id },
-    create: { id: user.id, email: user.email },
-    update: {},
-  });
+  try {
+    // Ensure profile exists (first-favorite-before-profile-load case).
+    await prisma.profile.upsert({
+      where: { id: user.id },
+      create: { id: user.id, email: user.email },
+      update: {},
+    });
 
-  const favorite = await prisma.favorite.upsert({
-    where: {
-      userId_kind_itemId: {
+    const favorite = await prisma.favorite.upsert({
+      where: {
+        userId_kind_itemId: {
+          userId: user.id,
+          kind: body.kind as "video" | "sound",
+          itemId: body.itemId,
+        },
+      },
+      create: {
         userId: user.id,
         kind: body.kind as "video" | "sound",
         itemId: body.itemId,
+        itemTitle: body.itemTitle ?? null,
       },
-    },
-    create: {
-      userId: user.id,
-      kind: body.kind as "video" | "sound",
-      itemId: body.itemId,
-      itemTitle: body.itemTitle ?? null,
-    },
-    update: {
-      itemTitle: body.itemTitle ?? null,
-    },
-  });
+      update: {
+        itemTitle: body.itemTitle ?? null,
+      },
+    });
 
-  return NextResponse.json({ favorite });
+    return NextResponse.json({ favorite });
+  } catch (error) {
+    console.error("POST Favorite Error:", error);
+    return NextResponse.json({ error: "favorites unavailable" }, { status: 503 });
+  }
 }
 
 /** DELETE — remove a favorite. Body: { kind, itemId } */
@@ -91,13 +101,18 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "invalid body" }, { status: 400 });
   }
 
-  await prisma.favorite.deleteMany({
-    where: {
-      userId: user.id,
-      kind: body.kind as "video" | "sound",
-      itemId: body.itemId,
-    },
-  });
+  try {
+    await prisma.favorite.deleteMany({
+      where: {
+        userId: user.id,
+        kind: body.kind as "video" | "sound",
+        itemId: body.itemId,
+      },
+    });
 
-  return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("DELETE Favorite Error:", error);
+    return NextResponse.json({ error: "favorites unavailable" }, { status: 503 });
+  }
 }
