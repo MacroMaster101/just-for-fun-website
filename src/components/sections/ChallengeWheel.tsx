@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Sparkles,
   RotateCcw,
@@ -153,9 +153,6 @@ interface ReelProps {
 }
 
 const Reel: React.FC<ReelProps> = ({ items, targetIndex, spinning, duration, renderCell, onStop }) => {
-  const [offset, setOffset] = useState(0);
-  const ref = useRef<HTMLDivElement | null>(null);
-
   // Build the long strip
   const strip = useMemo(() => {
     const out: ChallengeItem[] = [];
@@ -163,13 +160,16 @@ const Reel: React.FC<ReelProps> = ({ items, targetIndex, spinning, duration, ren
     return out;
   }, [items]);
 
-  useEffect(() => {
-    if (!spinning) return;
+  const offset = useMemo(() => {
+    if (targetIndex < 0) return 0;
     const landingRepeat = REEL_REPEATS - 2;
     const flatIndex = landingRepeat * items.length + targetIndex;
     // Center the landing item in the 3-row visible window (row index 1).
-    const targetTranslate = (flatIndex - 1) * REEL_ITEM_HEIGHT;
-    setOffset(targetTranslate);
+    return (flatIndex - 1) * REEL_ITEM_HEIGHT;
+  }, [items.length, targetIndex]);
+
+  useEffect(() => {
+    if (!spinning) return;
 
     const timeout = setTimeout(() => {
       reelStop();
@@ -181,30 +181,6 @@ const Reel: React.FC<ReelProps> = ({ items, targetIndex, spinning, duration, ren
     // captured at that moment.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spinning]);
-
-  // Reset to top instantly when caller clears (between spins).
-  const reset = () => {
-    const node = ref.current;
-    if (!node) return;
-    node.style.transition = "none";
-    setOffset(0);
-    void node.offsetHeight;
-    node.style.transition = "";
-  };
-
-  useEffect(() => {
-    if (!spinning && offset !== 0) {
-      // Wait a beat then snap back so the user briefly sees the result.
-      // The parent controls when results are cleared — we just expose reset
-      // via this effect when offset is forced to 0 externally.
-    }
-  }, [spinning, offset]);
-
-  // Imperative reset hook for parent
-  useEffect(() => {
-    if (!spinning && offset !== 0 && targetIndex === -1) reset();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetIndex]);
 
   return (
     <div
@@ -219,7 +195,6 @@ const Reel: React.FC<ReelProps> = ({ items, targetIndex, spinning, duration, ren
 
       {/* Strip */}
       <div
-        ref={ref}
         style={{
           transform: `translateY(-${offset}px)`,
           transition: spinning ? `transform ${duration}s cubic-bezier(0.16, 0.84, 0.24, 1)` : "none",
@@ -246,7 +221,6 @@ export const ChallengeWheel = () => {
   const [result, setResult] = useState<ChallengeItem | null>(null);
   const [locked, setLocked] = useState(false);
   const [targetIndex, setTargetIndex] = useState(-1);
-  const [reelsStopped, setReelsStopped] = useState(0);
   const [pulled, setPulled] = useState(false);
   const [spinCount, setSpinCount] = useState(0);
   const [reportStatus, setReportStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
@@ -281,7 +255,6 @@ export const ChallengeWheel = () => {
     const next = Math.floor(Math.random() * CHALLENGES.length);
     setIsSpinning(true);
     setResult(null);
-    setReelsStopped(0);
     setTargetIndex(next);
     setPulled(true);
     setSpinCount((c) => c + 1);
@@ -289,6 +262,11 @@ export const ChallengeWheel = () => {
     // Hold the lever down for most of the spin, then let it spring back up
     // just before the reels finish locking in.
     setTimeout(() => setPulled(false), 2800);
+    setTimeout(() => {
+      setIsSpinning(false);
+      setResult(CHALLENGES[next]);
+      jackpot();
+    }, Math.max(...REEL_DURATIONS) * 1000);
 
     // Tick sounds during the spin
     let ticks = 0;
@@ -301,15 +279,6 @@ export const ChallengeWheel = () => {
       }
     }, 100);
   };
-
-  // When all 3 reels have stopped, set the result.
-  useEffect(() => {
-    if (reelsStopped >= 3 && isSpinning) {
-      setIsSpinning(false);
-      setResult(CHALLENGES[targetIndex]);
-      jackpot();
-    }
-  }, [reelsStopped, isSpinning, targetIndex]);
 
   const clearResult = () => {
     setResult(null);
@@ -400,7 +369,6 @@ export const ChallengeWheel = () => {
                       targetIndex={targetIndex}
                       spinning={isSpinning}
                       duration={REEL_DURATIONS[0]}
-                      onStop={() => setReelsStopped((n) => n + 1)}
                       renderCell={(item) => {
                         const meta = GAME_META[item.game] ?? GAME_META["Any Game"];
                         const Icon = meta.Icon;
@@ -421,7 +389,6 @@ export const ChallengeWheel = () => {
                       targetIndex={targetIndex}
                       spinning={isSpinning}
                       duration={REEL_DURATIONS[1]}
-                      onStop={() => setReelsStopped((n) => n + 1)}
                       renderCell={(item) => (
                         <div className="w-full h-full flex flex-col items-center justify-center text-center px-2">
                           <span className="text-[9px] font-black uppercase tracking-widest text-neutral-500 mb-1">
@@ -440,7 +407,6 @@ export const ChallengeWheel = () => {
                       targetIndex={targetIndex}
                       spinning={isSpinning}
                       duration={REEL_DURATIONS[2]}
-                      onStop={() => setReelsStopped((n) => n + 1)}
                       renderCell={(item) => (
                         <div className="w-full h-full flex items-center justify-center">
                           <span

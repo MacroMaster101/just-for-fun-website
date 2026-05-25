@@ -90,7 +90,19 @@ const DEFAULT_FLOATING_GAMES = [
   },
 ];
 
-const DEFAULT_SYSTEM_WORDS: Array<{ text: string; style: "outline" | "glassy"; dot?: string }> = [
+type FloatingGameSetting = {
+  id: string;
+  name: string;
+  logoUrl: string;
+};
+
+type FloatingWordSetting = {
+  text: string;
+  style: "outline" | "glassy";
+  dot?: string;
+};
+
+const DEFAULT_SYSTEM_WORDS: FloatingWordSetting[] = [
   { text: "J4FN SQUAD", style: "outline" },
   { text: "CLUTCH TIME", style: "glassy", dot: "#ff0033" },
   { text: "GG EZ", style: "outline" },
@@ -98,6 +110,50 @@ const DEFAULT_SYSTEM_WORDS: Array<{ text: string; style: "outline" | "glassy"; d
   { text: "AIM BOT", style: "glassy", dot: "#ffffff" },
   { text: "GAME ON", style: "outline" },
 ];
+
+const ADMIN_TAB_IDS = [
+  "command",
+  "inbox",
+  "admins",
+  "cache",
+  "music",
+  "squad",
+  "schedule",
+  "sounds",
+  "highlights",
+  "settings",
+  "games",
+  "merch",
+] as const;
+
+type AdminTab = (typeof ADMIN_TAB_IDS)[number];
+
+const isAdminTab = (value: string | null | undefined): value is AdminTab =>
+  Boolean(value && ADMIN_TAB_IDS.includes(value as AdminTab));
+
+const getAdminTabFromHash = (): AdminTab => {
+  if (typeof window === "undefined") return "command";
+  const hash = window.location.hash.replace(/^#/, "");
+  return isAdminTab(hash) ? hash : "command";
+};
+
+const DISCORD_ADMIN_LINKS = [
+  {
+    title: "YouTube Status Bot",
+    description: "Manage Discord updates for YouTube live/status alerts.",
+    url: "https://discord-youtube-status-bot.fly.dev",
+  },
+  {
+    title: "J4FN Server Bot",
+    description: "Open the J4FN Discord server bot admin panel.",
+    url: "https://discord-j4fn-server-bot.fly.dev",
+  },
+  {
+    title: "Music Bot",
+    description: "Control the J4FN Discord music bot dashboard.",
+    url: "https://discord-music-bot-j4fn.fly.dev",
+  },
+] as const;
 
 export default function AdminPage() {
   const { user } = useAuth();
@@ -109,7 +165,7 @@ export default function AdminPage() {
   const [countdown, setCountdown] = useState(5);
 
   // Dashboard states
-  const [activeTab, setActiveTab] = useState<"command" | "inbox" | "admins" | "cache" | "music" | "squad" | "schedule" | "sounds" | "highlights" | "settings" | "games" | "merch">("command");
+  const [activeTab, setActiveTab] = useState<AdminTab>("command");
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [admins, setAdmins] = useState<AdminEmail[]>([]);
   const [tracks, setTracks] = useState<MusicTrack[]>([]);
@@ -158,6 +214,22 @@ export default function AdminPage() {
   const [highlightError, setHighlightError] = useState<string | null>(null);
   const [highlightSuccess, setHighlightSuccess] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const syncTabFromHash = () => {
+      const next = getAdminTabFromHash();
+      setActiveTab((prev) => (prev === next ? prev : next));
+    };
+
+    // Intentional URL -> tab state sync so browser refresh keeps the active
+    // admin panel instead of resetting to Command Center.
+    syncTabFromHash();
+
+    window.addEventListener("hashchange", syncTabFromHash);
+    return () => window.removeEventListener("hashchange", syncTabFromHash);
+  }, []);
+
   // Message reading modal/drawer state
   const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
   const [replyText, setReplyText] = useState("");
@@ -202,9 +274,9 @@ export default function AdminPage() {
   const [shopLiveSaved, setShopLiveSaved] = useState(false);
 
   // Floating settings state
-  const [floatingGames, setFloatingGames] = useState<any[]>([]);
+  const [floatingGames, setFloatingGames] = useState<FloatingGameSetting[]>([]);
   const [floatingGamesSaved, setFloatingGamesSaved] = useState<string>("");
-  const [floatingWords, setFloatingWords] = useState<Array<{ text: string; style: "outline" | "glassy"; dot?: string }>>([]);
+  const [floatingWords, setFloatingWords] = useState<FloatingWordSetting[]>([]);
   const [floatingWordsSaved, setFloatingWordsSaved] = useState<string>("");
 
   // Floating Games RAWG suggestions state
@@ -255,7 +327,7 @@ export default function AdminPage() {
 
   // Save Floating Games Setting
   const [floatingGamesSaving, setFloatingGamesSaving] = useState(false);
-  const handleSaveFloatingGames = async (list: any[]) => {
+  const handleSaveFloatingGames = async (list: FloatingGameSetting[]) => {
     setSettingsError(null);
     setSettingsSuccess(null);
     setFloatingGamesSaving(true);
@@ -315,7 +387,7 @@ export default function AdminPage() {
 
   // Save Floating Words Setting
   const [floatingWordsSaving, setFloatingWordsSaving] = useState(false);
-  const handleSaveFloatingWords = async (list: any[]) => {
+  const handleSaveFloatingWords = async (list: FloatingWordSetting[]) => {
     setSettingsError(null);
     setSettingsSuccess(null);
     setFloatingWordsSaving(true);
@@ -1430,6 +1502,28 @@ export default function AdminPage() {
     );
   });
 
+  const adminTabs: Array<{ id: AdminTab; name: string; icon: React.ReactNode }> = [
+    { id: "command", name: "Command Center", icon: <Compass size={16} /> },
+    { id: "inbox", name: "Contact Inbox", icon: <MessageSquare size={16} /> },
+    { id: "admins", name: "Administration", icon: <Users size={16} /> },
+    { id: "music", name: "Music Stream", icon: <Radio size={16} /> },
+    { id: "squad", name: "Squad Roster", icon: <Users size={16} /> },
+    { id: "schedule", name: "Stream Schedule", icon: <Calendar size={16} /> },
+    { id: "sounds", name: "Soundboard", icon: <Volume2 size={16} /> },
+    { id: "highlights", name: "Highlights Queue", icon: <Sparkles size={16} /> },
+    { id: "games", name: "Manage Games", icon: <Gamepad2 size={16} /> },
+    { id: "merch", name: "Creator Shop", icon: <Store size={16} /> },
+    { id: "settings", name: "Site Settings", icon: <Settings size={16} /> },
+    { id: "cache", name: "YouTube Cache", icon: <RefreshCw size={16} /> },
+  ];
+
+  const handleAdminTabChange = (tab: AdminTab) => {
+    setActiveTab(tab);
+    if (typeof window === "undefined") return;
+    const nextUrl = `${window.location.pathname}${window.location.search}#${tab}`;
+    window.history.replaceState(null, "", nextUrl);
+  };
+
   return (
     <>
       <Header />
@@ -1461,23 +1555,10 @@ export default function AdminPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Left Column: Tab Menu Selector */}
             <div className="lg:col-span-3 space-y-2.5">
-              {[
-                { id: "command", name: "Command Center", icon: <Compass size={16} /> },
-                { id: "inbox", name: "Contact Inbox", icon: <MessageSquare size={16} /> },
-                { id: "admins", name: "Administration", icon: <Users size={16} /> },
-                { id: "music", name: "Music Stream", icon: <Radio size={16} /> },
-                { id: "squad", name: "Squad Roster", icon: <Users size={16} /> },
-                { id: "schedule", name: "Stream Schedule", icon: <Calendar size={16} /> },
-                { id: "sounds", name: "Soundboard", icon: <Volume2 size={16} /> },
-                { id: "highlights", name: "Highlights Queue", icon: <Sparkles size={16} /> },
-                { id: "games", name: "Manage Games", icon: <Gamepad2 size={16} /> },
-                { id: "merch", name: "Creator Shop", icon: <Store size={16} /> },
-                { id: "settings", name: "Site Settings", icon: <Settings size={16} /> },
-                { id: "cache", name: "YouTube Cache", icon: <RefreshCw size={16} /> },
-              ].map((tab) => (
+              {adminTabs.map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                  onClick={() => handleAdminTabChange(tab.id)}
                   className={`flex w-full items-center gap-3.5 px-4 py-3.5 rounded-xl font-bold text-sm tracking-wide transition-all duration-300 border text-left cursor-pointer ${activeTab === tab.id
                       ? "border-[#ff0033] bg-[#ff0033]/10 text-[#ff0033] shadow-[0_0_20px_rgba(255,0,51,0.12)]"
                       : "border-[var(--color-border)] bg-[var(--color-bg-soft)]/50 text-[var(--color-text-muted)] hover:border-[#ff0033]/30 hover:text-[var(--color-text)] hover:bg-[var(--color-surface)]"
@@ -1550,6 +1631,56 @@ export default function AdminPage() {
                       </div>
                     </Card>
                   </div>
+
+                  <Card className="p-6 border-[var(--color-border)] relative overflow-hidden">
+                    <div className="absolute top-0 right-0 h-28 w-28 rounded-full bg-[#5865F2]/8 blur-2xl" />
+                    <div className="relative space-y-5">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#5865F2]/25 bg-[#5865F2]/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-[#5865F2]">
+                            <Bot size={13} /> Discord Tools
+                          </div>
+                          <h3 className="font-display text-xl font-black uppercase text-[var(--color-text)]">
+                            Bot Admin Dashboards
+                          </h3>
+                          <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
+                            Quick redirects to the external Discord bot control pages.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                        {DISCORD_ADMIN_LINKS.map((link) => (
+                          <a
+                            key={link.url}
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group flex min-h-[130px] flex-col justify-between rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)] p-4 transition hover:border-[#5865F2]/60 hover:bg-[#5865F2]/10 hover:shadow-[0_0_24px_rgba(88,101,242,0.14)]"
+                          >
+                            <div className="space-y-2">
+                              <div className="flex items-start justify-between gap-3">
+                                <h4 className="text-sm font-black uppercase tracking-wide text-[var(--color-text)]">
+                                  {link.title}
+                                </h4>
+                                <ExternalLink
+                                  size={15}
+                                  className="mt-0.5 shrink-0 text-[var(--color-text-muted)] transition group-hover:text-[#5865F2]"
+                                />
+                              </div>
+                              <p className="text-xs leading-relaxed text-[var(--color-text-muted)]">
+                                {link.description}
+                              </p>
+                            </div>
+                            <span className="mt-4 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#5865F2]">
+                              Open dashboard
+                              <ExternalLink size={12} />
+                            </span>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  </Card>
 
                   <Card className="p-8 border-[var(--color-border)] relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-1.5 h-full bg-[#ff0033]" />

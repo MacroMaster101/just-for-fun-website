@@ -131,7 +131,11 @@ export const FloatingGameLogos: React.FC<FloatingGameLogosProps> = ({
   const itemsRef = useRef<FloatingItem[]>([]);
   const particlesRef = useRef<Particle[]>([]);
   const rafRef = useRef<number>(0);
-  const [, forceRender] = useState(0);
+  const [renderSnapshot, setRenderSnapshot] = useState<{
+    items: FloatingItem[];
+    particles: Particle[];
+    now: number;
+  }>({ items: [], particles: [], now: 0 });
   const [isMobile, setIsMobile] = useState(false);
   const [active, setActive] = useState(true);
 
@@ -389,7 +393,11 @@ export const FloatingGameLogos: React.FC<FloatingGameLogosProps> = ({
         }))
         .filter((p) => p.life > 0);
 
-      forceRender((n) => n + 1);
+      setRenderSnapshot({
+        items: itemsRef.current.map((item) => ({ ...item })),
+        particles: particlesRef.current.map((particle) => ({ ...particle })),
+        now,
+      });
       rafRef.current = requestAnimationFrame(tick);
     };
 
@@ -430,11 +438,11 @@ export const FloatingGameLogos: React.FC<FloatingGameLogosProps> = ({
       aria-hidden="true"
     >
       {/* Floating items — spread across the right side, clicks register correctly */}
-      {itemsRef.current.map((logo) => {
+      {renderSnapshot.items.map((logo) => {
         const isHit = logo.hitAt !== null;
         const isRespawning = logo.respawnAt !== null;
         const respawnProgress = isRespawning
-          ? Math.min(1, (Date.now() - logo.respawnAt!) / 900)
+          ? Math.min(1, (renderSnapshot.now - logo.respawnAt!) / 900)
           : 1;
         const easedProgress = isRespawning
           ? 1 - Math.pow(1 - respawnProgress, 3)
@@ -627,7 +635,7 @@ export const FloatingGameLogos: React.FC<FloatingGameLogosProps> = ({
       })}
 
       {/* Particles */}
-      {particlesRef.current.map((p) => (
+      {renderSnapshot.particles.map((p) => (
         <span
           key={p.id}
           className="absolute rounded-full pointer-events-none"

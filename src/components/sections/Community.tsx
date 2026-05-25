@@ -21,7 +21,7 @@ export const Community = () => {
             Crew Community
           </h2>
           <p className="text-neutral-400 text-sm tracking-wider uppercase font-semibold">
-            Hop into the Discord — see who's online and join the squad live.
+            Hop into the Discord — see who&apos;s online and join the squad live.
           </p>
           <div className="w-16 h-[2px] bg-gradient-to-r from-[#5865F2] via-white to-[#ff0033] mx-auto rounded-full mt-4" />
         </div>
@@ -48,7 +48,7 @@ export const Community = () => {
               Real-Time Crew Chat
             </h3>
             <p className="text-neutral-400 text-sm leading-relaxed">
-              Voice channels, weekly squad nights, custom game lobbies, and a feed of every new upload. The widget shows live who's online right now.
+              Voice channels, weekly squad nights, custom game lobbies, and a feed of every new upload. The widget shows live who&apos;s online right now.
             </p>
             <a
               href={DISCORD_INVITE_URL}

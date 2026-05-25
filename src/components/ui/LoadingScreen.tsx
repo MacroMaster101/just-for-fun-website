@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 
 const LOADING_TEXTS = [
   "BOOTING SYSTEMS",
@@ -174,9 +175,14 @@ export const LoadingScreen = ({
 
           {/* Inner mark */}
           <div className="absolute inset-4 flex items-center justify-center rounded-full border border-white/10 bg-[#0a0a0a]">
-            <span className="font-display text-2xl font-black tracking-tight text-white">
-              JFF
-            </span>
+            <Image
+              src="/icon.png"
+              alt="Just For Fun logo"
+              width={72}
+              height={72}
+              priority
+              className="h-[72px] w-[72px] rounded-2xl object-cover shadow-[0_0_24px_rgba(255,0,51,0.28)]"
+            />
           </div>
 
           {/* Corner brackets */}
