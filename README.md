@@ -1,19 +1,19 @@
-# 🎮 JUST FOR FUN — Sri Lankan Gaming Crew Web Hub ⚡
+# 🎮 JUST FOR FUN — Sri Lankan Gaming Hub ⚡
 
-<p align="center">
-  <img src="https://media.rawg.io/media/games/b11/b11127b9ee3c3701bd15b9af3286d20e.jpg" alt="JFF Gaming" width="100%" style="border-radius: 16px; border: 2px solid #ff0033; box-shadow: 0 0 32px rgba(255, 0, 51, 0.45);" />
-</p>
+[![Next.js](https://img.shields.io/badge/Next.js-15.0%2B-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
+[![React](https://img.shields.io/badge/React-19.0-blue?style=for-the-badge&logo=react)](https://react.dev)
+[![Supabase](https://img.shields.io/badge/Supabase-Auth%20%26%20Storage-emerald?style=for-the-badge&logo=supabase)](https://supabase.com)
+[![Prisma](https://img.shields.io/badge/Prisma-ORM-indigo?style=for-the-badge&logo=prisma)](https://prisma.io)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4.0-38bdf8?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com)
 
-<p align="center">
-  <strong>An ultra-premium, cyberpunk-styled 3D landing site and custom administration console for the official Sri Lankan gaming channel. Built with immersive high-tech aesthetics, dynamic database settings, and zero-caching APIs.</strong>
-</p>
+Welcome to the official repository for the **Just For Fun (JFF) Sri Lankan Gaming Crew Web Hub**. This is an ultra-premium, cyberpunk-styled 3D web platform featuring a fully decoupled administrative system settings panel, dynamic HUD console badges, atomic track managers, and persistent music visualizers.
 
 ---
 
 ## 🚀 Key Features
 
-### 🌐 public Hub
-*   🤖 **3D Interactive Hero**: Framed by elegant, responsive **HUD Console Word Capsules** (`JFF SQUAD`, `CLUTCH TIME`, `GG EZ`, `MELTDOWN`, `AIM BOT`, `GAME ON`) that stay stationary while game logos spin, drift, and bounce dynamically inside concentric orbit rings.
+### 🌐 Public Landing Hub
+*   🤖 **3D Interactive Hero**: Framed by elegant, responsive **HUD Console Word Capsules** (`J4FN SQUAD`, `CLUTCH TIME`, `GG EZ`, `MELTDOWN`, `AIM BOT`, `GAME ON`) that stay stationary while game logos spin, drift, and bounce dynamically inside concentric orbit rings.
 *   🎯 **Digital Target Interactivity**: Clicks on floating logos and word badges register instantly at `z-index: 15`, producing rich, gravity-driven neon particle explosions. Word pills fade out and reappear exactly in place with no visual jumping.
 *   📻 **Persistent Ambient Music Disc**: Seamless HTML vinyl player with physical tonearm animations and real-time audio visualizers. Playback states and track progress survive page transitions and hard refreshes cleanly using `localStorage`.
 *   📺 **Auto-Seeded YouTube Feed**: High-performance channel database pulling up to 50 uploads with automated playlist filtering, game tagging, and cron-managed stale-while-revalidate caching.
@@ -132,5 +132,5 @@ This repository hosts the official personal web hub for the **Sri Lankan Just Fo
 
 ---
 <p align="center">
-  Made with ⚡ and 🎮 by the Just For FunSri Lankan Gaming Crew.
+  Made with ⚡ and 🎮 by the Just For Fun Sri Lankan Gaming Crew.
 </p>
