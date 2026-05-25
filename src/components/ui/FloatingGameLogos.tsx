@@ -215,32 +215,8 @@ export const FloatingGameLogos: React.FC<FloatingGameLogosProps> = ({
     // Generate Sci-Fi Word Capsule items
     const N = activeWords.length;
     const wordItems: FloatingItem[] = activeWords.map((w, idx) => {
-      // Robust text-based zone mapping to ensure SYS ONLINE and AI - V4.7 are ALWAYS top-left,
-      // and 3D - WEBGL and LIVE LINK are ALWAYS bottom-right, regardless of the DB storage order.
-      const textUpper = w.text.toUpperCase();
-      let zone: 1 | 2 = 1;
-      if (
-        textUpper.includes("SQUAD") ||
-        textUpper.includes("CLUTCH") ||
-        textUpper.includes("GG") ||
-        textUpper.includes("SYS") ||
-        textUpper.includes("AI") ||
-        textUpper.includes("J4FN")
-      ) {
-        zone = 1;
-      } else if (
-        textUpper.includes("MELTDOWN") ||
-        textUpper.includes("BOT") ||
-        textUpper.includes("GAME") ||
-        textUpper.includes("3D") ||
-        textUpper.includes("LIVE") ||
-        textUpper.includes("LINK")
-      ) {
-        zone = 2;
-      } else {
-        // Fallback for custom added words
-        zone = idx < N / 2 ? 1 : 2;
-      }
+      // Split the words list exactly in half so they are always balanced 50/50 between both corners
+      const zone = idx < N / 2 ? 1 : 2;
 
       let startX = 0;
       let startY = 0;
