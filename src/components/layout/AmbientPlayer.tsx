@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { Volume1, Volume2, VolumeX } from "lucide-react";
 
 /**
  * Persistent floating music disc + hidden YouTube iframe. Mounted once in
@@ -14,6 +15,30 @@ export const AmbientPlayer = () => {
   const [ambientPlaying, setAmbientPlaying] = useState(false);
   const [activeYoutubeId, setActiveYoutubeId] = useState("h7MYJghRWt0");
   const [ambientVolume, setAmbientVolume] = useState(35);
+  const [isMuted, setIsMuted] = useState(false);
+  const preMuteVolumeRef = useRef(35);
+
+  const toggleMute = () => {
+    if (isMuted) {
+      setIsMuted(false);
+      sendPlayerCommand("setVolume", [ambientVolume]);
+    } else {
+      preMuteVolumeRef.current = ambientVolume;
+      setIsMuted(true);
+      sendPlayerCommand("setVolume", [0]);
+    }
+  };
+
+  const handleVolumeChange = (newVol: number) => {
+    if (newVol > 0) {
+      setIsMuted(false);
+    }
+    setAmbientVolume(newVol);
+    applyVolume(newVol);
+    try {
+      window.localStorage.setItem("jff:music-volume", String(newVol));
+    } catch {}
+  };
 
   // Whether the iframe should boot with autoplay=1. True when the user's
   // last visible state was "playing" (persisted in localStorage). Browsers
@@ -59,8 +84,9 @@ export const AmbientPlayer = () => {
   }, []);
 
   const applyVolume = useCallback((volume = ambientVolume) => {
-    sendPlayerCommand("setVolume", [volume]);
-  }, [ambientVolume, sendPlayerCommand]);
+    const targetVol = isMuted ? 0 : volume;
+    sendPlayerCommand("setVolume", [targetVol]);
+  }, [ambientVolume, isMuted, sendPlayerCommand]);
 
   // Active-track polling. Re-checks every 5 seconds so admin-side
   // activation propagates quickly. Also re-runs whenever the tab regains
@@ -88,7 +114,14 @@ export const AmbientPlayer = () => {
         }
         if (typeof data.volume === "number" && Number.isFinite(data.volume)) {
           const nextVolume = Math.min(100, Math.max(0, Math.round(data.volume)));
-          setAmbientVolume((prev) => prev === nextVolume ? prev : nextVolume);
+          // Only update local volume from server if the user hasn't explicitly set their own volume
+          let hasLocalVol = false;
+          try {
+            hasLocalVol = Boolean(window.localStorage.getItem("jff:music-volume"));
+          } catch {}
+          if (!hasLocalVol) {
+            setAmbientVolume((prev) => prev === nextVolume ? prev : nextVolume);
+          }
         }
       } catch {
         if (!cancelled) setActiveYoutubeId((prev) => prev || "h7MYJghRWt0");
@@ -128,6 +161,20 @@ export const AmbientPlayer = () => {
     if (firstVisitDecidedRef.current) return;
     firstVisitDecidedRef.current = true;
     if (typeof window === "undefined") return;
+
+    let savedVolume = 35;
+    try {
+      const localVol = window.localStorage.getItem("jff:music-volume");
+      if (localVol) {
+        const parsed = Number(localVol);
+        if (Number.isFinite(parsed) && parsed >= 0 && parsed <= 100) {
+          savedVolume = parsed;
+        }
+      }
+    } catch {
+      // ignore
+    }
+    setAmbientVolume(savedVolume);
 
     let firstVisit = false;
     try {
@@ -503,12 +550,48 @@ export const AmbientPlayer = () => {
           )}
         </button>
 
-        <div className={`flex items-end gap-0.5 h-5 ml-3 transition-all duration-500 ${
+        <div className={`flex items-end gap-0.5 h-5 ml-3 transition-all duration-500 group-hover:opacity-0 group-hover:translate-x-2 group-hover:scale-75 group-hover:pointer-events-none ${
           ambientPlaying ? "opacity-100 translate-x-0 scale-100" : "opacity-0 -translate-x-3 scale-75 pointer-events-none"
         }`}>
           <span className="w-0.5 bg-[#ff0033] rounded-full ambient-wave-1" style={{ animationDelay: "0.1s" }} />
           <span className="w-0.5 bg-[#ff2d55] rounded-full ambient-wave-2" style={{ animationDelay: "0.3s" }} />
           <span className="w-0.5 bg-[#ff0033] rounded-full ambient-wave-3" style={{ animationDelay: "0.2s" }} />
+        </div>
+
+        {/* Hover Slide-out Volume Panel (Outer wrapper provides a generous hover zone and a 300ms exit delay to prevent accidental slip-offs) */}
+        <div className="absolute left-full -top-3 py-4 pr-6 pl-2 flex items-center opacity-0 -translate-x-4 pointer-events-none group-hover:opacity-100 group-hover:translate-x-0 group-hover:pointer-events-auto transition-all duration-500 delay-300 group-hover:delay-0 z-50">
+          <div className="flex items-center gap-2.5 bg-[#050505]/85 backdrop-blur-md border border-white/10 rounded-full py-1.5 px-3.5 shadow-2xl">
+            {/* Speaker Button (Click to mute/unmute) */}
+            <button
+              onClick={toggleMute}
+              className="text-[var(--color-text-muted)] hover:text-[#ff2d55] transition-colors cursor-pointer flex items-center justify-center shrink-0"
+              aria-label={isMuted ? "Unmute" : "Mute"}
+            >
+              {isMuted || ambientVolume === 0 ? (
+                <VolumeX size={15} />
+              ) : ambientVolume < 35 ? (
+                <Volume1 size={15} />
+              ) : (
+                <Volume2 size={15} />
+              )}
+            </button>
+
+            {/* Volume Slider Track */}
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={isMuted ? 0 : ambientVolume}
+              onChange={(e) => handleVolumeChange(Number(e.target.value))}
+              className="w-20 h-1 rounded-full bg-neutral-800 accent-[#ff0033] cursor-pointer outline-none transition-all hover:scale-y-125"
+              aria-label="Volume level"
+            />
+
+            {/* Volume Percent Text */}
+            <span className="font-mono text-[9px] font-black text-[var(--color-text)] tracking-wider min-w-[24px] text-right">
+              {isMuted ? 0 : ambientVolume}%
+            </span>
+          </div>
         </div>
       </div>
 
