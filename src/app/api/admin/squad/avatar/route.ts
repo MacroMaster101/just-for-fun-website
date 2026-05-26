@@ -60,9 +60,13 @@ export async function POST(request: Request) {
     );
   }
 
-  const member = await prisma.squadMember.findUnique({ where: { id: memberId } });
-  if (!member) {
-    return NextResponse.json({ error: "Member not found." }, { status: 404 });
+  const isTemp = memberId === "new" || memberId === "temp" || memberId === "temp-new";
+  let member = null;
+  if (!isTemp) {
+    member = await prisma.squadMember.findUnique({ where: { id: memberId } });
+    if (!member) {
+      return NextResponse.json({ error: "Member not found." }, { status: 404 });
+    }
   }
 
   const ext =
@@ -101,10 +105,13 @@ export async function POST(request: Request) {
   const { data: pub } = admin.storage.from(BUCKET).getPublicUrl(path);
   const avatarUrl = pub.publicUrl;
 
-  const updated = await prisma.squadMember.update({
-    where: { id: memberId },
-    data: { avatarUrl },
-  });
+  let updated = null;
+  if (member) {
+    updated = await prisma.squadMember.update({
+      where: { id: memberId },
+      data: { avatarUrl },
+    });
+  }
 
   return NextResponse.json({ success: true, avatarUrl, member: updated });
 }

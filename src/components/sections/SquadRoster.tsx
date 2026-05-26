@@ -12,6 +12,7 @@ interface TeamMember {
   role: string;
   avatar: string;
   favoriteGames: string[];
+  favoriteGamesEnriched?: Array<{ name: string; logoUrl: string }>;
   signatureAgent: string;
   twitchUrl?: string;
   specs: {
@@ -31,6 +32,7 @@ interface ApiSquadMember {
   role: string;
   avatarUrl: string;
   favoriteGames: string[];
+  favoriteGamesEnriched?: Array<{ name: string; logoUrl: string }>;
   signatureAgent: string;
   twitchUrl: string | null;
   cpu: string;
@@ -49,6 +51,11 @@ const FALLBACK_MEMBERS: TeamMember[] = [
     role: "Founder / Main Duelist",
     avatar: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?auto=format&fit=crop&w=400&q=80",
     favoriteGames: ["Valorant", "Valheim", "GTA V"],
+    favoriteGamesEnriched: [
+      { name: "Valorant", logoUrl: "" },
+      { name: "Valheim", logoUrl: "" },
+      { name: "GTA V", logoUrl: "" },
+    ],
     signatureAgent: "Jett / Reyna",
     twitchUrl: "https://www.twitch.tv/justforfunggez",
     specs: {
@@ -67,6 +74,11 @@ const FALLBACK_MEMBERS: TeamMember[] = [
     role: "Co-Founder / Main Sentinel",
     avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80",
     favoriteGames: ["Valorant", "Battlefield V", "Rust"],
+    favoriteGamesEnriched: [
+      { name: "Valorant", logoUrl: "" },
+      { name: "Battlefield V", logoUrl: "" },
+      { name: "Rust", logoUrl: "" },
+    ],
     signatureAgent: "Chamber / Cypher",
     specs: {
       cpu: "Intel Core i7-14700K",
@@ -84,6 +96,11 @@ const FALLBACK_MEMBERS: TeamMember[] = [
     role: "Co-Builder / Survival Specialist",
     avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=400&q=80",
     favoriteGames: ["Valheim", "Minecraft", "GTA V"],
+    favoriteGamesEnriched: [
+      { name: "Valheim", logoUrl: "" },
+      { name: "Minecraft", logoUrl: "" },
+      { name: "GTA V", logoUrl: "" },
+    ],
     signatureAgent: "Omen / Sage",
     specs: {
       cpu: "AMD Ryzen 5 7600X",
@@ -104,6 +121,7 @@ function mapApiToTeamMember(m: ApiSquadMember): TeamMember {
     role: m.role,
     avatar: m.avatarUrl || "",
     favoriteGames: m.favoriteGames || [],
+    favoriteGamesEnriched: m.favoriteGamesEnriched || [],
     signatureAgent: m.signatureAgent,
     twitchUrl: m.twitchUrl || undefined,
     specs: {
@@ -236,13 +254,31 @@ export const SquadRoster = () => {
                 
                 {/* Header Information */}
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-b border-white/5 pb-5">
-                  <div>
-                    <h3 className="font-display font-black text-2xl text-white tracking-wide uppercase">
-                      {selectedMember.name}
-                    </h3>
-                    <p className="text-[#ffffff] font-bold text-xs tracking-widest uppercase mt-0.5">
-                      {selectedMember.role}
-                    </p>
+                  <div className="flex items-center gap-4">
+                    {/* Glowing Avatar Portrait */}
+                    <div className="relative w-16 h-16 rounded-xl overflow-hidden border-2 border-[#ff0033] shadow-[0_0_15px_rgba(255,0,51,0.4)] shrink-0 bg-[#0f0f0f] flex items-center justify-center">
+                      {selectedMember.avatar ? (
+                        <Image
+                          src={selectedMember.avatar}
+                          alt={selectedMember.name}
+                          fill
+                          className="object-cover"
+                          sizes="64px"
+                        />
+                      ) : (
+                        <span className="font-display text-xl font-black text-white">
+                          {selectedMember.name.charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="font-display font-black text-2xl text-white tracking-wide uppercase">
+                        {selectedMember.name}
+                      </h3>
+                      <p className="text-[#ffffff] font-bold text-xs tracking-widest uppercase mt-0.5">
+                        {selectedMember.role}
+                      </p>
+                    </div>
                   </div>
                   
                   {selectedMember.twitchUrl && (
@@ -297,14 +333,38 @@ export const SquadRoster = () => {
                         <Gamepad2 size={12} className="text-[#ff0033]" /> Primary Games
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        {selectedMember.favoriteGames.map((game) => (
-                          <span
-                            key={game}
-                            className="text-xs bg-[#0f0f0f] border border-white/5 px-2.5 py-1 rounded-lg text-neutral-300 font-bold"
-                          >
-                            {game}
-                          </span>
-                        ))}
+                        {selectedMember.favoriteGamesEnriched && selectedMember.favoriteGamesEnriched.length > 0 ? (
+                          selectedMember.favoriteGamesEnriched.map((game) => (
+                            <span
+                              key={game.name}
+                              className="inline-flex items-center gap-2 text-xs bg-[#0f0f0f] border border-white/5 px-2.5 py-1 rounded-lg text-neutral-300 font-bold"
+                            >
+                              {game.logoUrl ? (
+                                <div className="relative w-4 h-4 overflow-hidden rounded shrink-0">
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={game.logoUrl}
+                                    alt={game.name}
+                                    className="object-contain w-full h-full"
+                                  />
+                                </div>
+                              ) : (
+                                <Gamepad2 size={10} className="text-[#ff0033]" />
+                              )}
+                              {game.name}
+                            </span>
+                          ))
+                        ) : (
+                          selectedMember.favoriteGames.map((game) => (
+                            <span
+                              key={game}
+                              className="inline-flex items-center gap-2 text-xs bg-[#0f0f0f] border border-white/5 px-2.5 py-1 rounded-lg text-neutral-300 font-bold"
+                            >
+                              <Gamepad2 size={10} className="text-[#ff0033]" />
+                              {game}
+                            </span>
+                          ))
+                        )}
                       </div>
                     </div>
                   </div>

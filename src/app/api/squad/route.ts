@@ -8,9 +8,37 @@ export async function GET() {
     const members = await prisma.squadMember.findMany({
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     });
-    return NextResponse.json({ members });
-  } catch (error) {
-    console.error("GET public squad failed:", error);
+
+    // Parse each member's favorite games (which can be legacy plain text or JSON string containing logoUrl)
+    const enrichedMembers = members.map((m) => {
+      const favoriteGamesEnriched = (m.favoriteGames || []).map((gameStr) => {
+        try {
+          if (gameStr.trim().startsWith("{")) {
+            const parsed = JSON.parse(gameStr);
+            if (parsed && typeof parsed === "object" && parsed.name) {
+              return {
+                name: parsed.name,
+                logoUrl: parsed.logoUrl || "",
+              };
+            }
+          }
+        } catch {
+          // Ignore parse errors and fall back to legacy string
+        }
+        return {
+          name: gameStr,
+          logoUrl: "",
+        };
+      });
+
+      return {
+        ...m,
+        favoriteGamesEnriched,
+      };
+    });
+
+    return NextResponse.json({ members: enrichedMembers });
+  } catch {
     return NextResponse.json({ members: [] });
   }
 }

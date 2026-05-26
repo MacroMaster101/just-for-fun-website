@@ -1166,10 +1166,15 @@ export default function AdminPage() {
         return;
       }
       flashSquadSuccess("Avatar updated.");
-      // Refresh the editing form with the new URL.
-      setEditingMember((prev) =>
-        prev && prev.id === memberId ? { ...prev, avatarUrl: data.avatarUrl } : prev
-      );
+      if (memberId === "new") {
+        setCreatingMember((prev) =>
+          prev ? { ...prev, avatarUrl: data.avatarUrl } : null
+        );
+      } else {
+        setEditingMember((prev) =>
+          prev && prev.id === memberId ? { ...prev, avatarUrl: data.avatarUrl } : prev
+        );
+      }
       await fetchSquad();
     } catch (err) {
       console.error("Failed to upload avatar:", err);
@@ -2302,10 +2307,29 @@ export default function AdminPage() {
                               <p className="font-bold text-sm text-[var(--color-text)] truncate">{m.name}</p>
                               <p className="text-xs text-[var(--color-text-muted)] truncate">{m.role}</p>
                             </div>
-                            <div className="hidden sm:flex flex-wrap gap-1">
-                              {m.favoriteGames.slice(0, 2).map((g) => (
-                                <Badge key={g} variant="secondary" className="text-[9px]">{g}</Badge>
-                              ))}
+                            <div className="hidden sm:flex flex-wrap gap-1.5 items-center">
+                              {m.favoriteGames.slice(0, 3).map((g) => {
+                                let displayName = g;
+                                let logoUrl = "";
+                                try {
+                                  if (g.trim().startsWith("{")) {
+                                    const parsed = JSON.parse(g);
+                                    if (parsed && parsed.name) {
+                                      displayName = parsed.name;
+                                      logoUrl = parsed.logoUrl || "";
+                                    }
+                                  }
+                                } catch {}
+                                return (
+                                  <Badge key={g} variant="secondary" className="text-[9px] flex items-center gap-1">
+                                    {logoUrl && (
+                                      // eslint-disable-next-line @next/next/no-img-element
+                                      <img src={logoUrl} alt="" className="w-3 h-3 rounded shrink-0 object-contain" />
+                                    )}
+                                    {displayName}
+                                  </Badge>
+                                );
+                              })}
                             </div>
                             <Button
                               variant="outline"
