@@ -1415,11 +1415,8 @@ export default function AdminPage() {
     setSyncError(null);
 
     try {
-      // Trigger live video sync cache. The refresh route accepts admin
-      // session cookies as authorization (in addition to the CRON_SECRET
-      // bearer token used by Vercel Cron), so we don't ship the secret
-      // to the browser bundle.
-      const res = await fetch("/api/youtube/refresh", {
+      // Trigger live video sync cache with ?force=1 to bypass the 15-minute rate limit.
+      const res = await fetch("/api/youtube/refresh?force=1", {
         method: "POST",
         cache: "no-store",
       });
@@ -1427,6 +1424,8 @@ export default function AdminPage() {
 
       if (res.ok) {
         setSyncSuccess("YouTube Cache refreshed successfully!");
+        // Instantly refresh the schedule view so the new time and streams show up in the UI
+        await fetchSchedule();
       } else {
         setSyncError(data.message || "Cache sync failed.");
       }
