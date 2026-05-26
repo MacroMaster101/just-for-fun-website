@@ -22,6 +22,28 @@ const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
  * per-route checks remain the source of truth for "is this user an admin".
  */
 export async function proxy(request: NextRequest) {
+  const host = request.headers.get("host") || "";
+  const searchParams = request.nextUrl.searchParams;
+
+  // 1. Check for the backup/fail-safe bypass query param (?no_redirect=true)
+  const hasBypassParam = searchParams.get("no_redirect") === "true";
+  const hasBypassCookie = request.cookies.get("bypass_domain_redirect")?.value === "true";
+
+  if (hasBypassParam) {
+    const response = NextResponse.next({ request });
+    // Set a session cookie to remember the bypass for subsequent page transitions
+    response.cookies.set("bypass_domain_redirect", "true", { path: "/" });
+    return response;
+  }
+
+  // 2. Redirect Vercel default domains to the custom domain (if not bypassed)
+  if (host.includes(".vercel.app") && !hasBypassCookie) {
+    const url = request.nextUrl.clone();
+    url.host = "j4fn.site";
+    url.protocol = "https";
+    return NextResponse.redirect(url, 301); // 301 Permanent Redirect
+  }
+
   let response = NextResponse.next({ request });
 
   // Only run the Supabase round-trip when we actually need it: on the page
@@ -86,8 +108,14 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Tight matcher: only the routes that genuinely need the JWT refresh
-  // dance. Static assets, Next internals, image optimizer, and the bulk
-  // of API routes are all excluded so middleware adds zero latency to them.
-  matcher: ["/", "/admin/:path*", "/auth/:path*"],
+  /*
+   * Match all request paths except for the ones starting with:
+   * - _next/static (static files)
+   * - _next/image (image optimization files)
+   * - favicon.ico, icon.png (favicon/icon files)
+   * - api/ (API routes, unless you want them redirected as well)
+   */
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|icon.png|api/).*)",
+  ],
 };
