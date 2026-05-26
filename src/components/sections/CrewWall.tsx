@@ -62,72 +62,55 @@ export const CrewWall = () => {
   }, [members]);
 
   return (
-    <section
-      id="crew-wall"
-      className="relative overflow-hidden bg-[#060606] py-20 sm:py-24"
-    >
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ff0033]/45 to-transparent" />
-      {/* Subtle scanline grid backdrop */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.06]"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,0,51,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,0,51,0.5) 1px, transparent 1px)",
-          backgroundSize: "44px 44px",
-        }}
-      />
-
-      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6">
-        {/* Header */}
-        <div className="mb-10 flex flex-col justify-between gap-6 border-b border-white/5 pb-6 md:flex-row md:items-end">
-          <div className="space-y-3">
-            <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.4em] text-[#ff4b5f] flex items-center gap-2">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inset-0 animate-ping rounded-full bg-[#ff0033] opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-[#ff0033]" />
-              </span>
-              Crew Online
-            </p>
-            <h2 className="flex flex-wrap items-center gap-3 font-display text-2xl font-extrabold tracking-tight text-white sm:text-4xl">
-              <Users
-                size={28}
-                className="text-[#ff0033] drop-shadow-[0_0_8px_rgba(255,0,51,0.5)]"
-              />
-              The J4FN Crew Wall
-            </h2>
-            <p className="text-neutral-400 text-xs sm:text-sm tracking-wider uppercase font-semibold">
-              {loading
-                ? "Pinging the roster…"
-                : `${total} ${total === 1 ? "operator" : "operators"} have enlisted in the squad.`}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div className="px-4 py-2.5 rounded-full border border-[#ff0033]/30 bg-[#ff0033]/10 text-[#ff4b5f] text-xs font-black uppercase tracking-widest flex items-center gap-2 shadow-[0_0_16px_rgba(255,0,51,0.18)]">
-              <Sparkles size={13} />
-              {total} Members
-            </div>
-          </div>
+    <div className="relative z-10 mx-auto max-w-7xl">
+      {/* Header */}
+      <div className="mb-10 flex flex-col justify-between gap-6 border-b border-white/5 pb-6 md:flex-row md:items-end">
+        <div className="space-y-3">
+          <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.4em] text-[#ff4b5f] flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inset-0 animate-ping rounded-full bg-[#ff0033] opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-[#ff0033]" />
+            </span>
+            Crew Online
+          </p>
+          <h2 className="flex flex-wrap items-center gap-3 font-display text-2xl font-extrabold tracking-tight text-white sm:text-4xl">
+            <Users
+              size={28}
+              className="text-[#ff0033] drop-shadow-[0_0_8px_rgba(255,0,51,0.5)]"
+            />
+            The J4FN Crew Wall
+          </h2>
+          <p className="text-neutral-400 text-xs sm:text-sm tracking-wider uppercase font-semibold">
+            {loading
+              ? "Pinging the roster…"
+              : `${total} ${total === 1 ? "operator" : "operators"} have enlisted in the squad.`}
+          </p>
         </div>
 
-        {/* Empty / error / content */}
-        {error ? (
-          <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] p-10 text-center text-sm text-neutral-500">
-            Couldn&apos;t reach the roster right now. Try again in a moment.
+        <div className="flex items-center gap-3">
+          <div className="px-4 py-2.5 rounded-full border border-[#ff0033]/30 bg-[#ff0033]/10 text-[#ff4b5f] text-xs font-black uppercase tracking-widest flex items-center gap-2 shadow-[0_0_16px_rgba(255,0,51,0.18)]">
+            <Sparkles size={13} />
+            {total} Members
           </div>
-        ) : loading ? (
-          <SkeletonGrid />
-        ) : visible.length === 0 ? (
-          <EmptyState />
-        ) : (
-          <>
-            <AvatarGrid members={visible} />
-            {marquee.length > 0 && <MarqueeStrip members={marquee} />}
-          </>
-        )}
+        </div>
       </div>
-    </section>
+
+      {/* Empty / error / content */}
+      {error ? (
+        <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] p-10 text-center text-sm text-neutral-500">
+          Couldn&apos;t reach the roster right now. Try again in a moment.
+        </div>
+      ) : loading ? (
+        <SkeletonGrid />
+      ) : visible.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <>
+          <AvatarGrid members={visible} />
+          {marquee.length > 0 && <MarqueeStrip members={marquee} />}
+        </>
+      )}
+    </div>
   );
 };
 
@@ -254,7 +237,7 @@ const EmptyState = () => (
       Be the first to enlist
     </h3>
     <p className="mt-2 text-sm text-neutral-400 max-w-sm mx-auto">
-      No operators on the wall yet. Sign up to claim your spot in the JFF crew roster.
+      No operators on the wall yet. Sign up to claim your spot in the J4FN crew roster.
     </p>
   </div>
 );

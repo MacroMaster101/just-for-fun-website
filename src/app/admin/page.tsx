@@ -30,6 +30,9 @@ import {
   XCircle,
   Play,
   Store,
+  Star,
+  Flag,
+  Loader2,
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useRouter } from "next/navigation";
@@ -61,6 +64,7 @@ import {
   type UpcomingStream,
 } from "./types";
 import { PUBLIC_SOUND_LIMIT, SOUND_TYPE_OPTIONS } from "@/lib/soundboardDefaults";
+import { resolveAvatarUrl } from "@/lib/avatar";
 
 const DEFAULT_FLOATING_GAMES = [
   {
@@ -124,6 +128,7 @@ const ADMIN_TAB_IDS = [
   "settings",
   "games",
   "merch",
+  "ratings",
 ] as const;
 
 type AdminTab = (typeof ADMIN_TAB_IDS)[number];
@@ -213,6 +218,27 @@ export default function AdminPage() {
   const [highlightActionId, setHighlightActionId] = useState<string | null>(null);
   const [highlightError, setHighlightError] = useState<string | null>(null);
   const [highlightSuccess, setHighlightSuccess] = useState<string | null>(null);
+
+  // Ratings states
+  const [adminRatings, setAdminRatings] = useState<Array<{
+    id: string;
+    userId: string;
+    rating: number;
+    comment: string;
+    isFlagged: boolean;
+    createdAt: string;
+    profile: {
+      id: string;
+      name: string | null;
+      email: string | null;
+      avatarUrl: string | null;
+    } | null;
+  }>>([]);
+  const [ratingsFilter, setRatingsFilter] = useState<number | "flagged" | "all">("all");
+  const [ratingsSearchQuery, setRatingsSearchQuery] = useState("");
+  const [ratingsStats, setRatingsStats] = useState({ average: 0, total: 0, flaggedCount: 0 });
+  const [ratingsLoading, setRatingsLoading] = useState(false);
+  const [ratingActionId, setRatingActionId] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -1153,6 +1179,28 @@ export default function AdminPage() {
     }
   };
 
+  const fetchAdminRatings = async () => {
+    setRatingsLoading(true);
+    try {
+      const res = await fetch("/api/admin/ratings", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        const list = data.ratings || [];
+        setAdminRatings(list);
+
+        const total = list.length;
+        const flaggedCount = list.filter((r: { isFlagged: boolean }) => r.isFlagged).length;
+        const sum = list.reduce((acc: number, r: { rating: number }) => acc + r.rating, 0);
+        const average = total > 0 ? parseFloat((sum / total).toFixed(2)) : 0;
+        setRatingsStats({ average, total, flaggedCount });
+      }
+    } catch (err) {
+      console.error("Failed to fetch admin ratings:", err);
+    } finally {
+      setRatingsLoading(false);
+    }
+  };
+
   // Load active tab data. The fetch helpers update state from an async response —
   // a valid "external data → react state" sync pattern that the lint rule flags
   // because it can't see past the synchronous call.
@@ -1182,12 +1230,14 @@ export default function AdminPage() {
     } else if (activeTab === "merch") {
       fetchMerch();
       fetchSettings();
+    } else if (activeTab === "ratings") {
+      fetchAdminRatings();
     }
     /* eslint-enable react-hooks/set-state-in-effect */
     // fetchHighlights closes over highlightFilter; listing the filter in deps
     // is what we want so the panel reloads when the admin flips the tabs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, isAdmin, highlightFilter]);
+  }, [activeTab, isAdmin, highlightFilter, ratingsFilter]);
 
   const handleDeleteMessage = async (id: string) => {
     if (!confirm("Are you sure you want to delete this contact message?")) return;
@@ -1477,6 +1527,56 @@ export default function AdminPage() {
     }
   };
 
+
+  const handleDismissRatingFlag = async (id: string) => {
+    setRatingActionId(id);
+    try {
+      const res = await fetch("/api/admin/ratings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ratingId: id }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setAdminRatings((prev) =>
+          prev.map((r) => (r.id === id ? { ...r, isFlagged: false } : r))
+        );
+        setRatingsStats((prev) => ({
+          ...prev,
+          flaggedCount: Math.max(0, prev.flaggedCount - 1),
+        }));
+      } else {
+        alert(data.error || "Failed to dismiss flag.");
+      }
+    } catch {
+      alert("Network error.");
+    } finally {
+      setRatingActionId(null);
+    }
+  };
+
+  const handleDeleteAdminRating = async (id: string) => {
+    if (!confirm("Are you sure you want to permanently delete this review?")) return;
+    setRatingActionId(id);
+    try {
+      const res = await fetch("/api/admin/ratings", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ratingId: id }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        await fetchAdminRatings();
+      } else {
+        alert(data.error || "Failed to delete review.");
+      }
+    } catch {
+      alert("Network error.");
+    } finally {
+      setRatingActionId(null);
+    }
+  };
+
   // Loading view
   if (checking) {
     return (
@@ -1544,17 +1644,18 @@ export default function AdminPage() {
 
   const adminTabs: Array<{ id: AdminTab; name: string; icon: React.ReactNode }> = [
     { id: "command", name: "Command Center", icon: <Compass size={16} /> },
+    { id: "settings", name: "Site Settings", icon: <Settings size={16} /> },
+    { id: "games", name: "Manage Games", icon: <Gamepad2 size={16} /> },
+    { id: "squad", name: "Squad Roster", icon: <Users size={16} /> },
+    { id: "highlights", name: "Highlights Queue", icon: <Sparkles size={16} /> },
+    { id: "sounds", name: "Soundboard", icon: <Volume2 size={16} /> },
+    { id: "schedule", name: "Stream Schedule", icon: <Calendar size={16} /> },
+    { id: "merch", name: "Creator Shop", icon: <Store size={16} /> },
+    { id: "ratings", name: "Page Ratings", icon: <Star size={16} /> },
     { id: "inbox", name: "Contact Inbox", icon: <MessageSquare size={16} /> },
     { id: "admins", name: "Administration", icon: <Users size={16} /> },
-    { id: "music", name: "Music Stream", icon: <Radio size={16} /> },
-    { id: "squad", name: "Squad Roster", icon: <Users size={16} /> },
-    { id: "schedule", name: "Stream Schedule", icon: <Calendar size={16} /> },
-    { id: "sounds", name: "Soundboard", icon: <Volume2 size={16} /> },
-    { id: "highlights", name: "Highlights Queue", icon: <Sparkles size={16} /> },
-    { id: "games", name: "Manage Games", icon: <Gamepad2 size={16} /> },
-    { id: "merch", name: "Creator Shop", icon: <Store size={16} /> },
-    { id: "settings", name: "Site Settings", icon: <Settings size={16} /> },
     { id: "cache", name: "YouTube Cache", icon: <RefreshCw size={16} /> },
+    { id: "music", name: "Music Stream", icon: <Radio size={16} /> },
   ];
 
   const handleAdminTabChange = (tab: AdminTab) => {
@@ -3790,6 +3891,307 @@ export default function AdminPage() {
                           {syncing ? "Syncing YouTube Cache..." : "Sync Cache Now"}
                         </Button>
                       </div>
+                    </div>
+                  </Card>
+                </div>
+              )}
+
+              {/* Tab 13: Page Ratings & Moderation */}
+              {activeTab === "ratings" && (
+                <div className="space-y-6 animate-fade-in-up">
+                  {/* Stats Overview */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    <Card hoverEffect className="p-6 border-[var(--color-border)] relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#ff0033]/5 to-transparent rounded-full -mr-8 -mt-8" />
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[var(--color-text-subtle)] font-mono text-[10px] uppercase tracking-widest">Average Score</span>
+                          <Star size={18} className="text-[#ff2d55]" />
+                        </div>
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-3xl font-black text-[var(--color-text)]">
+                            {ratingsStats.average > 0 ? ratingsStats.average.toFixed(2) : "0.00"}
+                          </span>
+                          <div className="flex text-[#ffb800] gap-0.5">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <Star
+                                key={i}
+                                size={10}
+                                className={`${
+                                  i < Math.round(ratingsStats.average) ? "fill-[#ffb800]" : ""
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <p className="text-[var(--color-text-muted)] text-xs leading-relaxed">
+                          Overall average page score based on community reviews.
+                        </p>
+                      </div>
+                    </Card>
+
+                    <Card hoverEffect className="p-6 border-[var(--color-border)] relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#ff0033]/5 to-transparent rounded-full -mr-8 -mt-8" />
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[var(--color-text-subtle)] font-mono text-[10px] uppercase tracking-widest">Total Reviews</span>
+                          <Users size={18} className="text-[#ff2d55]" />
+                        </div>
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-3xl font-black text-[var(--color-text)]">
+                            {ratingsStats.total}
+                          </span>
+                          <Badge variant="primary">Reviews</Badge>
+                        </div>
+                        <p className="text-[var(--color-text-muted)] text-xs leading-relaxed">
+                          Total number of individual ratings submitted by operators.
+                        </p>
+                      </div>
+                    </Card>
+
+                    <Card
+                      hoverEffect
+                      className={`p-6 border-[var(--color-border)] relative overflow-hidden group transition-all duration-500 ${
+                        ratingsStats.flaggedCount > 0
+                          ? "border-rose-500/20 shadow-[0_0_20px_rgba(239,68,68,0.1)]"
+                          : ""
+                      }`}
+                    >
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#ff0033]/5 to-transparent rounded-full -mr-8 -mt-8" />
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[var(--color-text-subtle)] font-mono text-[10px] uppercase tracking-widest">Flagged Items</span>
+                          <Flag size={18} className={ratingsStats.flaggedCount > 0 ? "text-rose-500 animate-pulse" : "text-[var(--color-text-muted)]"} />
+                        </div>
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-3xl font-black text-[var(--color-text)]">
+                            {ratingsStats.flaggedCount}
+                          </span>
+                          {ratingsStats.flaggedCount > 0 ? (
+                            <Badge variant="danger" pulse>Action Required</Badge>
+                          ) : (
+                            <Badge variant="success">Clear</Badge>
+                          )}
+                        </div>
+                        <p className="text-[var(--color-text-muted)] text-xs leading-relaxed">
+                          Reviews flagged by the public for containing inappropriate content.
+                        </p>
+                      </div>
+                    </Card>
+                  </div>
+
+                  {/* Filter and Search Bar */}
+                  <div className="flex flex-col sm:flex-row gap-4 justify-between items-stretch sm:items-center">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={16} />
+                      <input
+                        type="text"
+                        placeholder="Search reviews by name, email, or content..."
+                        value={ratingsSearchQuery}
+                        onChange={(e) => setRatingsSearchQuery(e.target.value)}
+                        className="w-full bg-[var(--color-bg-soft)]/80 border border-[var(--color-border)] text-[var(--color-text)] placeholder-[var(--color-text-subtle)] rounded-full py-2.5 pl-10 pr-4 text-xs font-semibold focus:outline-none focus:border-[#ff0033]/50 focus:ring-1 focus:ring-[#ff0033]/30 transition-all duration-300"
+                      />
+                    </div>
+                    
+                    <div className="flex flex-wrap items-center gap-2">
+                      <select
+                        value={ratingsFilter}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === "all" || val === "flagged") {
+                            setRatingsFilter(val);
+                          } else {
+                            setRatingsFilter(parseInt(val));
+                          }
+                        }}
+                        className="bg-[var(--color-bg-soft)]/85 border border-[var(--color-border)] text-[var(--color-text)] rounded-xl py-2 px-3 text-xs font-bold focus:outline-none focus:border-[#ff0033]/50 transition cursor-pointer"
+                        aria-label="Filter ratings"
+                      >
+                        <option value="all">All Star Scores</option>
+                        <option value="5">5 Stars</option>
+                        <option value="4">4 Stars</option>
+                        <option value="3">3 Stars</option>
+                        <option value="2">2 Stars</option>
+                        <option value="1">1 Star</option>
+                        <option value="flagged">Flagged / Reported Only</option>
+                      </select>
+
+                      <Button variant="outline" size="sm" onClick={fetchAdminRatings} className="gap-2 shrink-0">
+                        <RefreshCw size={14} className={ratingsLoading ? "animate-spin" : ""} /> Refresh
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Reviews Table */}
+                  <Card className="border-[var(--color-border)] overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="border-b border-[var(--color-border)] font-mono text-[9px] uppercase tracking-widest text-[var(--color-text-muted)] bg-[var(--color-surface-2)]/60">
+                            <th className="p-4">Reviewer</th>
+                            <th className="p-4">Rating</th>
+                            <th className="p-4">Comment</th>
+                            <th className="p-4">Submitted At</th>
+                            <th className="p-4 text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {ratingsLoading ? (
+                            <tr>
+                              <td colSpan={5} className="p-12 text-center text-xs text-[var(--color-text-muted)]">
+                                <Loader2 className="animate-spin text-[#ff0033] mx-auto mb-2" size={24} />
+                                Loading reviews...
+                              </td>
+                            </tr>
+                          ) : adminRatings.filter((r) => {
+                              const query = ratingsSearchQuery.toLowerCase();
+                              const matchesSearch =
+                                (r.profile?.name || "").toLowerCase().includes(query) ||
+                                (r.profile?.email || "").toLowerCase().includes(query) ||
+                                (r.comment || "").toLowerCase().includes(query);
+
+                              if (!matchesSearch) return false;
+                              if (ratingsFilter === "all") return true;
+                              if (ratingsFilter === "flagged") return r.isFlagged;
+                              return r.rating === ratingsFilter;
+                            }).length === 0 ? (
+                            <tr>
+                              <td colSpan={5} className="p-12 text-center text-xs text-[var(--color-text-muted)]">
+                                No reviews match your criteria.
+                              </td>
+                            </tr>
+                          ) : (
+                            adminRatings.filter((r) => {
+                              const query = ratingsSearchQuery.toLowerCase();
+                              const matchesSearch =
+                                (r.profile?.name || "").toLowerCase().includes(query) ||
+                                (r.profile?.email || "").toLowerCase().includes(query) ||
+                                (r.comment || "").toLowerCase().includes(query);
+
+                              if (!matchesSearch) return false;
+                              if (ratingsFilter === "all") return true;
+                              if (ratingsFilter === "flagged") return r.isFlagged;
+                              return r.rating === ratingsFilter;
+                            }).map((r) => {
+                              const avatar = resolveAvatarUrl(r.profile?.avatarUrl, r.profile?.id || "");
+                              const letter = (r.profile?.name || "?").charAt(0).toUpperCase();
+                              const isActioning = ratingActionId === r.id;
+
+                              return (
+                                <tr
+                                  key={r.id}
+                                  className={`border-b border-[var(--color-border)] hover:bg-[var(--color-surface-2)]/40 transition-colors group/row ${
+                                    r.isFlagged ? "bg-red-500/[0.02]" : ""
+                                  }`}
+                                >
+                                  {/* Reviewer User Info */}
+                                  <td className="p-4">
+                                    <div className="flex items-center gap-3">
+                                      <div className="h-8 w-8 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] overflow-hidden shrink-0 flex items-center justify-center">
+                                        {r.profile?.avatarUrl ? (
+                                          // eslint-disable-next-line @next/next/no-img-element
+                                          <img
+                                            src={avatar}
+                                            alt=""
+                                            className="h-full w-full object-cover"
+                                          />
+                                        ) : (
+                                          <span className="font-display font-black text-xs text-[var(--color-text)]">
+                                            {letter}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <div className="min-w-0">
+                                        <div className="font-bold text-xs text-[var(--color-text)] truncate max-w-[140px]">
+                                          {r.profile?.name || "Enlisted Operator"}
+                                        </div>
+                                        <div className="text-[10px] text-[var(--color-text-muted)] truncate max-w-[140px]">
+                                          {r.profile?.email || "No email"}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </td>
+
+                                  {/* Star Rating */}
+                                  <td className="p-4">
+                                    <div className="flex items-center text-[#ffb800] gap-0.5">
+                                      {Array.from({ length: 5 }).map((_, idx) => (
+                                        <Star
+                                          key={idx}
+                                          size={11}
+                                          className={`${
+                                            idx < r.rating ? "fill-[#ffb800]" : "text-neutral-800"
+                                          }`}
+                                        />
+                                      ))}
+                                    </div>
+                                    <span className="font-mono text-[9px] text-[#ff4b5f] font-semibold">
+                                      {r.rating} Stars
+                                    </span>
+                                  </td>
+
+                                  {/* Comment Text & Flag state */}
+                                  <td className="p-4 max-w-[300px]">
+                                    <div className="flex items-start gap-2">
+                                      {r.isFlagged && (
+                                        <span className="shrink-0 inline-flex items-center gap-1 rounded bg-rose-500/10 border border-rose-500/20 px-1.5 py-0.5 text-[9px] font-black uppercase text-rose-500 tracking-wider">
+                                          <Flag size={8} className="fill-rose-500" /> Flagged
+                                        </span>
+                                      )}
+                                      <p className="text-xs text-[var(--color-text-muted)] break-words font-medium">
+                                        {r.comment || <span className="italic text-neutral-600 font-mono text-[10px]">No comment</span>}
+                                      </p>
+                                    </div>
+                                  </td>
+
+                                  {/* Submitted time */}
+                                  <td className="p-4 text-[10px] text-[var(--color-text-muted)] font-semibold uppercase tracking-wider">
+                                    {new Date(r.createdAt).toLocaleDateString(undefined, {
+                                      month: "short",
+                                      day: "numeric",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })}
+                                  </td>
+
+                                  {/* Admin actions */}
+                                  <td className="p-4 text-right font-semibold">
+                                    <div className="flex items-center justify-end gap-2">
+                                      {r.isFlagged && (
+                                        <button
+                                          onClick={() => handleDismissRatingFlag(r.id)}
+                                          disabled={isActioning}
+                                          className="p-2 rounded-lg bg-emerald-950/20 border border-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500 hover:text-white disabled:opacity-40 transition cursor-pointer"
+                                          title="Dismiss Flag / Approve Review"
+                                        >
+                                          {isActioning ? (
+                                            <Loader2 size={13} className="animate-spin text-neutral-400" />
+                                          ) : (
+                                            <Check size={13} />
+                                          )}
+                                        </button>
+                                      )}
+                                      
+                                      <button
+                                        onClick={() => handleDeleteAdminRating(r.id)}
+                                        disabled={isActioning}
+                                        className="p-2 rounded-lg bg-red-950/20 border border-red-500/10 text-[#ff4b5f] hover:bg-[#ff0033]/20 hover:border-[#ff0033] hover:text-white disabled:opacity-40 transition cursor-pointer"
+                                        title="Delete Review"
+                                      >
+                                        {isActioning ? (
+                                          <Loader2 size={13} className="animate-spin text-neutral-400" />
+                                        ) : (
+                                          <Trash2 size={13} />
+                                        )}
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          )}
+                        </tbody>
+                      </table>
                     </div>
                   </Card>
                 </div>

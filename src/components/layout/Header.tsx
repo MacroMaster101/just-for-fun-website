@@ -82,6 +82,17 @@ export const Header = () => {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    const handleOpenAuth = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const mode = customEvent.detail?.mode === "signup" ? "signup" : "login";
+      openAuth(mode);
+    };
+    window.addEventListener("open-auth-modal", handleOpenAuth);
+    return () => window.removeEventListener("open-auth-modal", handleOpenAuth);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const errorMsg =

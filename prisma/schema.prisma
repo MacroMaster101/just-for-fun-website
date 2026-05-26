@@ -74,6 +74,7 @@ model Profile {
   updatedAt DateTime @updatedAt
 
   favorites Favorite[]
+  ratings   PageRating[]
 }
 
 enum FavoriteKind {
@@ -271,5 +272,19 @@ model SquadMember {
   sortOrder       Int      @default(0)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+model PageRating {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  rating    Int
+  comment   String   @default("")
+  isFlagged Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile   Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
