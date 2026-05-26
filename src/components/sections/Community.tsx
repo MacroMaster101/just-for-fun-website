@@ -13,6 +13,8 @@ type TabId = "discord" | "roster" | "ratings";
 
 export const Community = () => {
   const [activeTab, setActiveTab] = useState<TabId>("discord");
+  const [isTyping, setIsTyping] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
@@ -48,6 +50,53 @@ export const Community = () => {
     return () => window.removeEventListener("hashchange", handleHashChange);
   }, []);
 
+  // Monitor active text inputs globally to lock auto-rotation during user typing sessions
+  useEffect(() => {
+    const checkFocus = () => {
+      if (typeof document === "undefined") return;
+      const activeEl = document.activeElement;
+      const active = activeEl?.tagName === "INPUT" || activeEl?.tagName === "TEXTAREA";
+      setIsTyping(active);
+    };
+
+    window.addEventListener("focusin", checkFocus);
+    window.addEventListener("focusout", checkFocus);
+    return () => {
+      window.removeEventListener("focusin", checkFocus);
+      window.removeEventListener("focusout", checkFocus);
+    };
+  }, []);
+
+  // Smart Auto-Rotation loop that resets smoothly on manual tab swaps or typing blurs
+  useEffect(() => {
+    if (isTyping) {
+      setProgress(0);
+      return;
+    }
+
+    const intervalTime = 8000; // 8 seconds per tab
+    const stepTime = 100; // update progress every 100ms
+    const totalSteps = intervalTime / stepTime;
+    let stepCount = 0;
+
+    const timer = setInterval(() => {
+      stepCount++;
+      const currentProgress = Math.min((stepCount / totalSteps) * 100, 100);
+      setProgress(currentProgress);
+
+      if (stepCount >= totalSteps) {
+        stepCount = 0;
+        setActiveTab((prev) => {
+          if (prev === "discord") return "roster";
+          if (prev === "roster") return "ratings";
+          return "discord";
+        });
+      }
+    }, stepTime);
+
+    return () => clearInterval(timer);
+  }, [isTyping, activeTab]);
+
   const handleTabChange = (tab: TabId) => {
     setActiveTab(tab);
     try {
@@ -76,7 +125,10 @@ export const Community = () => {
   ];
 
   return (
-    <section id="community" className="relative overflow-hidden bg-[#060606] py-20 sm:py-24">
+    <section
+      id="community"
+      className="relative overflow-hidden bg-[#060606] py-20 sm:py-24"
+    >
       {/* Top neon divider line */}
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ff0033]/45 to-transparent" />
       
@@ -107,7 +159,7 @@ export const Community = () => {
         </div>
 
         {/* Tab Selection Switcher */}
-        <div className="flex justify-center mb-12">
+        <div className="flex flex-col items-center mb-12">
           <div className="inline-flex items-center gap-1.5 rounded-full border border-white/5 bg-[#0c0c0c]/80 p-1.5 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
             {tabs.map((tab) => {
               const active = activeTab === tab.id;
@@ -126,6 +178,24 @@ export const Community = () => {
                 </button>
               );
             })}
+          </div>
+
+          {/* Futuristic Cyber Charging Progress Bar */}
+          <div className="w-48 h-[2px] bg-white/5 rounded-full mt-4 overflow-hidden border border-white/5 shadow-[0_0_10px_rgba(0,0,0,0.5)] relative">
+            <div
+              className={`h-full bg-[#ff0033] shadow-[0_0_8px_rgba(255,0,51,0.85)] transition-all ease-linear ${
+                isTyping ? "opacity-40 animate-pulse bg-neutral-500 shadow-none" : ""
+              }`}
+              style={{
+                width: isTyping ? "100%" : `${progress}%`,
+                transitionDuration: isTyping ? "500ms" : "100ms",
+              }}
+            />
+            {isTyping && (
+              <span className="absolute inset-0 flex items-center justify-center text-[7px] font-black uppercase tracking-widest text-neutral-400 scale-[0.9] select-none">
+                TYPING...
+              </span>
+            )}
           </div>
         </div>
 
