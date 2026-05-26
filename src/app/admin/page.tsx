@@ -419,6 +419,9 @@ export default function AdminPage() {
   // Music form state
   const [newTrackTitle, setNewTrackTitle] = useState("");
   const [newTrackYoutubeId, setNewTrackYoutubeId] = useState("");
+  const [musicSource, setMusicSource] = useState<"youtube" | "upload">("youtube");
+  const [musicFile, setMusicFile] = useState<File | null>(null);
+  const [musicFileUploading, setMusicFileUploading] = useState(false);
   const [musicVolume, setMusicVolume] = useState(35);
   const [musicVolumeSaved, setMusicVolumeSaved] = useState(35);
   const [musicVolumeSaving, setMusicVolumeSaving] = useState(false);
@@ -1308,31 +1311,69 @@ export default function AdminPage() {
     setMusicFormSuccess(null);
 
     const title = newTrackTitle.trim();
-    const youtubeId = newTrackYoutubeId.trim();
 
-    if (!title || !youtubeId) {
-      setMusicFormError("Title and YouTube Video ID are required.");
+    if (!title) {
+      setMusicFormError("Track title is required.");
       return;
     }
 
-    try {
-      const res = await fetch("/api/admin/music", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, youtubeId }),
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        setMusicFormError(data.error || "Failed to add music track.");
-      } else {
-        setMusicFormSuccess("Background music track added successfully!");
-        setNewTrackTitle("");
-        setNewTrackYoutubeId("");
-        fetchTracks();
+    if (musicSource === "youtube") {
+      const youtubeId = newTrackYoutubeId.trim();
+      if (!youtubeId) {
+        setMusicFormError("YouTube Video ID or URL is required.");
+        return;
       }
-    } catch {
-      setMusicFormError("Something went wrong. Please try again.");
+      try {
+        const res = await fetch("/api/admin/music", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title, youtubeId }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          setMusicFormError(data.error || "Failed to add music track.");
+        } else {
+          setMusicFormSuccess("Background music track added successfully!");
+          setNewTrackTitle("");
+          setNewTrackYoutubeId("");
+          fetchTracks();
+        }
+      } catch {
+        setMusicFormError("Something went wrong. Please try again.");
+      }
+    } else {
+      if (!musicFile) {
+        setMusicFormError("Please select an audio file to upload.");
+        return;
+      }
+      setMusicFileUploading(true);
+      try {
+        const formData = new FormData();
+        formData.append("file", musicFile);
+        formData.append("title", title);
+
+        const res = await fetch("/api/admin/music/audio", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          setMusicFormError(data.error || "Failed to upload music track.");
+        } else {
+          setMusicFormSuccess("Music track uploaded and registered successfully!");
+          setNewTrackTitle("");
+          setMusicFile(null);
+          const fileInput = document.getElementById("music-file-input") as HTMLInputElement | null;
+          if (fileInput) fileInput.value = "";
+          fetchTracks();
+        }
+      } catch {
+        setMusicFormError("Network error. Please try again.");
+      } finally {
+        setMusicFileUploading(false);
+      }
     }
   };
 
@@ -1909,7 +1950,7 @@ export default function AdminPage() {
                                   {track.isActive && <Badge variant="success" className="ml-1" pulse>Active</Badge>}
                                 </p>
                                 <p className="text-[10px] text-[var(--color-text-muted)] font-mono pt-0.5">
-                                  Video ID: {track.youtubeId} · Added: {new Date(track.createdAt).toLocaleDateString()}
+                                  {track.youtubeId && track.youtubeId.startsWith("http") ? "🖳 Self-Hosted Audio" : `Video ID: ${track.youtubeId}`} · Added: {new Date(track.createdAt).toLocaleDateString()}
                                 </p>
                               </div>
 
@@ -2022,6 +2063,31 @@ export default function AdminPage() {
                           </div>
                         )}
 
+                        <div className="grid grid-cols-2 gap-2 bg-[var(--color-surface-2)] p-1 rounded-xl border border-[var(--color-border)] text-center text-xs font-bold mb-2">
+                          <button
+                            type="button"
+                            onClick={() => setMusicSource("youtube")}
+                            className={`py-2 px-3 rounded-lg transition-all cursor-pointer ${
+                              musicSource === "youtube"
+                                ? "bg-[#ff0033] text-white shadow-md font-black"
+                                : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                            }`}
+                          >
+                            YouTube Video
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setMusicSource("upload")}
+                            className={`py-2 px-3 rounded-lg transition-all cursor-pointer ${
+                              musicSource === "upload"
+                                ? "bg-[#ff0033] text-white shadow-md font-black"
+                                : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                            }`}
+                          >
+                            Upload File
+                          </button>
+                        </div>
+
                         <Input
                           label="Track Title"
                           type="text"
@@ -2031,17 +2097,33 @@ export default function AdminPage() {
                           onChange={(e) => setNewTrackTitle(e.target.value)}
                         />
 
-                        <Input
-                          label="YouTube Video ID or URL"
-                          type="text"
-                          required
-                          placeholder="h7MYJghRWt0 or https://youtu.be/h7MYJghRWt0"
-                          value={newTrackYoutubeId}
-                          onChange={(e) => setNewTrackYoutubeId(e.target.value)}
-                        />
+                        {musicSource === "youtube" ? (
+                          <Input
+                            label="YouTube Video ID or URL"
+                            type="text"
+                            required
+                            placeholder="h7MYJghRWt0 or https://youtu.be/h7MYJghRWt0"
+                            value={newTrackYoutubeId}
+                            onChange={(e) => setNewTrackYoutubeId(e.target.value)}
+                          />
+                        ) : (
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-black uppercase tracking-wider text-[var(--color-text)] block">
+                              Audio File (.mp3, .wav, .ogg, .webm)
+                            </label>
+                            <input
+                              id="music-file-input"
+                              type="file"
+                              accept="audio/*"
+                              required
+                              onChange={(e) => setMusicFile(e.target.files?.[0] || null)}
+                              className="w-full text-xs text-[var(--color-text-muted)] bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-xl px-3 py-2.5 outline-none file:mr-4 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[10px] file:font-black file:uppercase file:tracking-wider file:bg-[#ff0033]/15 file:text-[#ff2d55] hover:file:bg-[#ff0033]/35 transition cursor-pointer"
+                            />
+                          </div>
+                        )}
 
-                        <Button type="submit" variant="aurora" glow fullWidth className="gap-2">
-                          <Plus size={16} /> Register Track
+                        <Button type="submit" variant="aurora" glow fullWidth disabled={musicFileUploading} className="gap-2">
+                          <Plus size={16} /> {musicFileUploading ? "Uploading Track..." : musicSource === "upload" ? "Upload & Register Track" : "Register YouTube Track"}
                         </Button>
                       </form>
                     </Card>

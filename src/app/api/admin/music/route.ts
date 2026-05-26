@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { supabaseServer } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 // Admin reads are user-specific and write-heavy; never serve a cached response.
 export const dynamic = "force-dynamic";
@@ -159,6 +160,21 @@ export async function DELETE(request: Request) {
     await prisma.musicTrack.delete({
       where: { id },
     });
+
+    // If it's an uploaded track (stored as http URL), delete it from Supabase storage
+    if (track.youtubeId && track.youtubeId.startsWith("http")) {
+      try {
+        const urlObj = new URL(track.youtubeId);
+        const pathParts = urlObj.pathname.split("/sound-clips/");
+        if (pathParts.length > 1) {
+          const storagePath = decodeURIComponent(pathParts[1]);
+          const admin = supabaseAdmin();
+          await admin.storage.from("sound-clips").remove([storagePath]);
+        }
+      } catch (err) {
+        console.error("Failed to delete music track from Supabase storage:", err);
+      }
+    }
 
     // If the deleted track was active, set the most recent track to active
     if (track.isActive) {

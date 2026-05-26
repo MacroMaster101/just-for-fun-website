@@ -80,6 +80,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
 
+  // Auto-create bucket if missing
+  try {
+    const { data: buckets, error: listError } = await admin.storage.listBuckets();
+    if (!listError && buckets) {
+      const hasBucket = buckets.some((b) => b.id === BUCKET);
+      if (!hasBucket) {
+        await admin.storage.createBucket(BUCKET, { public: true });
+      }
+    }
+  } catch (err) {
+    console.error("Auto-bucket verification failed:", err);
+  }
+
   const arrayBuffer = await file.arrayBuffer();
   const { error: uploadErr } = await admin.storage
     .from(BUCKET)

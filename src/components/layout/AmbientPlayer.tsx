@@ -17,8 +17,19 @@ export const AmbientPlayer = () => {
   const [ambientVolume, setAmbientVolume] = useState(35);
   const [isMuted, setIsMuted] = useState(false);
   const preMuteVolumeRef = useRef(35);
+  const fadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const fadeTypeRef = useRef<"in" | "out" | null>(null);
+
+  const clearFade = useCallback(() => {
+    if (fadeIntervalRef.current) {
+      clearInterval(fadeIntervalRef.current);
+      fadeIntervalRef.current = null;
+    }
+    fadeTypeRef.current = null;
+  }, []);
 
   const toggleMute = () => {
+    clearFade();
     if (isMuted) {
       setIsMuted(false);
       sendPlayerCommand("setVolume", [ambientVolume]);
@@ -30,6 +41,7 @@ export const AmbientPlayer = () => {
   };
 
   const handleVolumeChange = (newVol: number) => {
+    clearFade();
     if (newVol > 0) {
       setIsMuted(false);
     }
@@ -46,6 +58,30 @@ export const AmbientPlayer = () => {
   // the disc to start. We do NOT boot muted — that would lie to the user
   // about the playing state.
   const [bootAutoplay, setBootAutoplay] = useState(false);
+  const bootAutoplayRef = useRef(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const [showEnterScreen, setShowEnterScreen] = useState(false);
+
+  // Initialize iframeAutoplay state synchronously on client side to prevent reload
+  const [iframeAutoplay] = useState(() => {
+    if (typeof window === "undefined") return 0;
+    try {
+      const firstVisit = !window.localStorage.getItem("jff:visited");
+      if (firstVisit) return 1;
+      const wasPlaying = window.localStorage.getItem("jff:music-state") === "playing";
+      return wasPlaying ? 1 : 0;
+    } catch {
+      return 0;
+    }
+  });
+
+  useEffect(() => {
+    bootAutoplayRef.current = bootAutoplay;
+  }, [bootAutoplay]);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   // Position (in whole seconds) + video id the iframe should resume from.
   // Only applied to the iframe URL when activeYoutubeId matches savedTrackId
   // (so a track swap via admin between visits restarts cleanly at 0).
@@ -63,6 +99,8 @@ export const AmbientPlayer = () => {
   // effect). A ref lets setTimeout callbacks read the current value rather
   // than a stale closure.
   const ambientPlayingRef = useRef(false);
+  const playerReadyRef = useRef(false);
+  const userHasInteractedRef = useRef(false);
   // Gates the play/pause persistence effect so it doesn't overwrite the
   // saved state with the default `false` on initial mount, BEFORE the
   // hydration mount effect at line 89 has restored the user's last state.
@@ -74,14 +112,31 @@ export const AmbientPlayer = () => {
   // track and only resume it if the user had it playing beforehand.
   const resumeAfterTheaterRef = useRef(false);
 
-  const sendPlayerCommand = useCallback((func: string, args: unknown = "") => {
-    const iframe = document.getElementById("youtube-ambient-player") as HTMLIFrameElement | null;
-    if (!iframe || !iframe.contentWindow) return;
-    iframe.contentWindow.postMessage(
-      JSON.stringify({ event: "command", func, args }),
-      "*"
-    );
-  }, []);
+  const sendPlayerCommand = useCallback((func: string, args: any = "") => {
+    const isUpload = activeYoutubeId.startsWith("http");
+    if (isUpload) {
+      const audio = document.getElementById("html5-ambient-player") as HTMLAudioElement | null;
+      if (!audio) return;
+      if (func === "playVideo") {
+        audio.play().catch(() => {});
+      } else if (func === "pauseVideo") {
+        audio.pause();
+      } else if (func === "setVolume") {
+        const vol = Array.isArray(args) ? args[0] : Number(args);
+        audio.volume = Math.min(1, Math.max(0, vol / 100));
+      } else if (func === "seekTo") {
+        const sec = Array.isArray(args) ? args[0] : Number(args);
+        audio.currentTime = sec;
+      }
+    } else {
+      const iframe = document.getElementById("youtube-ambient-player") as HTMLIFrameElement | null;
+      if (!iframe || !iframe.contentWindow) return;
+      iframe.contentWindow.postMessage(
+        JSON.stringify({ event: "command", func, args }),
+        "*"
+      );
+    }
+  }, [activeYoutubeId]);
 
   const applyVolume = useCallback((volume = ambientVolume) => {
     const targetVol = isMuted ? 0 : volume;
@@ -195,9 +250,10 @@ export const AmbientPlayer = () => {
       /* eslint-disable react-hooks/set-state-in-effect */
       setBootAutoplay(true);
       setShowFirstVisitTooltip(true);
-      setAmbientPlaying(true);
+      setAmbientPlaying(false); // Paused initially to prevent broken silent spinning disc
+      setShowEnterScreen(true); // Show Welcome Overlay on first visit!
       /* eslint-enable react-hooks/set-state-in-effect */
-      ambientPlayingRef.current = true;
+      ambientPlayingRef.current = false;
       didHydrateRef.current = true;
       return;
     }
@@ -226,8 +282,8 @@ export const AmbientPlayer = () => {
     if (wasPlaying) {
       setBootAutoplay(true);
       setBootStartSeconds(savedPosition);
-      setAmbientPlaying(true);
-      ambientPlayingRef.current = true;
+      setAmbientPlaying(false); // Paused initially to prevent broken silent spinning disc
+      ambientPlayingRef.current = false;
     }
     // Hydration done. The persist effect can now safely write changes to
     // localStorage without clobbering the user's previous saved state.
@@ -247,22 +303,50 @@ export const AmbientPlayer = () => {
       } catch {
         return;
       }
-      if (
-        typeof data === "object" &&
-        data !== null &&
-        "event" in data &&
-        (data as { event: string }).event === "infoDelivery"
-      ) {
-        const info = (data as { info?: { currentTime?: number } }).info;
-        const t = info?.currentTime;
-        if (typeof t === "number" && Number.isFinite(t) && t > 0) {
-          lastKnownTimeRef.current = t;
+      if (typeof data === "object" && data !== null && "event" in data) {
+        const eventName = (data as { event: string }).event;
+        
+        if (eventName === "infoDelivery") {
+          const info = (data as { info?: { currentTime?: number } }).info;
+          const t = info?.currentTime;
+          if (typeof t === "number" && Number.isFinite(t) && t > 0) {
+            lastKnownTimeRef.current = t;
+          }
+        } else if (eventName === "onStateChange") {
+          const playerState = (data as { info?: number }).info;
+          if (playerState === 1) {
+            setAmbientPlaying(true);
+            setBootAutoplay(false);
+          } else if (playerState === 2 || playerState === 0) {
+            setAmbientPlaying(false);
+          }
+        } else if (eventName === "onReady" || eventName === "initialDelivery") {
+          playerReadyRef.current = true;
+          const iframe = document.getElementById("youtube-ambient-player") as HTMLIFrameElement | null;
+          if (iframe && iframe.contentWindow) {
+            iframe.contentWindow.postMessage(
+              JSON.stringify({ event: "listening", id: "youtube-ambient-player" }),
+              "*"
+            );
+            if (bootAutoplayRef.current) {
+              sendPlayerCommand("setVolume", [0]);
+              const seek = pendingSeekRef.current;
+              if (seek && seek.videoId === activeYoutubeId && seek.seconds > 0) {
+                iframe.contentWindow.postMessage(
+                  JSON.stringify({ event: "command", func: "seekTo", args: [seek.seconds, true] }),
+                  "*"
+                );
+              }
+              pendingSeekRef.current = null;
+              sendPlayerCommand("playVideo");
+            }
+          }
         }
       }
     };
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
-  }, []);
+  }, [activeYoutubeId, applyVolume, sendPlayerCommand]);
 
   // Tell the YouTube iframe to start pushing infoDelivery events to us. We
   // re-send this whenever the active track changes (iframe src swap remounts
@@ -275,6 +359,11 @@ export const AmbientPlayer = () => {
   // send an explicit pauseVideo command after the iframe has had time to
   // initialize. This makes the React state the single source of truth.
   useEffect(() => {
+    if (activeYoutubeId.startsWith("http")) {
+      playerReadyRef.current = false;
+      return;
+    }
+    playerReadyRef.current = false;
     const sendHandshake = () => {
       const iframe = document.getElementById("youtube-ambient-player") as HTMLIFrameElement | null;
       if (!iframe || !iframe.contentWindow) return;
@@ -293,9 +382,18 @@ export const AmbientPlayer = () => {
 
       // Hard-enforce paused state — defeats YouTube's implicit autoplay
       // when loop=1&playlist=<id> tries to start playback against our wishes.
-      if (!ambientPlayingRef.current) {
+      if (!ambientPlayingRef.current && !bootAutoplayRef.current) {
         iframe.contentWindow.postMessage(
           JSON.stringify({ event: "command", func: "pauseVideo", args: "" }),
+          "*"
+        );
+      } else if (bootAutoplayRef.current) {
+        iframe.contentWindow.postMessage(
+          JSON.stringify({ event: "command", func: "setVolume", args: [0] }),
+          "*"
+        );
+        iframe.contentWindow.postMessage(
+          JSON.stringify({ event: "command", func: "playVideo", args: "" }),
           "*"
         );
       }
@@ -306,9 +404,18 @@ export const AmbientPlayer = () => {
     const t2 = setTimeout(() => {
       const iframe = document.getElementById("youtube-ambient-player") as HTMLIFrameElement | null;
       if (!iframe || !iframe.contentWindow) return;
-      if (!ambientPlayingRef.current) {
+      if (!ambientPlayingRef.current && !bootAutoplayRef.current) {
         iframe.contentWindow.postMessage(
           JSON.stringify({ event: "command", func: "pauseVideo", args: "" }),
+          "*"
+        );
+      } else if (bootAutoplayRef.current) {
+        iframe.contentWindow.postMessage(
+          JSON.stringify({ event: "command", func: "setVolume", args: [0] }),
+          "*"
+        );
+        iframe.contentWindow.postMessage(
+          JSON.stringify({ event: "command", func: "playVideo", args: "" }),
           "*"
         );
       }
@@ -317,7 +424,7 @@ export const AmbientPlayer = () => {
       clearTimeout(t);
       clearTimeout(t2);
     };
-  }, [activeYoutubeId]);
+  }, [activeYoutubeId, applyVolume]);
 
   // Apply admin-controlled stream volume to the current YouTube iframe.
   // Re-run when either the active track or the saved admin volume changes,
@@ -373,6 +480,58 @@ export const AmbientPlayer = () => {
     }
   }, [ambientPlaying]);
 
+  // Smooth volume fade-in when the music starts playing
+  useEffect(() => {
+    if (ambientPlaying) {
+      clearFade();
+      
+      const targetVolume = isMuted ? 0 : ambientVolume;
+      if (targetVolume <= 0) return;
+
+      let currentVol = 0;
+      sendPlayerCommand("setVolume", [0]);
+      fadeTypeRef.current = "in";
+
+      const steps = 15;
+      const stepValue = targetVolume / steps;
+      const duration = 1200; // 1.2s total fade-in duration
+      const stepTime = duration / steps; // 80ms per step
+
+      let currentStep = 0;
+
+      fadeIntervalRef.current = setInterval(() => {
+        currentStep++;
+        currentVol = Math.min(targetVolume, currentStep * stepValue);
+        sendPlayerCommand("setVolume", [Math.round(currentVol)]);
+
+        if (currentStep >= steps) {
+          clearFade();
+        }
+      }, stepTime);
+    } else {
+      // Only clear if we were fading in. If we are currently fading out,
+      // let the fade-out run to completion.
+      if (fadeTypeRef.current === "in") {
+        clearFade();
+      }
+    }
+
+    return () => {
+      if (fadeTypeRef.current === "in") {
+        clearFade();
+      }
+    };
+  }, [ambientPlaying, ambientVolume, isMuted, sendPlayerCommand, clearFade]);
+
+  // Global unmount safety hook to clear any remaining intervals on actual component unmount
+  useEffect(() => {
+    return () => {
+      if (fadeIntervalRef.current) {
+        clearInterval(fadeIntervalRef.current);
+      }
+    };
+  }, []);
+
   useEffect(() => {
     const onVideoTheater = (event: Event) => {
       const open = (event as CustomEvent<{ open?: boolean }>).detail?.open === true;
@@ -380,14 +539,13 @@ export const AmbientPlayer = () => {
       if (open) {
         resumeAfterTheaterRef.current = ambientPlayingRef.current;
         if (ambientPlayingRef.current) {
-          sendPlayerCommand("pauseVideo");
-          setAmbientPlaying(false);
+          initiatePause();
         }
         return;
       }
 
       if (resumeAfterTheaterRef.current) {
-        applyVolume();
+        sendPlayerCommand("setVolume", [0]);
         sendPlayerCommand("playVideo");
         setAmbientPlaying(true);
       }
@@ -412,14 +570,11 @@ export const AmbientPlayer = () => {
   // synchronous playVideo command — this counts as a user gesture and the
   // browser allows it.
   useEffect(() => {
-    if (!bootAutoplay) return;
-    let attempted = false;
+    if (!bootAutoplay || ambientPlaying) return;
     const onInteract = () => {
-      if (attempted) return;
-      attempted = true;
-      const iframe = document.getElementById("youtube-ambient-player") as HTMLIFrameElement | null;
-      if (iframe && iframe.contentWindow) {
-        applyVolume();
+      userHasInteractedRef.current = true;
+      if (playerReadyRef.current) {
+        sendPlayerCommand("setVolume", [0]);
         sendPlayerCommand("playVideo");
       }
     };
@@ -431,7 +586,7 @@ export const AmbientPlayer = () => {
       window.removeEventListener("keydown", onInteract);
       window.removeEventListener("touchstart", onInteract);
     };
-  }, [bootAutoplay, applyVolume, sendPlayerCommand]);
+  }, [bootAutoplay, ambientPlaying, applyVolume, sendPlayerCommand]);
 
   // Guest -> logged-in transition autoplay.
   useEffect(() => {
@@ -442,30 +597,77 @@ export const AmbientPlayer = () => {
       return;
     }
     if (user && !prevUserRef.current && !ambientPlaying) {
-      const iframe = document.getElementById("youtube-ambient-player") as HTMLIFrameElement | null;
-      if (iframe && iframe.contentWindow) {
-        applyVolume();
+      const isUpload = activeYoutubeId.startsWith("http");
+      const player = isUpload
+        ? document.getElementById("html5-ambient-player")
+        : document.getElementById("youtube-ambient-player");
+      if (player) {
+        sendPlayerCommand("setVolume", [0]);
         sendPlayerCommand("playVideo");
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setAmbientPlaying(true);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setBootAutoplay(false);
       }
     }
     prevUserRef.current = user;
-  }, [user, loading, ambientPlaying, applyVolume, sendPlayerCommand]);
+  }, [user, loading, ambientPlaying, applyVolume, sendPlayerCommand, activeYoutubeId]);
 
-  const toggleAmbient = () => {
-    const iframe = document.getElementById("youtube-ambient-player") as HTMLIFrameElement | null;
-    if (!iframe || !iframe.contentWindow) return;
+  const initiatePause = useCallback(() => {
+    if (!ambientPlayingRef.current) return;
+    
+    clearFade();
 
-    if (ambientPlaying) {
+    const currentVolume = isMuted ? 0 : ambientVolume;
+    if (currentVolume <= 0) {
       sendPlayerCommand("pauseVideo");
       setAmbientPlaying(false);
+      ambientPlayingRef.current = false;
+      return;
+    }
+
+    const steps = 10;
+    const stepValue = currentVolume / steps;
+    const duration = 800; // 800ms total fade-out duration
+    const stepTime = duration / steps; // 80ms per step
+
+    let currentStep = 0;
+
+    // Transition state immediately so visual UI changes immediately
+    setAmbientPlaying(false);
+    ambientPlayingRef.current = false;
+    fadeTypeRef.current = "out";
+
+    fadeIntervalRef.current = setInterval(() => {
+      currentStep++;
+      const vol = Math.max(0, currentVolume - currentStep * stepValue);
+      sendPlayerCommand("setVolume", [Math.round(vol)]);
+
+      if (currentStep >= steps) {
+        clearFade();
+        sendPlayerCommand("pauseVideo");
+      }
+    }, stepTime);
+  }, [ambientVolume, isMuted, sendPlayerCommand, clearFade]);
+
+  const toggleAmbient = () => {
+    const isUpload = activeYoutubeId.startsWith("http");
+    const player = isUpload
+      ? document.getElementById("html5-ambient-player")
+      : document.getElementById("youtube-ambient-player");
+    if (!player) return;
+
+    if (ambientPlaying) {
+      initiatePause();
     } else {
-      applyVolume();
+      sendPlayerCommand("setVolume", [0]);
       sendPlayerCommand("playVideo");
       setAmbientPlaying(true);
     }
+    setBootAutoplay(false);
   };
+
+  if (!isMounted) return null;
 
   return (
     <>
@@ -601,17 +803,105 @@ export const AmbientPlayer = () => {
           the first user interaction below sends a playVideo command, which
           counts as a user gesture and is allowed. Mounted at the layout level
           so client-side navigation doesn't tear it down. */}
-      <iframe
-        // Key forces React to fully unmount + remount the iframe whenever
-        // the track id changes. Without this, YouTube's internal player
-        // sometimes gets stuck on the old video even when src is updated.
-        key={activeYoutubeId}
-        id="youtube-ambient-player"
-        src={`https://www.youtube.com/embed/${activeYoutubeId}?enablejsapi=1&autoplay=${bootAutoplay ? 1 : 0}&controls=0&disablekb=1&fs=0&loop=1&playlist=${activeYoutubeId}&modestbranding=1&rel=0&iv_load_policy=3${bootStartSeconds > 0 && savedTrackId === activeYoutubeId ? `&start=${bootStartSeconds}` : ""}`}
-        allow="autoplay"
-        className="pointer-events-none absolute -left-[9999px] -top-[9999px] h-1 w-1 opacity-0"
-        tabIndex={-1}
-      />
+      {activeYoutubeId.startsWith("http") ? (
+        <audio
+          key={activeYoutubeId}
+          id="html5-ambient-player"
+          src={activeYoutubeId}
+          loop
+          preload="auto"
+          className="hidden"
+          onPlay={() => {
+            setAmbientPlaying(true);
+            setBootAutoplay(false);
+          }}
+          onPause={() => setAmbientPlaying(false)}
+          onEnded={() => setAmbientPlaying(false)}
+          onTimeUpdate={(e) => {
+            const t = e.currentTarget.currentTime;
+            if (t > 0) {
+              lastKnownTimeRef.current = t;
+            }
+          }}
+          onLoadedMetadata={(e) => {
+            playerReadyRef.current = true;
+            const audio = e.currentTarget;
+            const targetVol = isMuted ? 0 : ambientVolume;
+            audio.volume = targetVol / 100;
+            
+            const seek = pendingSeekRef.current;
+            if (seek && seek.videoId === activeYoutubeId && seek.seconds > 0) {
+              audio.currentTime = seek.seconds;
+            }
+            pendingSeekRef.current = null;
+            
+            if (bootAutoplayRef.current) {
+              audio.volume = 0;
+              audio.play().catch(() => {});
+            } else {
+              const targetVol = isMuted ? 0 : ambientVolume;
+              audio.volume = targetVol / 100;
+            }
+          }}
+        />
+      ) : (
+        <iframe
+          // Key forces React to fully unmount + remount the iframe whenever
+          // the track id changes. Without this, YouTube's internal player
+          // sometimes gets stuck on the old video even when src is updated.
+          key={activeYoutubeId}
+          id="youtube-ambient-player"
+          src={`https://www.youtube.com/embed/${activeYoutubeId}?enablejsapi=1&autoplay=${iframeAutoplay}&controls=0&disablekb=1&fs=0&loop=1&playlist=${activeYoutubeId}&modestbranding=1&rel=0&iv_load_policy=3${bootStartSeconds > 0 && savedTrackId === activeYoutubeId ? `&start=${bootStartSeconds}` : ""}`}
+          allow="autoplay"
+          className="pointer-events-none absolute -left-[9999px] -top-[9999px] h-1 w-1 opacity-0"
+          tabIndex={-1}
+        />
+      )}
+
+      {showEnterScreen && (
+        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black/90 backdrop-blur-md transition-all duration-700 animate-fade-in">
+          {/* Neon Grid Background / Scanlines */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,0,51,0.15),transparent_70%)] pointer-events-none" />
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,255,0,0.06))] bg-[size:100%_4px,6px_100%] pointer-events-none" />
+
+          <div className="relative text-center max-w-sm px-6 py-10 rounded-3xl border border-white/10 bg-[#050505]/65 backdrop-blur-xl shadow-2xl flex flex-col items-center gap-6 group">
+            {/* Glowing active outline */}
+            <div className="absolute -inset-[1px] rounded-3xl bg-gradient-to-r from-[#ff0033] to-[#ff2d55] opacity-30 blur-sm group-hover:opacity-60 transition duration-500" />
+            
+            {/* Logo Icon */}
+            <div className="relative h-16 w-16 rounded-full bg-[#0a0a0a] border border-white/10 flex items-center justify-center shadow-2xl animate-pulse">
+              <span className="text-2xl">🎮</span>
+              <div className="absolute inset-0 rounded-full bg-[#ff0033]/10 animate-ping" />
+            </div>
+
+            <div className="space-y-1">
+              <h1 className="font-display font-black text-xl uppercase tracking-widest text-white drop-shadow-[0_0_12px_rgba(255,255,255,0.1)]">
+                JUST FOR FUN
+              </h1>
+              <p className="text-[9px] uppercase font-black tracking-[0.25em] text-[#ff2d55] animate-pulse">
+                Immersive Music Experience
+              </p>
+            </div>
+
+            <p className="text-[11px] text-neutral-400 font-medium leading-relaxed max-w-xs text-center">
+              Welcome to the Arena. We play hand-selected Synthwave beats to elevate your stay. Click below to tune in.
+            </p>
+
+            <button
+              onClick={() => {
+                setShowEnterScreen(false);
+                sendPlayerCommand("setVolume", [0]);
+                sendPlayerCommand("playVideo");
+                setAmbientPlaying(true);
+                setBootAutoplay(false);
+              }}
+              className="mt-1 px-7 py-3 bg-gradient-to-r from-[#ff0033] to-[#ff2d55] text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-[0_0_20px_rgba(255,0,51,0.4)] hover:shadow-[0_0_30px_rgba(255,0,51,0.6)] hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer flex items-center gap-2 border border-white/20"
+            >
+              <span>📻 Tune In & Enter</span>
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 };
