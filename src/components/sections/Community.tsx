@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Discord } from "@/components/ui/Icons";
 import { CrewWall } from "./CrewWall";
 import { PageRating } from "./PageRating";
@@ -14,7 +14,11 @@ type TabId = "discord" | "roster" | "ratings";
 export const Community = () => {
   const [activeTab, setActiveTab] = useState<TabId>("discord");
   const [isTyping, setIsTyping] = useState(false);
+  const [rotationMode, setRotationMode] = useState<"auto" | "manual">("auto");
   const [progress, setProgress] = useState(0);
+
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const manualTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
@@ -22,10 +26,13 @@ export const Community = () => {
       const hash = window.location.hash;
       if (hash === "#crew-wall" || hash === "#roster") {
         setActiveTab("roster");
+        setRotationMode("manual");
       } else if (hash === "#ratings" || hash === "#hq-ratings") {
         setActiveTab("ratings");
+        setRotationMode("manual");
       } else if (hash === "#discord") {
         setActiveTab("discord");
+        setRotationMode("manual");
       }
     };
 
@@ -34,8 +41,10 @@ export const Community = () => {
       const hash = window.location.hash;
       if (hash === "#crew-wall" || hash === "#roster") {
         setActiveTab("roster");
+        setRotationMode("manual");
       } else if (hash === "#ratings" || hash === "#hq-ratings") {
         setActiveTab("ratings");
+        setRotationMode("manual");
       } else {
         const saved = window.sessionStorage.getItem("jff:community-tab");
         if (saved === "discord" || saved === "roster" || saved === "ratings") {
@@ -69,7 +78,7 @@ export const Community = () => {
 
   // Smart Auto-Rotation loop that resets smoothly on manual tab swaps or typing blurs
   useEffect(() => {
-    if (isTyping) {
+    if (isTyping || rotationMode === "manual") {
       setProgress(0);
       return;
     }
@@ -95,10 +104,51 @@ export const Community = () => {
     }, stepTime);
 
     return () => clearInterval(timer);
-  }, [isTyping, activeTab]);
+  }, [isTyping, activeTab, rotationMode]);
+
+  // Scroll visibility observer: Auto-Resumes rotation when user scrolls away from this section
+  useEffect(() => {
+    if (typeof window === "undefined" || !("IntersectionObserver" in window)) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // If the community section is scrolled completely out of the viewport, reset to auto showcase
+        if (!entry.isIntersecting) {
+          setRotationMode("auto");
+          if (manualTimeoutRef.current) {
+            clearTimeout(manualTimeoutRef.current);
+          }
+        }
+      },
+      { threshold: 0 }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+      if (manualTimeoutRef.current) {
+        clearTimeout(manualTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleTabChange = (tab: TabId) => {
     setActiveTab(tab);
+    setRotationMode("manual");
+
+    // Clear any existing manual cooldown timer
+    if (manualTimeoutRef.current) {
+      clearTimeout(manualTimeoutRef.current);
+    }
+
+    // Set a 5-minute timeout to resume auto-rotation
+    manualTimeoutRef.current = setTimeout(() => {
+      setRotationMode("auto");
+    }, 5 * 60 * 1000);
+
     try {
       window.sessionStorage.setItem("jff:community-tab", tab);
     } catch {
@@ -126,6 +176,7 @@ export const Community = () => {
 
   return (
     <section
+      ref={sectionRef}
       id="community"
       className="relative overflow-hidden bg-[#060606] py-20 sm:py-24"
     >
@@ -184,16 +235,16 @@ export const Community = () => {
           <div className="w-48 h-[2px] bg-white/5 rounded-full mt-4 overflow-hidden border border-white/5 shadow-[0_0_10px_rgba(0,0,0,0.5)] relative">
             <div
               className={`h-full bg-[#ff0033] shadow-[0_0_8px_rgba(255,0,51,0.85)] transition-all ease-linear ${
-                isTyping ? "opacity-40 animate-pulse bg-neutral-500 shadow-none" : ""
+                isTyping || rotationMode === "manual" ? "opacity-40 animate-pulse bg-neutral-500 shadow-none" : ""
               }`}
               style={{
-                width: isTyping ? "100%" : `${progress}%`,
-                transitionDuration: isTyping ? "500ms" : "100ms",
+                width: isTyping || rotationMode === "manual" ? "100%" : `${progress}%`,
+                transitionDuration: isTyping || rotationMode === "manual" ? "500ms" : "100ms",
               }}
             />
-            {isTyping && (
+            {(isTyping || rotationMode === "manual") && (
               <span className="absolute inset-0 flex items-center justify-center text-[7px] font-black uppercase tracking-widest text-neutral-400 scale-[0.9] select-none">
-                TYPING...
+                {isTyping ? "TYPING..." : "MANUAL"}
               </span>
             )}
           </div>
