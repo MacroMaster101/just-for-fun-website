@@ -226,6 +226,7 @@ export default function AdminPage() {
     rating: number;
     comment: string;
     isFlagged: boolean;
+    isAnonymous: boolean;
     createdAt: string;
     profile: {
       id: string;
@@ -4126,8 +4127,13 @@ export default function AdminPage() {
                                         )}
                                       </div>
                                       <div className="min-w-0">
-                                        <div className="font-bold text-xs text-[var(--color-text)] truncate max-w-[140px]">
+                                        <div className="font-bold text-xs text-[var(--color-text)] truncate max-w-[140px] flex items-center gap-1.5">
                                           {r.profile?.name || "Enlisted Operator"}
+                                          {r.isAnonymous && (
+                                            <span className="text-[8px] font-black uppercase bg-neutral-800 text-neutral-400 border border-neutral-700 px-1 rounded tracking-wide shrink-0">
+                                              Anon
+                                            </span>
+                                          )}
                                         </div>
                                         <div className="text-[10px] text-[var(--color-text-muted)] truncate max-w-[140px]">
                                           {r.profile?.email || "No email"}

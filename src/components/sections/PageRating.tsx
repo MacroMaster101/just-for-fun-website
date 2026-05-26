@@ -25,6 +25,7 @@ interface Rating {
   rating: number;
   comment: string;
   isFlagged: boolean;
+  isAnonymous: boolean;
   createdAt: string;
   updatedAt: string;
   profile: {
@@ -79,6 +80,7 @@ export const PageRating = () => {
   const [ratingInput, setRatingInput] = useState(5);
   const [hoveredStar, setHoveredStar] = useState<number | null>(null);
   const [commentInput, setCommentInput] = useState("");
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [flaggingId, setFlaggingId] = useState<string | null>(null);
@@ -136,9 +138,11 @@ export const PageRating = () => {
     if (userReview) {
       setRatingInput(userReview.rating);
       setCommentInput(userReview.comment);
+      setIsAnonymous(userReview.isAnonymous || false);
     } else {
       setRatingInput(5);
       setCommentInput("");
+      setIsAnonymous(false);
     }
   }, [userReview]);
   /* eslint-enable react-hooks/set-state-in-effect */
@@ -153,7 +157,11 @@ export const PageRating = () => {
       const res = await fetch("/api/ratings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rating: ratingInput, comment: commentInput }),
+        body: JSON.stringify({ 
+          rating: ratingInput, 
+          comment: commentInput, 
+          isAnonymous: isAnonymous 
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -408,6 +416,37 @@ export const PageRating = () => {
                     placeholder="Write your review here... (Optional)"
                     className="w-full rounded-xl border border-white/10 bg-[#0c0c0c] px-4 py-3 text-xs text-white placeholder:text-neutral-600 focus:border-[#ff0033] focus:outline-none focus:ring-1 focus:ring-[#ff0033]/30 resize-none font-semibold transition"
                   />
+                </div>
+
+                {/* Anonymous Toggle */}
+                <div className="flex items-center justify-between p-3 rounded-xl border border-white/5 bg-[#0c0c0c]/40 backdrop-blur-md relative overflow-hidden group select-none">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-white flex items-center gap-1.5">
+                      🕵️ Anonymous Review
+                    </span>
+                    <span className="text-[8px] text-neutral-500 font-semibold normal-case">
+                      Mask your profile details and generate a random JFF DiceBear avatar.
+                    </span>
+                  </div>
+                  
+                  {/* Cyber Toggle Switch */}
+                  <button
+                    type="button"
+                    onClick={() => setIsAnonymous(!isAnonymous)}
+                    className={`relative w-9 h-5 rounded-full border transition-all duration-300 flex items-center p-0.5 cursor-pointer ${
+                      isAnonymous 
+                        ? "bg-[#ff0033]/20 border-[#ff0033] shadow-[0_0_10px_rgba(255,0,51,0.2)]" 
+                        : "bg-neutral-900 border-white/10"
+                    }`}
+                  >
+                    <div 
+                      className={`w-3.5 h-3.5 rounded-full transition-all duration-300 ${
+                        isAnonymous 
+                          ? "bg-[#ff0033] shadow-[0_0_8px_rgba(255,0,51,0.85)] translate-x-4" 
+                          : "bg-neutral-600 translate-x-0"
+                      }`}
+                    />
+                  </button>
                 </div>
 
                 {/* Form Actions */}

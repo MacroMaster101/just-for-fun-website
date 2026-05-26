@@ -275,15 +275,16 @@ model SquadMember {
 }
 
 model PageRating {
-  id        String   @id @default(uuid())
-  userId    String   @unique
-  rating    Int
-  comment   String   @default("")
-  isFlagged Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  rating      Int
+  comment     String   @default("")
+  isFlagged   Boolean  @default(false)
+  isAnonymous Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  profile   Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profile     Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }

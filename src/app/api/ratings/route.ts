@@ -34,8 +34,23 @@ export async function GET() {
 
     const averageRating = totalCount > 0 ? parseFloat((sum / totalCount).toFixed(2)) : 0;
 
+    const enrichedRatings = ratings.map((r) => {
+      if (r.isAnonymous) {
+        const seed = r.userId.slice(0, 8);
+        return {
+          ...r,
+          profile: {
+            id: r.userId,
+            name: "Anonymous Operator",
+            avatarUrl: `https://api.dicebear.com/7.x/pixel-art/svg?seed=${seed}`,
+          },
+        };
+      }
+      return r;
+    });
+
     return NextResponse.json({
-      ratings,
+      ratings: enrichedRatings,
       stats: {
         average: averageRating,
         total: totalCount,
@@ -63,6 +78,7 @@ export async function POST(request: Request) {
     const body = (await request.json().catch(() => null)) as {
       rating?: number;
       comment?: string;
+      isAnonymous?: boolean;
     } | null;
 
     if (!body || typeof body.rating !== "number") {
@@ -101,10 +117,12 @@ export async function POST(request: Request) {
         userId: user.id,
         rating: ratingVal,
         comment: commentVal,
+        isAnonymous: !!body?.isAnonymous,
       },
       update: {
         rating: ratingVal,
         comment: commentVal,
+        isAnonymous: !!body?.isAnonymous,
         isFlagged: false, // Reset flag if updated
       },
     });
