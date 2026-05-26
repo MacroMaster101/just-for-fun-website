@@ -21,6 +21,51 @@ export interface SquadMemberEditorProps {
   onSave: (member: SquadMember | Omit<SquadMember, "id">, isNew: boolean) => void;
 }
 
+const COMMON_ROLES = [
+  "Founder / Main Duelist",
+  "Co-Founder / Main Sentinel",
+  "Co-Builder / Survival Specialist",
+  "Member / Main Duelist",
+  "Member / Main Initiator",
+  "Member / Main Controller",
+  "Member / Main Sentinel",
+  "Founder",
+  "Co-Founder"
+];
+
+const COMMON_COMBAT_STYLES = [
+  "Aggressive / W-Key Warrior",
+  "Calculated / Tactical",
+  "Defensive / Architect",
+  "Aggressive / Entry Fragger",
+  "Tactical / Support Specialist",
+  "Flexible / Fill Specialist",
+  "Defensive / Sniper Anchor"
+];
+
+const GAME_AGENTS: Record<string, string[]> = {
+  valorant: [
+    "Jett", "Reyna", "Clove", "Omen", "Sage", "Chamber", "Cypher", "Phoenix",
+    "Raze", "Breach", "Skye", "Fade", "Deadlock", "Iso", "Neon", "Sova",
+    "Viper", "Astra", "Harbor", "Gekko", "Tejo", "Vyse"
+  ],
+  apex: [
+    "Wraith", "Pathfinder", "Octane", "Bloodhound", "Gibraltar", "Lifeline",
+    "Bangalore", "Caustic", "Mirage", "Wattson", "Crypto", "Revenant",
+    "Loba", "Rampart", "Horizon", "Fuse", "Valkyrie", "Seer", "Ash",
+    "Mad Maggie", "Newcastle", "Vantage", "Catalyst", "Ballistic",
+    "Conduit", "Alter"
+  ],
+  overwatch: [
+    "Tracer", "Genji", "Mercy", "Reinhardt", "D.Va", "Widowmaker", "Hanzo",
+    "Cassidy", "Reaper", "Pharah", "Soldier: 76", "Sombra", "Bastion",
+    "Junkrat", "Mei", "Torbjörn", "Doomfist", "Junker Queen", "Mauga",
+    "Orisa", "Ramattra", "Roadhog", "Sigma", "Winston", "Wrecking Ball",
+    "Zarya", "Ana", "Baptiste", "Brigitte", "Illari", "Juno", "Kiriko",
+    "Lifeweaver", "Lúcio", "Moira", "Zenyatta"
+  ]
+};
+
 /**
  * Form for creating or editing a squad member. Lives in its own file so
  * the giant admin page doesn't have to carry 190 lines of form markup.
@@ -60,6 +105,29 @@ export const SquadMemberEditor = ({
   const [searching, setSearching] = useState(false);
   const [suggestions, setSuggestions] = useState<Array<{ id: number; name: string; backgroundImage: string }>>([]);
   const [showDropdown, setShowDropdown] = useState(false);
+
+  // Overrides to toggle between custom input and dropdown selectors
+  const [useCustomRole, setUseCustomRole] = useState(!COMMON_ROLES.includes(initial.role) && initial.role !== "");
+  const [useCustomStyle, setUseCustomStyle] = useState(!COMMON_COMBAT_STYLES.includes(initial.combatStyle) && initial.combatStyle !== "");
+
+  // Find matching game for agents dropdown
+  const getActiveGameKey = () => {
+    const activeNames = squadGames.map((g) => g.name.toLowerCase());
+    if (activeNames.some((name) => name.includes("valorant"))) return "valorant";
+    if (activeNames.some((name) => name.includes("apex"))) return "apex";
+    if (activeNames.some((name) => name.includes("overwatch"))) return "overwatch";
+    return null;
+  };
+
+  const activeGameKey = getActiveGameKey();
+
+  const isAgentPredefined = () => {
+    if (!activeGameKey) return false;
+    const roster = GAME_AGENTS[activeGameKey];
+    return roster.some((agent) => initial.signatureAgent.toLowerCase().includes(agent.toLowerCase()));
+  };
+
+  const [useCustomAgent, setUseCustomAgent] = useState(!isAgentPredefined() && initial.signatureAgent !== "");
 
   useEffect(() => {
     const q = searchQuery.trim();
@@ -182,16 +250,171 @@ export const SquadMemberEditor = ({
           <Input value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="Kavisha (GGEZ)" className="mt-2" />
         </div>
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Role *</label>
-          <Input value={form.role} onChange={(e) => update("role", e.target.value)} placeholder="Founder / Main Duelist" className="mt-2" />
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Role *</label>
+            <div className="flex items-center gap-1 bg-[var(--color-surface-2)] p-0.5 rounded-md border border-[var(--color-border)] select-none shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setUseCustomRole(false);
+                  update("role", COMMON_ROLES[0]);
+                }}
+                className={`px-2 py-0.5 rounded text-[8px] uppercase font-extrabold transition-all duration-200 cursor-pointer ${
+                  !useCustomRole
+                    ? "bg-[#ff0033] text-white shadow-[0_0_8px_rgba(255,0,51,0.4)]"
+                    : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                }`}
+              >
+                Dropdown
+              </button>
+              <button
+                type="button"
+                onClick={() => setUseCustomRole(true)}
+                className={`px-2 py-0.5 rounded text-[8px] uppercase font-extrabold transition-all duration-200 cursor-pointer ${
+                  useCustomRole
+                    ? "bg-[#ff0033] text-white shadow-[0_0_8px_rgba(255,0,51,0.4)]"
+                    : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                }`}
+              >
+                Custom
+              </button>
+            </div>
+          </div>
+          {useCustomRole ? (
+            <Input
+              value={form.role}
+              onChange={(e) => update("role", e.target.value)}
+              placeholder="Founder / Main Duelist"
+              className="mt-2 text-xs font-semibold focus:ring-1 focus:ring-[#ff0033]/40 border-[var(--color-border)]"
+            />
+          ) : (
+            <select
+              value={form.role}
+              onChange={(e) => update("role", e.target.value)}
+              className="mt-2 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-2 text-xs text-[var(--color-text)] focus:border-[#ff0033] focus:outline-none focus:ring-1 focus:ring-[#ff0033]/30 font-semibold cursor-pointer transition-all duration-200 hover:border-[#ff0033]/30"
+            >
+              {!COMMON_ROLES.includes(form.role) && form.role !== "" && (
+                <option value={form.role} className="bg-[var(--color-surface-2)] font-semibold text-xs">{form.role}</option>
+              )}
+              {COMMON_ROLES.map((role) => (
+                <option key={role} value={role} className="bg-[var(--color-surface-2)] font-semibold text-xs">{role}</option>
+              ))}
+            </select>
+          )}
         </div>
+
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Signature Agent</label>
-          <Input value={form.signatureAgent} onChange={(e) => update("signatureAgent", e.target.value)} placeholder="Jett / Reyna" className="mt-2" />
+          <div className="flex items-center justify-between min-h-[22px]">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Signature Agent</label>
+            {activeGameKey ? (
+              <div className="flex items-center gap-1 bg-[var(--color-surface-2)] p-0.5 rounded-md border border-[var(--color-border)] select-none shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUseCustomAgent(false);
+                    update("signatureAgent", GAME_AGENTS[activeGameKey][0]);
+                  }}
+                  className={`px-2 py-0.5 rounded text-[8px] uppercase font-extrabold transition-all duration-200 cursor-pointer ${
+                    !useCustomAgent
+                      ? "bg-[#ff0033] text-white shadow-[0_0_8px_rgba(255,0,51,0.4)]"
+                      : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                  }`}
+                >
+                  Dropdown
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUseCustomAgent(true)}
+                  className={`px-2 py-0.5 rounded text-[8px] uppercase font-extrabold transition-all duration-200 cursor-pointer ${
+                    useCustomAgent
+                      ? "bg-[#ff0033] text-white shadow-[0_0_8px_rgba(255,0,51,0.4)]"
+                      : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                  }`}
+                >
+                  Custom
+                </button>
+              </div>
+            ) : (
+              <span className="text-[8px] text-[var(--color-text-muted)] bg-[var(--color-surface-2)]/60 px-1.5 py-0.5 rounded border border-[var(--color-border)] uppercase font-extrabold tracking-wider shrink-0 select-none">
+                🎮 Add game to unlock list
+              </span>
+            )}
+          </div>
+          {(!activeGameKey || useCustomAgent) ? (
+            <Input
+              value={form.signatureAgent}
+              onChange={(e) => update("signatureAgent", e.target.value)}
+              placeholder="Jett / Reyna"
+              className="mt-2 text-xs font-semibold focus:ring-1 focus:ring-[#ff0033]/40 border-[var(--color-border)]"
+            />
+          ) : (
+            <select
+              value={form.signatureAgent}
+              onChange={(e) => update("signatureAgent", e.target.value)}
+              className="mt-2 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-2 text-xs text-[var(--color-text)] focus:border-[#ff0033] focus:outline-none focus:ring-1 focus:ring-[#ff0033]/30 font-semibold cursor-pointer transition-all duration-200 hover:border-[#ff0033]/30"
+            >
+              {!GAME_AGENTS[activeGameKey].includes(form.signatureAgent) && form.signatureAgent !== "" && (
+                <option value={form.signatureAgent} className="bg-[var(--color-surface-2)] font-semibold text-xs">{form.signatureAgent}</option>
+              )}
+              {GAME_AGENTS[activeGameKey].map((agent) => (
+                <option key={agent} value={agent} className="bg-[var(--color-surface-2)] font-semibold text-xs">{agent}</option>
+              ))}
+            </select>
+          )}
         </div>
+
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Combat Style</label>
-          <Input value={form.combatStyle} onChange={(e) => update("combatStyle", e.target.value)} placeholder="Aggressive / W-Key Warrior" className="mt-2" />
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Combat Style</label>
+            <div className="flex items-center gap-1 bg-[var(--color-surface-2)] p-0.5 rounded-md border border-[var(--color-border)] select-none shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setUseCustomStyle(false);
+                  update("combatStyle", COMMON_COMBAT_STYLES[0]);
+                }}
+                className={`px-2 py-0.5 rounded text-[8px] uppercase font-extrabold transition-all duration-200 cursor-pointer ${
+                  !useCustomStyle
+                    ? "bg-[#ff0033] text-white shadow-[0_0_8px_rgba(255,0,51,0.4)]"
+                    : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                }`}
+              >
+                Dropdown
+              </button>
+              <button
+                type="button"
+                onClick={() => setUseCustomStyle(true)}
+                className={`px-2 py-0.5 rounded text-[8px] uppercase font-extrabold transition-all duration-200 cursor-pointer ${
+                  useCustomStyle
+                    ? "bg-[#ff0033] text-white shadow-[0_0_8px_rgba(255,0,51,0.4)]"
+                    : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                }`}
+              >
+                Custom
+              </button>
+            </div>
+          </div>
+          {useCustomStyle ? (
+            <Input
+              value={form.combatStyle}
+              onChange={(e) => update("combatStyle", e.target.value)}
+              placeholder="Aggressive / W-Key Warrior"
+              className="mt-2 text-xs font-semibold focus:ring-1 focus:ring-[#ff0033]/40 border-[var(--color-border)]"
+            />
+          ) : (
+            <select
+              value={form.combatStyle}
+              onChange={(e) => update("combatStyle", e.target.value)}
+              className="mt-2 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-2 text-xs text-[var(--color-text)] focus:border-[#ff0033] focus:outline-none focus:ring-1 focus:ring-[#ff0033]/30 font-semibold cursor-pointer transition-all duration-200 hover:border-[#ff0033]/30"
+            >
+              {!COMMON_COMBAT_STYLES.includes(form.combatStyle) && form.combatStyle !== "" && (
+                <option value={form.combatStyle} className="bg-[var(--color-surface-2)] font-semibold text-xs">{form.combatStyle}</option>
+              )}
+              {COMMON_COMBAT_STYLES.map((style) => (
+                <option key={style} value={style} className="bg-[var(--color-surface-2)] font-semibold text-xs">{style}</option>
+              ))}
+            </select>
+          )}
         </div>
         <div className="md:col-span-2 pt-4 border-t border-[var(--color-border)] relative">
           <label className="text-[10px] font-bold uppercase tracking-widest text-[#ff0033] flex items-center justify-between">
@@ -285,10 +508,10 @@ export const SquadMemberEditor = ({
             {squadGames.map((game, idx) => (
               <div
                 key={idx}
-                className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 p-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]/60 animate-fade-in"
+                className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 p-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]/30 hover:bg-[var(--color-surface-2)]/50 hover:border-[#ff0033]/25 backdrop-blur-md transition-all duration-300 animate-fade-in border-l-4 border-l-[#ff0033] shadow-[0_4px_20px_rgba(0,0,0,0.15)]"
               >
                 {/* Live Logo Preview Container */}
-                <div className="relative h-10 w-10 rounded-lg overflow-hidden border border-[var(--color-border)] bg-[var(--color-surface-2)] flex items-center justify-center shrink-0 bg-[#0f0f0f]">
+                <div className="relative h-10 w-10 rounded-lg overflow-hidden border border-[var(--color-border)] bg-[var(--color-surface-2)] flex items-center justify-center shrink-0 bg-[#0f0f0f] shadow-inner">
                   {game.logoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={game.logoUrl} alt="" className="h-full w-full object-contain" />
