@@ -3,3 +3,6 @@ onlyBuiltDependencies:
   - prisma
   - sharp
   - unrs-resolver
+overrides:
+  '@hono/node-server': 1.19.13
+  postcss: 8.5.15

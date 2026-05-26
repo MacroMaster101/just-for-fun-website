@@ -27,14 +27,11 @@ export const CustomCursor = () => {
     let lastHoverCheck = 0;
 
     const tick = () => {
-      ring.x += (pos.x - ring.x) * 0.22;
-      ring.y += (pos.y - ring.y) * 0.22;
-      glow.x += (pos.x - glow.x) * 0.1;
-      glow.y += (pos.y - glow.y) * 0.1;
+      ring.x += (pos.x - ring.x) * 0.34;
+      ring.y += (pos.y - ring.y) * 0.34;
+      glow.x += (pos.x - glow.x) * 0.16;
+      glow.y += (pos.y - glow.y) * 0.16;
 
-      if (dotRef.current) {
-        dotRef.current.style.transform = `translate3d(${pos.x}px, ${pos.y}px, 0) translate(-50%, -50%)`;
-      }
       if (ringRef.current) {
         ringRef.current.style.transform = `translate3d(${ring.x}px, ${ring.y}px, 0) translate(-50%, -50%)`;
       }
@@ -61,6 +58,9 @@ export const CustomCursor = () => {
     const onMove = (e: MouseEvent) => {
       pos.x = e.clientX;
       pos.y = e.clientY;
+      if (dotRef.current) {
+        dotRef.current.style.transform = `translate3d(${pos.x}px, ${pos.y}px, 0) translate(-50%, -50%)`;
+      }
       // Throttle interactive-element lookup to ~60ms
       const now = e.timeStamp;
       if (now - lastHoverCheck > 60) {

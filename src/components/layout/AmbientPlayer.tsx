@@ -4,6 +4,23 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Volume1, Volume2, VolumeX } from "lucide-react";
 
+type PlayerCommandArg = string | number | boolean;
+type PlayerCommandArgs = "" | PlayerCommandArg[];
+
+const readStoredAmbientVolume = () => {
+  if (typeof window === "undefined") return 35;
+  try {
+    const localVol = window.localStorage.getItem("jff:music-volume");
+    if (!localVol) return 35;
+    const parsed = Number(localVol);
+    return Number.isFinite(parsed) && parsed >= 0 && parsed <= 100
+      ? parsed
+      : 35;
+  } catch {
+    return 35;
+  }
+};
+
 /**
  * Persistent floating music disc + hidden YouTube iframe. Mounted once in
  * the root layout so the audio survives client-side navigation between
@@ -14,9 +31,9 @@ export const AmbientPlayer = () => {
   const { user, loading } = useAuth();
   const [ambientPlaying, setAmbientPlaying] = useState(false);
   const [activeYoutubeId, setActiveYoutubeId] = useState("h7MYJghRWt0");
-  const [ambientVolume, setAmbientVolume] = useState(35);
+  const [ambientVolume, setAmbientVolume] = useState(readStoredAmbientVolume);
   const [isMuted, setIsMuted] = useState(false);
-  const preMuteVolumeRef = useRef(35);
+  const preMuteVolumeRef = useRef(ambientVolume);
   const fadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fadeTypeRef = useRef<"in" | "out" | null>(null);
 
@@ -27,30 +44,6 @@ export const AmbientPlayer = () => {
     }
     fadeTypeRef.current = null;
   }, []);
-
-  const toggleMute = () => {
-    clearFade();
-    if (isMuted) {
-      setIsMuted(false);
-      sendPlayerCommand("setVolume", [ambientVolume]);
-    } else {
-      preMuteVolumeRef.current = ambientVolume;
-      setIsMuted(true);
-      sendPlayerCommand("setVolume", [0]);
-    }
-  };
-
-  const handleVolumeChange = (newVol: number) => {
-    clearFade();
-    if (newVol > 0) {
-      setIsMuted(false);
-    }
-    setAmbientVolume(newVol);
-    applyVolume(newVol);
-    try {
-      window.localStorage.setItem("jff:music-volume", String(newVol));
-    } catch {}
-  };
 
   // Whether the iframe should boot with autoplay=1. True when the user's
   // last visible state was "playing" (persisted in localStorage). Browsers
@@ -80,7 +73,8 @@ export const AmbientPlayer = () => {
   }, [bootAutoplay]);
 
   useEffect(() => {
-    setIsMounted(true);
+    const t = setTimeout(() => setIsMounted(true), 0);
+    return () => clearTimeout(t);
   }, []);
   // Position (in whole seconds) + video id the iframe should resume from.
   // Only applied to the iframe URL when activeYoutubeId matches savedTrackId
@@ -112,7 +106,7 @@ export const AmbientPlayer = () => {
   // track and only resume it if the user had it playing beforehand.
   const resumeAfterTheaterRef = useRef(false);
 
-  const sendPlayerCommand = useCallback((func: string, args: any = "") => {
+  const sendPlayerCommand = useCallback((func: string, args: PlayerCommandArgs = "") => {
     const isUpload = activeYoutubeId.startsWith("http");
     if (isUpload) {
       const audio = document.getElementById("html5-ambient-player") as HTMLAudioElement | null;
@@ -122,10 +116,10 @@ export const AmbientPlayer = () => {
       } else if (func === "pauseVideo") {
         audio.pause();
       } else if (func === "setVolume") {
-        const vol = Array.isArray(args) ? args[0] : Number(args);
+        const vol = Number(Array.isArray(args) ? args[0] : args);
         audio.volume = Math.min(1, Math.max(0, vol / 100));
       } else if (func === "seekTo") {
-        const sec = Array.isArray(args) ? args[0] : Number(args);
+        const sec = Number(Array.isArray(args) ? args[0] : args);
         audio.currentTime = sec;
       }
     } else {
@@ -142,6 +136,30 @@ export const AmbientPlayer = () => {
     const targetVol = isMuted ? 0 : volume;
     sendPlayerCommand("setVolume", [targetVol]);
   }, [ambientVolume, isMuted, sendPlayerCommand]);
+
+  const toggleMute = () => {
+    clearFade();
+    if (isMuted) {
+      setIsMuted(false);
+      sendPlayerCommand("setVolume", [ambientVolume]);
+    } else {
+      preMuteVolumeRef.current = ambientVolume;
+      setIsMuted(true);
+      sendPlayerCommand("setVolume", [0]);
+    }
+  };
+
+  const handleVolumeChange = (newVol: number) => {
+    clearFade();
+    if (newVol > 0) {
+      setIsMuted(false);
+    }
+    setAmbientVolume(newVol);
+    applyVolume(newVol);
+    try {
+      window.localStorage.setItem("jff:music-volume", String(newVol));
+    } catch {}
+  };
 
   // Active-track polling. Re-checks every 5 seconds so admin-side
   // activation propagates quickly. Also re-runs whenever the tab regains
@@ -216,20 +234,10 @@ export const AmbientPlayer = () => {
     if (firstVisitDecidedRef.current) return;
     firstVisitDecidedRef.current = true;
     if (typeof window === "undefined") return;
-
-    let savedVolume = 35;
-    try {
-      const localVol = window.localStorage.getItem("jff:music-volume");
-      if (localVol) {
-        const parsed = Number(localVol);
-        if (Number.isFinite(parsed) && parsed >= 0 && parsed <= 100) {
-          savedVolume = parsed;
-        }
-      }
-    } catch {
-      // ignore
-    }
-    setAmbientVolume(savedVolume);
+    let deferredState: ReturnType<typeof setTimeout> | null = null;
+    const deferState = (fn: () => void) => {
+      deferredState = setTimeout(fn, 0);
+    };
 
     let firstVisit = false;
     try {
@@ -247,15 +255,17 @@ export const AmbientPlayer = () => {
       } catch {
         // sessionStorage blocked — no big deal.
       }
-      /* eslint-disable react-hooks/set-state-in-effect */
-      setBootAutoplay(true);
-      setShowFirstVisitTooltip(true);
-      setAmbientPlaying(false); // Paused initially to prevent broken silent spinning disc
-      setShowEnterScreen(true); // Show Welcome Overlay on first visit!
-      /* eslint-enable react-hooks/set-state-in-effect */
+      deferState(() => {
+        setBootAutoplay(true);
+        setShowFirstVisitTooltip(true);
+        setAmbientPlaying(false);
+        setShowEnterScreen(true);
+      });
       ambientPlayingRef.current = false;
       didHydrateRef.current = true;
-      return;
+      return () => {
+        if (deferredState) clearTimeout(deferredState);
+      };
     }
 
     // Return visitor — restore whatever play state they had before refresh.
@@ -278,16 +288,23 @@ export const AmbientPlayer = () => {
     if (savedVideoId && savedPosition > 0) {
       pendingSeekRef.current = { videoId: savedVideoId, seconds: savedPosition };
     }
-    if (savedVideoId) setSavedTrackId(savedVideoId);
-    if (wasPlaying) {
-      setBootAutoplay(true);
-      setBootStartSeconds(savedPosition);
-      setAmbientPlaying(false); // Paused initially to prevent broken silent spinning disc
-      ambientPlayingRef.current = false;
+    if (savedVideoId || wasPlaying) {
+      deferState(() => {
+        if (savedVideoId) setSavedTrackId(savedVideoId);
+        if (wasPlaying) {
+          setBootAutoplay(true);
+          setBootStartSeconds(savedPosition);
+          setAmbientPlaying(false);
+        }
+      });
     }
+    if (wasPlaying) ambientPlayingRef.current = false;
     // Hydration done. The persist effect can now safely write changes to
     // localStorage without clobbering the user's previous saved state.
     didHydrateRef.current = true;
+    return () => {
+      if (deferredState) clearTimeout(deferredState);
+    };
   }, []);
 
   // Listen for time updates from the YouTube iframe via postMessage. The
@@ -532,6 +549,42 @@ export const AmbientPlayer = () => {
     };
   }, []);
 
+  const initiatePause = useCallback(() => {
+    if (!ambientPlayingRef.current) return;
+
+    clearFade();
+
+    const currentVolume = isMuted ? 0 : ambientVolume;
+    if (currentVolume <= 0) {
+      sendPlayerCommand("pauseVideo");
+      setAmbientPlaying(false);
+      ambientPlayingRef.current = false;
+      return;
+    }
+
+    const steps = 10;
+    const stepValue = currentVolume / steps;
+    const duration = 800;
+    const stepTime = duration / steps;
+
+    let currentStep = 0;
+
+    setAmbientPlaying(false);
+    ambientPlayingRef.current = false;
+    fadeTypeRef.current = "out";
+
+    fadeIntervalRef.current = setInterval(() => {
+      currentStep++;
+      const vol = Math.max(0, currentVolume - currentStep * stepValue);
+      sendPlayerCommand("setVolume", [Math.round(vol)]);
+
+      if (currentStep >= steps) {
+        clearFade();
+        sendPlayerCommand("pauseVideo");
+      }
+    }, stepTime);
+  }, [ambientVolume, isMuted, sendPlayerCommand, clearFade]);
+
   useEffect(() => {
     const onVideoTheater = (event: Event) => {
       const open = (event as CustomEvent<{ open?: boolean }>).detail?.open === true;
@@ -554,7 +607,7 @@ export const AmbientPlayer = () => {
 
     window.addEventListener("jff:video-theater", onVideoTheater);
     return () => window.removeEventListener("jff:video-theater", onVideoTheater);
-  }, [applyVolume, sendPlayerCommand]);
+  }, [initiatePause, sendPlayerCommand]);
 
   // Auto-hide the first-visit hint tooltip after 10s.
   useEffect(() => {
@@ -591,6 +644,7 @@ export const AmbientPlayer = () => {
   // Guest -> logged-in transition autoplay.
   useEffect(() => {
     if (loading) return;
+    let deferredState: ReturnType<typeof setTimeout> | null = null;
     if (!hasSetBaselineRef.current) {
       prevUserRef.current = user;
       hasSetBaselineRef.current = true;
@@ -604,51 +658,17 @@ export const AmbientPlayer = () => {
       if (player) {
         sendPlayerCommand("setVolume", [0]);
         sendPlayerCommand("playVideo");
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setAmbientPlaying(true);
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setBootAutoplay(false);
+        deferredState = setTimeout(() => {
+          setAmbientPlaying(true);
+          setBootAutoplay(false);
+        }, 0);
       }
     }
     prevUserRef.current = user;
-  }, [user, loading, ambientPlaying, applyVolume, sendPlayerCommand, activeYoutubeId]);
-
-  const initiatePause = useCallback(() => {
-    if (!ambientPlayingRef.current) return;
-    
-    clearFade();
-
-    const currentVolume = isMuted ? 0 : ambientVolume;
-    if (currentVolume <= 0) {
-      sendPlayerCommand("pauseVideo");
-      setAmbientPlaying(false);
-      ambientPlayingRef.current = false;
-      return;
-    }
-
-    const steps = 10;
-    const stepValue = currentVolume / steps;
-    const duration = 800; // 800ms total fade-out duration
-    const stepTime = duration / steps; // 80ms per step
-
-    let currentStep = 0;
-
-    // Transition state immediately so visual UI changes immediately
-    setAmbientPlaying(false);
-    ambientPlayingRef.current = false;
-    fadeTypeRef.current = "out";
-
-    fadeIntervalRef.current = setInterval(() => {
-      currentStep++;
-      const vol = Math.max(0, currentVolume - currentStep * stepValue);
-      sendPlayerCommand("setVolume", [Math.round(vol)]);
-
-      if (currentStep >= steps) {
-        clearFade();
-        sendPlayerCommand("pauseVideo");
-      }
-    }, stepTime);
-  }, [ambientVolume, isMuted, sendPlayerCommand, clearFade]);
+    return () => {
+      if (deferredState) clearTimeout(deferredState);
+    };
+  }, [user, loading, ambientPlaying, sendPlayerCommand, activeYoutubeId]);
 
   const toggleAmbient = () => {
     const isUpload = activeYoutubeId.startsWith("http");

@@ -588,6 +588,7 @@ export const FloatingGameLogos: React.FC<FloatingGameLogosProps> = ({
                 />
 
                 {/* Logo image centered inside the ball */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={logo.game?.logoUrl}
                   alt={logo.game?.name}

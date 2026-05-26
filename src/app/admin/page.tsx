@@ -2982,6 +2982,7 @@ export default function AdminPage() {
                                 >
                                   <div className="h-8 w-8 rounded-md overflow-hidden border border-[var(--color-border)] bg-[var(--color-surface-2)] flex items-center justify-center shrink-0">
                                     {s.backgroundImage ? (
+                                      // eslint-disable-next-line @next/next/no-img-element
                                       <img
                                         src={s.backgroundImage}
                                         alt={s.name}
@@ -3040,6 +3041,7 @@ export default function AdminPage() {
                             >
                               <div className="h-12 w-12 rounded-lg overflow-hidden border border-[var(--color-border)] bg-[var(--color-surface-2)] flex items-center justify-center shrink-0">
                                 {g.logoUrl ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
                                   <img
                                     src={g.logoUrl}
                                     alt={g.name}
@@ -3661,6 +3663,7 @@ export default function AdminPage() {
                             >
                               <div className="h-20 w-20 shrink-0 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] overflow-hidden relative flex items-center justify-center text-3xl">
                                 {item.imageUrl ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
                                   <img
                                     src={item.imageUrl}
                                     alt={item.name}

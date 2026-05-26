@@ -108,6 +108,132 @@ export const SplineRobot = ({
     };
   }, [delay, inView]);
 
+  // Let the Spline scene react to the whole hero, not just the canvas box.
+  // Spline listens to pointer events, so proxy a mapped pointer into the
+  // canvas at most once per frame to avoid making the custom cursor feel heavy.
+  useEffect(() => {
+    if (!loaded) return;
+    if (typeof window === "undefined") return;
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    const canvas = container.querySelector("canvas");
+    if (!canvas) return;
+
+    const heroSection = document.getElementById("hero");
+    if (!heroSection) return;
+
+    let raf = 0;
+    let lastEvent: PointerEvent | null = null;
+    let pointerInside = false;
+    let canvasRect = canvas.getBoundingClientRect();
+    let heroRect = heroSection.getBoundingClientRect();
+
+    const clamp = (value: number) => Math.min(Math.max(value, 0), 1);
+    const refreshRects = () => {
+      canvasRect = canvas.getBoundingClientRect();
+      heroRect = heroSection.getBoundingClientRect();
+    };
+
+    const dispatchPointer = (type: "pointerenter" | "pointermove" | "pointerleave", e: PointerEvent) => {
+      const nx = clamp((e.clientX - heroRect.left) / heroRect.width);
+      const ny = clamp((e.clientY - heroRect.top) / heroRect.height);
+      const clientX = canvasRect.left + nx * canvasRect.width;
+      const clientY = canvasRect.top + ny * canvasRect.height;
+      const pageX = clientX + window.scrollX;
+      const pageY = clientY + window.scrollY;
+
+      const proxyEvent = new PointerEvent(type, {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        clientX,
+        clientY,
+        screenX: e.screenX + (clientX - e.clientX),
+        screenY: e.screenY + (clientY - e.clientY),
+        pointerId: e.pointerId,
+        pointerType: e.pointerType,
+        isPrimary: e.isPrimary,
+        buttons: e.buttons,
+        button: e.button,
+        pressure: e.pressure,
+        tangentialPressure: e.tangentialPressure,
+        tiltX: e.tiltX,
+        tiltY: e.tiltY,
+        twist: e.twist,
+        width: e.width,
+        height: e.height,
+      });
+
+      Object.defineProperty(proxyEvent, "offsetX", {
+        value: clientX - canvasRect.left,
+      });
+      Object.defineProperty(proxyEvent, "offsetY", {
+        value: clientY - canvasRect.top,
+      });
+      Object.defineProperty(proxyEvent, "pageX", { value: pageX });
+      Object.defineProperty(proxyEvent, "pageY", { value: pageY });
+
+      canvas.dispatchEvent(proxyEvent);
+    };
+
+    const flush = () => {
+      raf = 0;
+      if (!lastEvent) return;
+      if (!pointerInside) {
+        dispatchPointer("pointerenter", lastEvent);
+        pointerInside = true;
+      }
+      dispatchPointer("pointermove", lastEvent);
+    };
+
+    const onHeroPointerMove = (e: PointerEvent) => {
+      // Prevent recursive trigger loops from proxied events.
+      if (!e.isTrusted) return;
+
+      // Native pointer events are best while hovering the actual Spline canvas.
+      if (container.contains(e.target as Node)) {
+        pointerInside = true;
+        return;
+      }
+
+      lastEvent = e;
+      if (!raf) raf = requestAnimationFrame(flush);
+    };
+
+    const onHeroPointerLeave = (e: PointerEvent) => {
+      if (!e.isTrusted) return;
+      if (raf) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+      lastEvent = null;
+      if (pointerInside) {
+        dispatchPointer("pointerleave", e);
+        pointerInside = false;
+      }
+    };
+
+    refreshRects();
+    window.addEventListener("resize", refreshRects);
+    window.addEventListener("scroll", refreshRects, { passive: true });
+    const observer = new ResizeObserver(refreshRects);
+    observer.observe(canvas);
+    observer.observe(heroSection);
+    heroSection.addEventListener("pointermove", onHeroPointerMove, { passive: true });
+    heroSection.addEventListener("pointerleave", onHeroPointerLeave, { passive: true });
+
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener("resize", refreshRects);
+      window.removeEventListener("scroll", refreshRects);
+      observer.disconnect();
+      heroSection.removeEventListener("pointermove", onHeroPointerMove);
+      heroSection.removeEventListener("pointerleave", onHeroPointerLeave);
+    };
+  }, [loaded]);
+
   return (
     <div ref={containerRef} className={`relative h-full w-full ${className}`}>
       {/* Placeholder is always rendered underneath. Once Spline loads,
