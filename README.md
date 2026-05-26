@@ -122,10 +122,10 @@ Create these public buckets in Supabase Storage:
 - 🧑 `avatars`
 - ⚔️ `squad-avatars`
 - 🎮 `game-logos`
-- 🔊 `sound-clips`
+- 🔊 `sound-clips` (Auto-created dynamically by the server if missing)
 - 🎬 `highlights`
 
-User avatar uploads use the logged-in Supabase client and should be covered by Storage RLS. Admin upload routes use the server-only service role key after admin verification.
+User avatar uploads use the logged-in Supabase client and should be covered by Storage RLS. Admin upload routes use the server-only service role key after admin verification. The `"sound-clips"` bucket features automatic self-healing: if the bucket is missing during an admin audio upload, the backend automatically creates it with public read access.
 
 ### 5. Run the dev server
 
