@@ -97,11 +97,11 @@ const DEFAULT_FLOATING_GAMES: Game[] = [
   },
 ];
 
-function spawnParticles(cx: number, cy: number): Particle[] {
-  const count = 14;
+function spawnParticles(cx: number, cy: number, isMobile: boolean): Particle[] {
+  const count = isMobile ? 7 : 14;
   return Array.from({ length: count }, (_, i) => {
     const a = (Math.PI * 2 * i) / count + rand(-0.4, 0.4);
-    const speed = rand(2.5, 7);
+    const speed = isMobile ? rand(1.5, 4) : rand(2.5, 7);
     return {
       id: Date.now() * 1000 + i,
       x: cx,
@@ -110,7 +110,7 @@ function spawnParticles(cx: number, cy: number): Particle[] {
       vy: Math.sin(a) * speed,
       life: 1,
       color: PARTICLE_COLORS[Math.floor(Math.random() * PARTICLE_COLORS.length)],
-      size: rand(3, 8),
+      size: isMobile ? rand(1.5, 4) : rand(3, 8),
     };
   });
 }
@@ -128,14 +128,12 @@ export const FloatingGameLogos: React.FC<FloatingGameLogosProps> = ({
   className = "",
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const itemsRef = useRef<FloatingItem[]>([]);
   const particlesRef = useRef<Particle[]>([]);
+  const domRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const rafRef = useRef<number>(0);
-  const [renderSnapshot, setRenderSnapshot] = useState<{
-    items: FloatingItem[];
-    particles: Particle[];
-    now: number;
-  }>({ items: [], particles: [], now: 0 });
+  const [items, setItems] = useState<FloatingItem[]>([]);
   const [isMobile, setIsMobile] = useState(false);
   const [active, setActive] = useState(true);
 
@@ -223,13 +221,13 @@ export const FloatingGameLogos: React.FC<FloatingGameLogosProps> = ({
     // 1. Resolve Games list: Use custom settings if available, otherwise fall back to premium defaults
     const activeGames = customFloatingGames.length > 0 ? customFloatingGames : DEFAULT_FLOATING_GAMES;
 
-    // 2. Resolve Words list: Use custom settings if available, otherwise fall back to JFF defaults
+    // 2. Resolve Words list: Use custom settings if available, otherwise fall back to J4FN defaults
     const activeWords = customFloatingWords.length > 0 ? customFloatingWords : DEFAULT_SYSTEM_WORDS;
 
     // Generate Game Logo items
     const gameItems: FloatingItem[] = activeGames.map((game) => {
-      const startX = rand(10, 90);
-      const startY = rand(-10, 95);
+      const startX = isMobile ? rand(18, 82) : rand(10, 90);
+      const startY = isMobile ? rand(18, 82) : rand(-10, 95);
 
       return {
         id: `game-${game.id}`,
@@ -239,8 +237,8 @@ export const FloatingGameLogos: React.FC<FloatingGameLogosProps> = ({
         y: startY,
         vx: rand(0.02, 0.045) * (Math.random() > 0.5 ? 1 : -1),
         vy: rand(0.02, 0.045) * (Math.random() > 0.5 ? 1 : -1),
-        sizeW: rand(44, 58),
-        sizeH: rand(44, 58),
+        sizeW: isMobile ? rand(30, 36) : rand(44, 58),
+        sizeH: isMobile ? rand(30, 38) : rand(44, 58),
         rotation: rand(-15, 15),
         rotationSpeed: rand(-0.015, 0.015),
         hitAt: null,
@@ -254,27 +252,28 @@ export const FloatingGameLogos: React.FC<FloatingGameLogosProps> = ({
     // Generate Sci-Fi Word Capsule items
     const N = activeWords.length;
     const wordItems: FloatingItem[] = activeWords.map((w, idx) => {
-      // Split the words list exactly in half so they are always balanced 50/50 between both corners
       const zone = idx < N / 2 ? 1 : 2;
 
       let startX = 0;
       let startY = 0;
       let rotation = 0;
       if (zone === 1) {
-        // Zone 1: Top-Left (extreme left 8% to match original layout)
+        // Zone 1: Top-Left
         const idxInZone = zone1Count++;
-        startX = isMobile ? 12 + idxInZone * 4 : 8;
-        startY = isMobile ? 10 + idxInZone * 6 : 12 + idxInZone * 8;
+        startX = isMobile ? 8 + idxInZone * 2.5 : 8;
+        startY = isMobile ? 12 + idxInZone * 10 : 12 + idxInZone * 8;
         rotation = 0;
       } else {
-        // Zone 2: Bottom-Right (extreme right 92% to match original layout)
+        // Zone 2: Bottom-Right
         const idxInZone = zone2Count++;
-        startX = isMobile ? 60 + idxInZone * 4 : 92;
-        startY = isMobile ? 70 + idxInZone * 6 : 82 + idxInZone * 8;
+        startX = isMobile ? 92 - idxInZone * 2.5 : 92;
+        startY = isMobile ? 62 + idxInZone * 10 : 82 + idxInZone * 8;
         rotation = 0;
       }
 
-      const width = w.text.length * 6.5 + 46; // Calculate capsule width based on text length
+      const width = isMobile
+        ? w.text.length * 4.8 + 24
+        : w.text.length * 6.5 + 46;
 
       return {
         id: `word-${idx}`,
@@ -288,7 +287,7 @@ export const FloatingGameLogos: React.FC<FloatingGameLogosProps> = ({
         vx: 0,
         vy: 0,
         sizeW: width,
-        sizeH: 30, // standard capsule height
+        sizeH: isMobile ? 22 : 30,
         rotation,
         rotationSpeed: 0,
         hitAt: null,
@@ -297,6 +296,7 @@ export const FloatingGameLogos: React.FC<FloatingGameLogosProps> = ({
     });
 
     itemsRef.current = [...gameItems, ...wordItems];
+    setItems(itemsRef.current.map((item) => ({ ...item })));
   }, [games, customFloatingGames, customFloatingWords, isMobile]);
 
   /* ---------- Animation loop ---------- */
@@ -308,96 +308,150 @@ export const FloatingGameLogos: React.FC<FloatingGameLogosProps> = ({
       if (!running) return;
       const now = Date.now();
 
-      // Bounds to fit layout and Concentric Orbit rings beautifully
-      const minX = -10; // Allow drifting fully left
-      const maxX = 110; // Allow drifting fully right
-      const minY = -20; // Allow drifting fully top
-      const maxY = 110; // Allow drifting fully bottom
+      // Bounds check: tight concentric ring bounds on mobile, wide screens on PC
+      const minX = isMobile ? 18 : -10;
+      const maxX = isMobile ? 82 : 110;
+      const minY = isMobile ? 18 : -20;
+      const maxY = isMobile ? 82 : 110;
 
+      // 1. Update Physics States & Direct DOM Styling
       itemsRef.current.forEach((logo) => {
         // Hit state: wait 700ms then respawn
         if (logo.hitAt !== null) {
           if (now - logo.hitAt > 700) {
             if (logo.type === "game") {
-              logo.x = 50; // Pop games from robot center
-              logo.y = 50;
-              // Eject in a random outward direction, moderately
+              logo.x = isMobile ? rand(18, 82) : 50;
+              logo.y = isMobile ? rand(18, 82) : 50;
               const ejectAngle = rand(0, Math.PI * 2);
-              const ejectSpeed = rand(0.04, 0.07);
+              const ejectSpeed = isMobile ? rand(0.015, 0.03) : rand(0.04, 0.07);
               logo.vx = Math.cos(ejectAngle) * ejectSpeed;
               logo.vy = Math.sin(ejectAngle) * ejectSpeed;
             }
-            // For words, logo.x and logo.y remain untouched, fading back exactly in place!
             logo.hitAt = null;
             logo.respawnAt = now;
           }
-          return;
+        } else {
+          // Physics movement for active game elements
+          if (logo.type === "game") {
+            logo.x += logo.vx;
+            logo.y += logo.vy;
+            logo.rotation += logo.rotationSpeed;
+
+            // Soft organic steering forces
+            logo.vx += rand(-0.0005, 0.0005);
+            logo.vy += rand(-0.0005, 0.0005);
+
+            const speed = Math.sqrt(logo.vx * logo.vx + logo.vy * logo.vy);
+            const maxSpeed = 0.09;
+            const minSpeed = 0.02;
+            if (speed > maxSpeed) {
+              logo.vx = (logo.vx / speed) * maxSpeed;
+              logo.vy = (logo.vy / speed) * maxSpeed;
+            } else if (speed < minSpeed) {
+              logo.vx = (logo.vx / speed) * minSpeed;
+              logo.vy = (logo.vy / speed) * minSpeed;
+            }
+
+            // Soft boundaries bounce
+            if (logo.x < minX) {
+              logo.x = minX;
+              logo.vx = Math.abs(logo.vx) * 0.8;
+            } else if (logo.x > maxX) {
+              logo.x = maxX;
+              logo.vx = -Math.abs(logo.vx) * 0.8;
+            }
+
+            if (logo.y < minY) {
+              logo.y = minY;
+              logo.vy = Math.abs(logo.vy) * 0.8;
+            } else if (logo.y > maxY) {
+              logo.y = maxY;
+              logo.vy = -Math.abs(logo.vy) * 0.8;
+            }
+          }
         }
 
-        // Respawn fade-in over 900ms
+        // Respawn timer cleanup
         if (logo.respawnAt !== null) {
           if (now - logo.respawnAt > 900) {
             logo.respawnAt = null;
           }
         }
 
-        // Physics movement (Logos only drift/float. Words are stationary HUD badges)
-        if (logo.type === "game") {
-          logo.x += logo.vx;
-          logo.y += logo.vy;
-          logo.rotation += logo.rotationSpeed;
+        // Compute direct inline style values
+        const isHit = logo.hitAt !== null;
+        const isRespawning = logo.respawnAt !== null;
+        const respawnProgress = isRespawning
+          ? Math.min(1, (now - logo.respawnAt!) / 900)
+          : 1;
+        const easedProgress = isRespawning
+          ? 1 - Math.pow(1 - respawnProgress, 3)
+          : 1;
 
-          // Gentle random steering forces to make motion organic
-          logo.vx += rand(-0.0005, 0.0005);
-          logo.vy += rand(-0.0005, 0.0005);
+        const inRobotZone = logo.type === "game" && logo.x > 32 && logo.x < 68 && logo.y > 18 && logo.y < 92;
+        const robotZoneOpacity = inRobotZone ? 0 : 1;
 
-          // Cap speed to keep drift moderate and elegant
-          const speed = Math.sqrt(logo.vx * logo.vx + logo.vy * logo.vy);
-          const maxSpeed = 0.09;
-          const minSpeed = 0.02;
-          if (speed > maxSpeed) {
-            logo.vx = (logo.vx / speed) * maxSpeed;
-            logo.vy = (logo.vy / speed) * maxSpeed;
-          } else if (speed < minSpeed) {
-            logo.vx = (logo.vx / speed) * minSpeed;
-            logo.vy = (logo.vy / speed) * minSpeed;
-          }
+        const scale = isHit ? 0 : isRespawning ? easedProgress * 0.85 + 0.15 : 1;
+        const opacity = isHit ? 0 : 0.9 * easedProgress * robotZoneOpacity;
+        const pointerEvents = (isHit || inRobotZone) ? "none" : "auto";
 
-          // Soft wall bouncing with speed absorption (dampening) to prevent aggressive bounces
-          if (logo.x < minX) {
-            logo.x = minX;
-            logo.vx = Math.abs(logo.vx) * 0.8;
-          } else if (logo.x > maxX) {
-            logo.x = maxX;
-            logo.vx = -Math.abs(logo.vx) * 0.8;
-          }
-
-          if (logo.y < minY) {
-            logo.y = minY;
-            logo.vy = Math.abs(logo.vy) * 0.8;
-          } else if (logo.y > maxY) {
-            logo.y = maxY;
-            logo.vy = -Math.abs(logo.vy) * 0.8;
-          }
+        const el = domRefs.current[logo.id];
+        if (el) {
+          el.style.left = `${logo.x}%`;
+          el.style.top = `${logo.y}%`;
+          el.style.transform = `translate(-50%, -50%) rotate(${logo.rotation}deg) scale(${scale})`;
+          el.style.opacity = opacity.toString();
+          el.style.pointerEvents = pointerEvents;
         }
       });
 
-      // Update particles
+      // 2. Update Particles array
+      const lifeDecay = isMobile ? 0.05 : 0.03;
       particlesRef.current = particlesRef.current
         .map((p) => ({
           ...p,
           x: p.x + p.vx,
           y: p.y + p.vy,
-          vy: p.vy + 0.15,
-          life: p.life - 0.03,
+          vy: p.vy + (isMobile ? 0.1 : 0.18), // slight gravity
+          life: p.life - lifeDecay,
         }))
         .filter((p) => p.life > 0);
 
-      setRenderSnapshot({
-        items: itemsRef.current.map((item) => ({ ...item })),
-        particles: particlesRef.current.map((particle) => ({ ...particle })),
-        now,
-      });
+      // 3. Render Particles on high-fidelity `<canvas>` with device pixel scaling
+      const canvas = canvasRef.current;
+      if (canvas && containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        const w = Math.floor(rect.width);
+        const h = Math.floor(rect.height);
+
+        if (canvas.width !== w * dpr || canvas.height !== h * dpr) {
+          canvas.width = w * dpr;
+          canvas.height = h * dpr;
+          canvas.style.width = `${w}px`;
+          canvas.style.height = `${h}px`;
+          const ctx = canvas.getContext("2d");
+          if (ctx) ctx.scale(dpr, dpr);
+        }
+
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.clearRect(0, 0, w, h);
+          particlesRef.current.forEach((p) => {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fillStyle = p.color;
+            ctx.globalAlpha = p.life;
+            // Draw a high-tech neon glowing aura around the particle
+            ctx.shadowBlur = p.size * 3.5;
+            ctx.shadowColor = p.color;
+            ctx.fill();
+            ctx.restore();
+          });
+        }
+      }
+
       rafRef.current = requestAnimationFrame(tick);
     };
 
@@ -408,7 +462,7 @@ export const FloatingGameLogos: React.FC<FloatingGameLogosProps> = ({
     };
   }, [isMobile, active]);
 
-  /* ---------- Shoot handler ---------- */
+  /* ---------- Click Shoot handler ---------- */
   const handleShoot = useCallback((logoId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
@@ -422,11 +476,61 @@ export const FloatingGameLogos: React.FC<FloatingGameLogosProps> = ({
 
     logo.hitAt = Date.now();
 
-    // Spawn burst particles at click coords
+    // Spawn burst particles at click coordinates
     const cx = e.clientX - rect.left;
     const cy = e.clientY - rect.top;
-    particlesRef.current.push(...spawnParticles(cx, cy));
-  }, []);
+    particlesRef.current.push(...spawnParticles(cx, cy, isMobile));
+  }, [isMobile]);
+
+  /* ---------- Touch Shoot Event Listeners (Prevent Passive Listener Warnings) ---------- */
+  useEffect(() => {
+    const activeItems = items;
+    const currentDomRefs = domRefs.current;
+    const handlers: { [id: string]: (e: TouchEvent) => void } = {};
+
+    activeItems.forEach((logo) => {
+      const el = currentDomRefs[logo.id];
+      if (!el) return;
+
+      const btn = el.querySelector("button");
+      if (!btn) return;
+
+      const handler = (e: TouchEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+
+        const container = containerRef.current;
+        if (!container) return;
+        const rect = container.getBoundingClientRect();
+
+        const logoItem = itemsRef.current.find((l) => l.id === logo.id);
+        if (!logoItem || logoItem.hitAt !== null) return;
+
+        logoItem.hitAt = Date.now();
+
+        // Get touch coordinates
+        const touch = e.touches[0];
+        const cx = touch.clientX - rect.left;
+        const cy = touch.clientY - rect.top;
+        particlesRef.current.push(...spawnParticles(cx, cy, isMobile));
+      };
+
+      handlers[logo.id] = handler;
+      btn.addEventListener("touchstart", handler, { passive: false });
+    });
+
+    return () => {
+      activeItems.forEach((logo) => {
+        const el = currentDomRefs[logo.id];
+        if (!el) return;
+        const btn = el.querySelector("button");
+        const handler = handlers[logo.id];
+        if (btn && handler) {
+          btn.removeEventListener("touchstart", handler);
+        }
+      });
+    };
+  }, [items, isMobile]);
 
   if (customFloatingGames.length === 0 && DEFAULT_FLOATING_GAMES.length === 0) return null;
 
@@ -437,49 +541,43 @@ export const FloatingGameLogos: React.FC<FloatingGameLogosProps> = ({
       style={{ zIndex: 15 }}
       aria-hidden="true"
     >
-      {/* Floating items — spread across the right side, clicks register correctly */}
-      {renderSnapshot.items.map((logo) => {
-        const isHit = logo.hitAt !== null;
-        const isRespawning = logo.respawnAt !== null;
-        const respawnProgress = isRespawning
-          ? Math.min(1, (renderSnapshot.now - logo.respawnAt!) / 900)
-          : 1;
-        const easedProgress = isRespawning
-          ? 1 - Math.pow(1 - respawnProgress, 3)
-          : 1;
+      {/* High-fidelity graphics canvas for particle explosion drawing */}
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 pointer-events-none w-full h-full"
+        style={{ zIndex: 10 }}
+      />
 
-        // Robot bounding zone (percentages of parent aspect-square container).
-        // If the item floats inside this zone, we hide it and disable pointer events
-        // so only the 3D robot is visible and interactive.
+      {/* Floating items container */}
+      {items.map((logo) => {
         const inRobotZone = logo.type === "game" && logo.x > 32 && logo.x < 68 && logo.y > 18 && logo.y < 92;
         const robotZoneOpacity = inRobotZone ? 0 : 1;
-
-        const scale = isHit ? 0 : isRespawning ? easedProgress * 0.85 + 0.15 : 1;
-        const opacity = isHit ? 0 : 0.9 * easedProgress * robotZoneOpacity;
-        const pointerEvents = (isHit || inRobotZone) ? "none" : "auto";
+        const initialOpacity = 0.9 * robotZoneOpacity;
+        const initialPointerEvents = inRobotZone ? "none" : "auto";
 
         return (
           <div
             key={logo.id}
+            ref={(el) => {
+              domRefs.current[logo.id] = el;
+            }}
             className="absolute"
             style={{
               left: `${logo.x}%`,
               top: `${logo.y}%`,
-              transform: `translate(-50%, -50%) rotate(${logo.rotation}deg) scale(${scale})`,
-              opacity,
-              transition: isHit
-                ? "transform 0.25s cubic-bezier(.7,0,1,.6), opacity 0.15s ease-out"
-                : "opacity 0.3s ease-in-out, transform 0.25s ease-out",
+              transform: `translate(-50%, -50%) rotate(${logo.rotation}deg) scale(1)`,
+              opacity: initialOpacity,
               width: logo.sizeW,
               height: logo.sizeH,
-              pointerEvents,
+              pointerEvents: initialPointerEvents,
+              transition: "none", // Prevent CSS transitions from fighting the direct DOM frame updates
             }}
           >
             {logo.type === "word" ? (
               /* High-Tech Sci-Fi Text Badge matching Spline UI capsules */
               <button
                 onClick={(e) => handleShoot(logo.id, e)}
-                className="relative w-full h-full rounded-full flex items-center justify-center px-4 font-mono font-black tracking-[0.24em] text-[9px] uppercase cursor-crosshair group select-none transition-all duration-300"
+                className="relative w-full h-full rounded-full flex items-center justify-center px-2.5 sm:px-4 font-mono font-black tracking-[0.16em] sm:tracking-[0.24em] text-[7px] sm:text-[9px] uppercase cursor-crosshair group select-none transition-all duration-300"
                 style={
                   logo.wordStyle === "glassy"
                     ? {
@@ -634,24 +732,6 @@ export const FloatingGameLogos: React.FC<FloatingGameLogosProps> = ({
           </div>
         );
       })}
-
-      {/* Particles */}
-      {renderSnapshot.particles.map((p) => (
-        <span
-          key={p.id}
-          className="absolute rounded-full pointer-events-none"
-          style={{
-            left: p.x,
-            top: p.y,
-            width: p.size,
-            height: p.size,
-            backgroundColor: p.color,
-            opacity: p.life,
-            boxShadow: `0 0 ${p.size * 3}px ${p.color}`,
-            transform: `translate(-50%, -50%) scale(${p.life})`,
-          }}
-        />
-      ))}
     </div>
   );
 };

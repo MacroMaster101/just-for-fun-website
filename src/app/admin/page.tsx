@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   X,
+  LayoutGrid,
   Compass,
   Users,
   MessageSquare,
@@ -171,6 +172,7 @@ export default function AdminPage() {
 
   // Dashboard states
   const [activeTab, setActiveTab] = useState<AdminTab>("command");
+  const [adminMenuOpen, setAdminMenuOpen] = useState(false);
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [admins, setAdmins] = useState<AdminEmail[]>([]);
   const [tracks, setTracks] = useState<MusicTrack[]>([]);
@@ -256,22 +258,6 @@ export default function AdminPage() {
     window.addEventListener("hashchange", syncTabFromHash);
     return () => window.removeEventListener("hashchange", syncTabFromHash);
   }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const container = document.getElementById("admin-mobile-bottom-nav-container");
-    const activeBtn = document.getElementById(`admin-bottom-nav-${activeTab}`);
-    if (container && activeBtn) {
-      const containerWidth = container.clientWidth;
-      const btnWidth = activeBtn.clientWidth;
-      const btnLeft = activeBtn.offsetLeft;
-      const targetScrollLeft = btnLeft - (containerWidth / 2) + (btnWidth / 2);
-      container.scrollTo({
-        left: targetScrollLeft,
-        behavior: "smooth",
-      });
-    }
-  }, [activeTab]);
 
   // Message reading modal/drawer state
   const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
@@ -1931,7 +1917,7 @@ export default function AdminPage() {
                                 <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
                                   <div className="flex items-center justify-end gap-2">
                                     <a
-                                      href={`mailto:${msg.email}?subject=Reply from JFF Gaming Channel&body=Hi ${msg.name},%0D%0A%0D%0A`}
+                                      href={`mailto:${msg.email}?subject=Reply from J4FN Gaming Channel&body=Hi ${msg.name},%0D%0A%0D%0A`}
                                       className="p-2 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-[#ff0033]/50 hover:text-[var(--color-text)] transition"
                                       title="Reply via Email"
                                     >
@@ -3404,7 +3390,7 @@ export default function AdminPage() {
 
                       {floatingWords.length === 0 ? (
                         <div className="rounded-lg border border-dashed border-[var(--color-border)] p-6 text-center text-xs text-[var(--color-text-muted)]">
-                          No custom floating words. (Currently falling back to JFF defaults: CHAOS, CLUTCH, JFF SQUAD, CO-OP, MELTDOWNS).
+                          No custom floating words. (Currently falling back to J4FN defaults: CHAOS, CLUTCH, J4FN SQUAD, CO-OP, MELTDOWNS).
                         </div>
                       ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -4369,41 +4355,222 @@ export default function AdminPage() {
         </div>
       )}
       {/* Floating Bottom Nav for Admin Panel on Mobile */}
-      <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-md rounded-2xl border border-white/10 bg-[#070708]/85 p-1.5 backdrop-blur-xl shadow-[0_12px_45px_rgba(0,0,0,0.85)] lg:hidden">
-        <div
-          id="admin-mobile-bottom-nav-container"
-          className="flex items-center gap-1.5 overflow-x-auto scrollbar-none snap-x snap-mandatory px-1"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-        >
-          {adminTabs.map((tab) => {
-            const active = activeTab === tab.id;
-            return (
+      {!checking && isAdmin && (
+        <>
+          {/* Expanded Menu Backdrop */}
+          <div
+            className={`fixed inset-0 z-40 bg-black/60 backdrop-blur-md transition-opacity duration-300 lg:hidden ${
+              adminMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+            }`}
+            onClick={() => setAdminMenuOpen(false)}
+          />
+
+          {/* Expanded Grid Panel */}
+          <div
+            className={`fixed bottom-24 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-md rounded-3xl border border-white/10 bg-[#07070a]/90 p-5 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.95),inset_0_1px_1px_rgba(255,255,255,0.15)] transition-all duration-300 ease-out lg:hidden ${
+              adminMenuOpen
+                ? "opacity-100 translate-y-0 scale-100 pointer-events-auto"
+                : "opacity-0 translate-y-10 scale-95 pointer-events-none"
+            }`}
+          >
+            {/* Drawer Header */}
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
+              <div>
+                <h3 className="font-display text-xs font-black uppercase tracking-wider text-white">
+                  Console Command Hub
+                </h3>
+                <p className="text-[9px] font-semibold text-neutral-400 uppercase tracking-widest mt-0.5">
+                  Execute Platform Tasks
+                </p>
+              </div>
+              <span className="text-[9px] font-black uppercase tracking-widest text-[#ff2d55] bg-[#ff2d55]/10 px-2.5 py-1 rounded-full border border-[#ff2d55]/20">
+                Admin Mode
+              </span>
+            </div>
+
+            {/* Grid of Links */}
+            <div className="grid grid-cols-3 gap-2 max-h-[320px] overflow-y-auto pr-1 scrollbar-none">
+              {adminTabs.map((tab) => {
+                const active = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      handleAdminTabChange(tab.id);
+                      setAdminMenuOpen(false);
+                    }}
+                    className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all duration-300 group cursor-pointer ${
+                      active
+                        ? "bg-gradient-to-br from-[#ff0033]/20 to-[#ff2d55]/10 border-[#ff0033]/40 shadow-[0_0_15px_rgba(255,0,51,0.2)] text-white"
+                        : "bg-white/5 border-white/5 text-neutral-400 hover:text-white hover:bg-white/10 hover:border-white/10"
+                    }`}
+                  >
+                    <span
+                      className={`p-2 rounded-xl transition-all duration-300 ${
+                        active
+                          ? "bg-gradient-to-br from-[#ff0033] to-[#ff2d55] text-white shadow-[0_0_10px_rgba(255,0,51,0.5)]"
+                          : "bg-neutral-900/60 text-neutral-400 group-hover:text-white group-hover:bg-[#ff0033]/15"
+                      }`}
+                    >
+                      <div className="transition-transform duration-300 group-hover:scale-110">
+                        {tab.icon}
+                      </div>
+                    </span>
+                    <span
+                      className={`text-[9px] font-display font-bold uppercase tracking-wider mt-2 text-center leading-tight whitespace-normal ${
+                        active ? "text-white font-black" : "text-neutral-400 group-hover:text-white"
+                      }`}
+                    >
+                      {tab.name}
+                    </span>
+                  </button>
+                );
+              })}
+
+              {/* 14th Grid Element - Back to Site */}
               <button
-                key={tab.id}
-                id={`admin-bottom-nav-${tab.id}`}
-                onClick={() => handleAdminTabChange(tab.id)}
-                className={`flex flex-col items-center justify-center min-w-[80px] px-3.5 py-1.5 rounded-xl transition-all duration-300 snap-center cursor-pointer flex-shrink-0 ${
-                  active
-                    ? "bg-gradient-to-br from-[#ff0033] to-[#ff2d55] text-white shadow-[0_0_16px_rgba(255,0,51,0.5)] scale-[1.03]"
+                onClick={() => {
+                  setAdminMenuOpen(false);
+                  router.push("/");
+                }}
+                className="flex flex-col items-center justify-center p-3 rounded-2xl border bg-emerald-500/10 border-emerald-500/25 text-neutral-400 hover:text-white hover:bg-emerald-500/20 hover:border-emerald-500/40 transition-all duration-300 group cursor-pointer"
+              >
+                <span className="p-2 rounded-xl bg-emerald-500 text-white shadow-[0_0_10px_rgba(16,185,129,0.5)]">
+                  <ArrowLeft size={16} className="transition-transform duration-300 group-hover:scale-110" />
+                </span>
+                <span className="text-[9px] font-display font-black uppercase tracking-wider mt-2 text-white text-center leading-none">
+                  Website
+                </span>
+              </button>
+
+              {/* 15th Grid Element - Refresh Data */}
+              <button
+                onClick={() => {
+                  setAdminMenuOpen(false);
+                  window.location.reload();
+                }}
+                className="flex flex-col items-center justify-center p-3 rounded-2xl border bg-blue-500/10 border-blue-500/25 text-neutral-400 hover:text-white hover:bg-blue-500/20 hover:border-blue-500/40 transition-all duration-300 group cursor-pointer"
+              >
+                <span className="p-2 rounded-xl bg-blue-500 text-white shadow-[0_0_10px_rgba(59,130,246,0.5)]">
+                  <RefreshCw size={16} className="transition-transform duration-300 group-hover:scale-110" />
+                </span>
+                <span className="text-[9px] font-display font-black uppercase tracking-wider mt-2 text-white text-center leading-none">
+                  Reload
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {/* Floating Glassmorphic Pill Dock */}
+          <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-[360px] rounded-full border border-white/10 bg-[#07070a]/65 px-4 py-2 backdrop-blur-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.75)] lg:hidden transition-all duration-300">
+            <div className="flex items-center justify-between gap-1">
+              {/* Command Center */}
+              <button
+                onClick={() => {
+                  handleAdminTabChange("command");
+                  setAdminMenuOpen(false);
+                }}
+                className={`flex items-center justify-center h-10 w-10 rounded-full transition-all duration-300 relative group cursor-pointer ${
+                  activeTab === "command"
+                    ? "text-[#ff0033]"
                     : "text-neutral-400 hover:text-white hover:bg-white/5"
                 }`}
               >
-                <div className={`${active ? "scale-110" : ""} transition-transform duration-300`}>
-                  {tab.icon}
-                </div>
-                <span className={`text-[9px] font-bold uppercase tracking-wider mt-1 leading-none whitespace-nowrap ${active ? "font-black" : ""}`}>
-                  {tab.name}
-                </span>
+                <Compass
+                  size={20}
+                  className={`transition-all duration-300 ${
+                    activeTab === "command" ? "scale-110 drop-shadow-[0_0_8px_rgba(255,0,51,0.65)]" : "group-hover:scale-105"
+                  }`}
+                />
+                {activeTab === "command" && (
+                  <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#ff0033] shadow-[0_0_4px_rgba(255,0,51,0.8)]" />
+                )}
               </button>
-            );
-          })}
-        </div>
-        <style dangerouslySetInnerHTML={{__html: `
-          .scrollbar-none::-webkit-scrollbar {
-            display: none !important;
-          }
-        `}} />
-      </div>
+
+              {/* Inbox */}
+              <button
+                onClick={() => {
+                  handleAdminTabChange("inbox");
+                  setAdminMenuOpen(false);
+                }}
+                className={`flex items-center justify-center h-10 w-10 rounded-full transition-all duration-300 relative group cursor-pointer ${
+                  activeTab === "inbox"
+                    ? "text-[#ff0033]"
+                    : "text-neutral-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <MessageSquare
+                  size={20}
+                  className={`transition-all duration-300 ${
+                    activeTab === "inbox" ? "scale-110 drop-shadow-[0_0_8px_rgba(255,0,51,0.65)]" : "group-hover:scale-105"
+                  }`}
+                />
+                {activeTab === "inbox" && (
+                  <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#ff0033] shadow-[0_0_4px_rgba(255,0,51,0.8)]" />
+                )}
+              </button>
+
+              {/* Glowing Center Menu Toggle Button */}
+              <button
+                onClick={() => setAdminMenuOpen(!adminMenuOpen)}
+                className="relative flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[#ff0033] to-[#ff2d55] text-white shadow-[0_0_20px_rgba(255,0,51,0.6),inset_0_1px_1px_rgba(255,255,255,0.25)] transition-transform duration-300 active:scale-90 hover:scale-105 z-50 border border-white/20 cursor-pointer"
+              >
+                {adminMenuOpen ? (
+                  <X size={20} className="transition-transform duration-300 rotate-90" />
+                ) : (
+                  <LayoutGrid size={20} className="transition-transform duration-300" />
+                )}
+              </button>
+
+              {/* Squad */}
+              <button
+                onClick={() => {
+                  handleAdminTabChange("squad");
+                  setAdminMenuOpen(false);
+                }}
+                className={`flex items-center justify-center h-10 w-10 rounded-full transition-all duration-300 relative group cursor-pointer ${
+                  activeTab === "squad"
+                    ? "text-[#ff0033]"
+                    : "text-neutral-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <Users
+                  size={20}
+                  className={`transition-all duration-300 ${
+                    activeTab === "squad" ? "scale-110 drop-shadow-[0_0_8px_rgba(255,0,51,0.65)]" : "group-hover:scale-105"
+                  }`}
+                />
+                {activeTab === "squad" && (
+                  <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#ff0033] shadow-[0_0_4px_rgba(255,0,51,0.8)]" />
+                )}
+              </button>
+
+              {/* Settings */}
+              <button
+                onClick={() => {
+                  handleAdminTabChange("settings");
+                  setAdminMenuOpen(false);
+                }}
+                className={`flex items-center justify-center h-10 w-10 rounded-full transition-all duration-300 relative group cursor-pointer ${
+                  activeTab === "settings"
+                    ? "text-[#ff0033]"
+                    : "text-neutral-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <Settings
+                  size={20}
+                  className={`transition-all duration-300 ${
+                    activeTab === "settings" ? "scale-110 drop-shadow-[0_0_8px_rgba(255,0,51,0.65)]" : "group-hover:scale-105"
+                  }`}
+                />
+                {activeTab === "settings" && (
+                  <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#ff0033] shadow-[0_0_4px_rgba(255,0,51,0.8)]" />
+                )}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 }

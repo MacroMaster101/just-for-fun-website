@@ -8,7 +8,7 @@
 [![Prisma](https://img.shields.io/badge/Prisma-7.8-2d3748?style=for-the-badge&logo=prisma)](https://www.prisma.io)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-38bdf8?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
 
-Welcome to the official **Just For Fun (JFF)** gaming crew web hub: a cyberpunk channel site for chaotic streams, clutch clips, community moments, squad profiles, and admin-powered content updates.
+Welcome to the official **Just For Fun (J4FN)** gaming crew web hub: a cyberpunk channel site for chaotic streams, clutch clips, community moments, squad profiles, and admin-powered content updates.
 
 Think of it as the crew’s command center: public hype page up front, serious admin controls in the back, and just enough neon to make the database feel like it has RGB.
 
@@ -212,7 +212,7 @@ Recent project review found a few good next upgrades:
 
 ## 📄 License
 
-This repository hosts the official **Just For Fun** gaming crew web hub. Channel branding, media, squad metadata, and visual identity belong to the JFF crew. Reuse of the application code should preserve third-party licenses and remove private brand assets or secrets before redistribution.
+This repository hosts the official **Just For Fun** gaming crew web hub. Channel branding, media, squad metadata, and visual identity belong to the J4FN crew. Reuse of the application code should preserve third-party licenses and remove private brand assets or secrets before redistribution.
 
 <p align="center">
   🎮 Built for chaotic wins, funny fails, and weekend stream energy. ⚡

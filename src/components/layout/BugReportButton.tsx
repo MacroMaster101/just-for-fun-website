@@ -28,7 +28,7 @@ export const BugReportButton = () => {
     isMobileRef.current = checkMobile();
 
     try {
-      const saved = window.localStorage.getItem("jff:bug-collapsed");
+      const saved = window.localStorage.getItem("j4fn:bug-collapsed");
       if (saved === "true") {
         setIsCollapsed(true);
       } else if (saved === "false") {
@@ -60,7 +60,7 @@ export const BugReportButton = () => {
     if (isCollapsed) {
       setIsCollapsed(false);
       try {
-        window.localStorage.setItem("jff:bug-collapsed", "false");
+        window.localStorage.setItem("j4fn:bug-collapsed", "false");
       } catch {}
     } else {
       setOpen(true);
@@ -193,7 +193,7 @@ export const BugReportButton = () => {
               e.stopPropagation();
               setIsCollapsed(true);
               try {
-                window.localStorage.setItem("jff:bug-collapsed", "true");
+                window.localStorage.setItem("j4fn:bug-collapsed", "true");
               } catch {}
             }}
             className="absolute right-full mr-1.5 lg:right-[-26px] lg:mr-0 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-[#0a0a0a]/95 text-neutral-400 hover:text-white hover:border-[#ff0033]/30 hover:bg-[#ff0033]/20 transition-all duration-300 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:focus:opacity-100 z-50 cursor-pointer shadow-sm group/collapse"

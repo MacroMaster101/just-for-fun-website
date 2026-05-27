@@ -132,17 +132,16 @@
   }
 
   /* Page-wide transition effect during theme switch.
-     Uses View Transitions API when available (single cheap snapshot fade),
-     falls back to a body-only color tween. Per-element transitions were
-     too expensive on this site (many gradients/blurs/shadows). */
-  html.theme-switching body {
-    transition: background-color 0.3s ease, color 0.3s ease;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    html.theme-switching,
-    html.theme-switching * {
-      transition: none !important;
-    }
+     Uses View Transitions API when available (single cheap snapshot fade).
+     For browsers without it, ThemeToggle.tsx injects a full-page overlay
+     that fades out → swap theme → fades in. During the swap we kill ALL
+     element transitions so the repaint is a single, instant frame. */
+  html.theme-switching,
+  html.theme-switching *,
+  html.theme-switching *::before,
+  html.theme-switching *::after {
+    transition-duration: 0s !important;
+    animation-duration: 0s !important;
   }
 
   ::-webkit-scrollbar { width: 8px; height: 8px; }

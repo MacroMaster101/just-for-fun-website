@@ -46,7 +46,7 @@ export const Community = () => {
         setActiveTab("ratings");
         setRotationMode("manual");
       } else {
-        const saved = window.sessionStorage.getItem("jff:community-tab");
+        const saved = window.sessionStorage.getItem("j4fn:community-tab");
         if (saved === "discord" || saved === "roster" || saved === "ratings") {
           setActiveTab(saved);
         }
@@ -166,7 +166,7 @@ export const Community = () => {
     }, 5 * 60 * 1000);
 
     try {
-      window.sessionStorage.setItem("jff:community-tab", tab);
+      window.sessionStorage.setItem("j4fn:community-tab", tab);
     } catch {
       // ignore
     }

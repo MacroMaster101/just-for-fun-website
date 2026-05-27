@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
-const STORAGE_PREFIX = "jff:scroll:";
+const STORAGE_PREFIX = "j4fn:scroll:";
 
 /**
  * Persists window scroll position per-pathname to sessionStorage and

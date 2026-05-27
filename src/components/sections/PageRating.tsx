@@ -425,7 +425,7 @@ export const PageRating = () => {
                       🕵️ Anonymous Review
                     </span>
                     <span className="text-[8px] text-neutral-500 font-semibold normal-case">
-                      Mask your profile details and generate a random JFF DiceBear avatar.
+                      Mask your profile details and generate a random J4FN DiceBear avatar.
                     </span>
                   </div>
                   

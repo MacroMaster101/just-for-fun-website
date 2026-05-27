@@ -114,29 +114,34 @@ async function listAuthUsers(): Promise<Map<string, AuthProfile> | null> {
   }
   const users = new Map<string, AuthProfile>();
   let page = 1;
-  // 1000 is the per-page cap. Loop until we exhaust the pages or hit a
-  // safety ceiling of 10k members.
-  while (page < 11) {
-    const { data, error } = await admin.auth.admin.listUsers({
-      page,
-      perPage: 1000,
-    });
-    if (error || !data?.users) {
-      console.error("listUsers failed:", error);
-      return null;
-    }
-    for (const u of data.users) {
-      const metadata = u.user_metadata as AuthMetadata;
-      users.set(u.id, {
-        email: u.email ?? null,
-        name: metadataText(metadata, "full_name") || metadataText(metadata, "name"),
-        avatarUrl:
-          metadataText(metadata, "avatar_url") ||
-          metadataText(metadata, "picture"),
+  try {
+    // 1000 is the per-page cap. Loop until we exhaust the pages or hit a
+    // safety ceiling of 10k members.
+    while (page < 11) {
+      const { data, error } = await admin.auth.admin.listUsers({
+        page,
+        perPage: 1000,
       });
+      if (error || !data?.users) {
+        console.error("listUsers failed:", error);
+        return null;
+      }
+      for (const u of data.users) {
+        const metadata = u.user_metadata as AuthMetadata;
+        users.set(u.id, {
+          email: u.email ?? null,
+          name: metadataText(metadata, "full_name") || metadataText(metadata, "name"),
+          avatarUrl:
+            metadataText(metadata, "avatar_url") ||
+            metadataText(metadata, "picture"),
+        });
+      }
+      if (data.users.length < 1000) break;
+      page += 1;
     }
-    if (data.users.length < 1000) break;
-    page += 1;
+  } catch (err) {
+    console.error("listAuthUsers exception:", err);
+    return null;
   }
   return users;
 }

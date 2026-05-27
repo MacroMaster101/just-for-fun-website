@@ -13,6 +13,8 @@ import {
   Share2,
   MessageSquare,
   Mail,
+  LayoutGrid,
+  X,
 } from "lucide-react";
 import { Youtube } from "@/components/ui/Icons";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
@@ -53,6 +55,7 @@ export const Header = () => {
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
   const [authError, setAuthError] = useState<string | null>(null);
   const [showThemeHint, setShowThemeHint] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const pathname = usePathname();
   const isAdminPage = pathname?.startsWith("/admin");
@@ -61,7 +64,7 @@ export const Header = () => {
     if (typeof window === "undefined") return;
     const t = setTimeout(() => {
       try {
-        const isFresh = window.sessionStorage.getItem("jff:fresh-session") === "1";
+        const isFresh = window.sessionStorage.getItem("j4fn:fresh-session") === "1";
         if (isFresh) {
           setShowThemeHint(true);
           window.setTimeout(() => setShowThemeHint(false), 10_000);
@@ -160,22 +163,6 @@ export const Header = () => {
 
   const activeNavSection = navSectionAliases[activeSection] ?? activeSection;
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const container = document.getElementById("mobile-bottom-nav-container");
-    const activeBtn = document.getElementById(`bottom-nav-${activeNavSection}`);
-    if (container && activeBtn) {
-      const containerWidth = container.clientWidth;
-      const btnWidth = activeBtn.clientWidth;
-      const btnLeft = activeBtn.offsetLeft;
-      const targetScrollLeft = btnLeft - (containerWidth / 2) + (btnWidth / 2);
-      container.scrollTo({
-        left: targetScrollLeft,
-        behavior: "smooth",
-      });
-    }
-  }, [activeNavSection]);
-
   return (
     <>
       <header
@@ -249,40 +236,192 @@ export const Header = () => {
       </header>
 
       {!isAdminPage && (
-        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-md rounded-2xl border border-white/10 bg-[#070708]/85 p-1.5 backdrop-blur-xl shadow-[0_12px_45px_rgba(0,0,0,0.85)] lg:hidden">
-          <div 
-            id="mobile-bottom-nav-container"
-            className="flex items-center gap-1 overflow-x-auto scrollbar-none snap-x snap-mandatory px-1"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        <>
+          {/* Expanded Menu Backdrop */}
+          <div
+            className={`fixed inset-0 z-40 bg-black/60 backdrop-blur-md transition-opacity duration-300 lg:hidden ${
+              menuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+            }`}
+            onClick={() => setMenuOpen(false)}
+          />
+
+          {/* Expanded Grid Panel */}
+          <div
+            className={`fixed bottom-24 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-md rounded-3xl border border-white/10 bg-[#07070a]/90 p-5 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.95),inset_0_1px_1px_rgba(255,255,255,0.15)] transition-all duration-300 ease-out lg:hidden ${
+              menuOpen
+                ? "opacity-100 translate-y-0 scale-100 pointer-events-auto"
+                : "opacity-0 translate-y-10 scale-95 pointer-events-none"
+            }`}
           >
-            {navLinks.map((link) => {
-              const active = activeNavSection === link.href.slice(1);
-              const LinkIcon = link.icon;
-              return (
-                <a
-                  key={link.href}
-                  id={`bottom-nav-${link.href.slice(1)}`}
-                  href={link.href}
-                  className={`flex flex-col items-center justify-center min-w-[58px] px-2 py-1.5 rounded-xl transition-all duration-300 snap-center ${
-                    active
-                      ? "bg-gradient-to-br from-[#ff0033] to-[#ff2d55] text-white shadow-[0_0_16px_rgba(255,0,51,0.5)] scale-[1.05]"
-                      : "text-neutral-400 hover:text-white hover:bg-white/5"
-                  }`}
-                >
-                  <LinkIcon size={16} className={active ? "scale-110" : ""} />
-                  <span className={`text-[9px] font-bold uppercase tracking-wider mt-1 leading-none ${active ? "font-black" : ""}`}>
-                    {link.name}
-                  </span>
-                </a>
-              );
-            })}
+            {/* Drawer Header */}
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
+              <div>
+                <h3 className="font-display text-xs font-black uppercase tracking-wider text-white">
+                  Navigation Hub
+                </h3>
+                <p className="text-[9px] font-semibold text-neutral-400 uppercase tracking-widest mt-0.5">
+                  Explore Channel Sections
+                </p>
+              </div>
+              <span className="text-[9px] font-black uppercase tracking-widest text-[#ff2d55] bg-[#ff2d55]/10 px-2.5 py-1 rounded-full border border-[#ff2d55]/20">
+                J4FN Gaming
+              </span>
+            </div>
+
+            {/* Grid of Links */}
+            <div className="grid grid-cols-3 gap-2">
+              {navLinks.map((link) => {
+                const active = activeNavSection === link.href.slice(1);
+                const LinkIcon = link.icon;
+                return (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMenuOpen(false)}
+                    className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all duration-300 group ${
+                      active
+                        ? "bg-gradient-to-br from-[#ff0033]/20 to-[#ff2d55]/10 border-[#ff0033]/40 shadow-[0_0_15px_rgba(255,0,51,0.2)] text-white"
+                        : "bg-white/5 border-white/5 text-neutral-400 hover:text-white hover:bg-white/10 hover:border-white/10"
+                    }`}
+                  >
+                    <span
+                      className={`p-2 rounded-xl transition-all duration-300 ${
+                        active
+                          ? "bg-gradient-to-br from-[#ff0033] to-[#ff2d55] text-white shadow-[0_0_10px_rgba(255,0,51,0.5)]"
+                          : "bg-neutral-900/60 text-neutral-400 group-hover:text-white group-hover:bg-[#ff0033]/15"
+                      }`}
+                    >
+                      <LinkIcon size={16} className="transition-transform duration-300 group-hover:scale-110" />
+                    </span>
+                    <span
+                      className={`text-[9px] font-display font-bold uppercase tracking-wider mt-2 text-center leading-none ${
+                        active ? "text-white font-black" : "text-neutral-400 group-hover:text-white"
+                      }`}
+                    >
+                      {link.name}
+                    </span>
+                  </a>
+                );
+              })}
+
+              {/* 12th Grid Element - YouTube official link */}
+              <a
+                href="https://youtube.com/@justforfungaming"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center justify-center p-3 rounded-2xl border bg-[#ff0000]/10 border-[#ff0000]/25 text-neutral-400 hover:text-white hover:bg-[#ff0000]/20 hover:border-[#ff0000]/40 transition-all duration-300 group"
+              >
+                <span className="p-2 rounded-xl bg-[#ff0000] text-white shadow-[0_0_10px_rgba(255,0,0,0.5)]">
+                  <Youtube size={16} className="transition-transform duration-300 group-hover:scale-110" />
+                </span>
+                <span className="text-[9px] font-display font-black uppercase tracking-wider mt-2 text-white text-center leading-none">
+                  YouTube
+                </span>
+              </a>
+            </div>
           </div>
-          <style dangerouslySetInnerHTML={{__html: `
-            .scrollbar-none::-webkit-scrollbar {
-              display: none !important;
-            }
-          `}} />
-        </div>
+
+          {/* Floating Glassmorphic Pill Dock */}
+          <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-[360px] rounded-full border border-white/10 bg-[#07070a]/65 px-4 py-2 backdrop-blur-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.75)] lg:hidden transition-all duration-300">
+            <div className="flex items-center justify-between gap-1">
+              {/* Home */}
+              <a
+                href="#hero"
+                onClick={() => setMenuOpen(false)}
+                className={`flex items-center justify-center h-10 w-10 rounded-full transition-all duration-300 relative group ${
+                  activeNavSection === "hero"
+                    ? "text-[#ff0033]"
+                    : "text-neutral-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <Home
+                  size={20}
+                  className={`transition-all duration-300 ${
+                    activeNavSection === "hero" ? "scale-110 drop-shadow-[0_0_8px_rgba(255,0,51,0.65)]" : "group-hover:scale-105"
+                  }`}
+                />
+                {activeNavSection === "hero" && (
+                  <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#ff0033] shadow-[0_0_4px_rgba(255,0,51,0.8)]" />
+                )}
+              </a>
+
+              {/* Videos */}
+              <a
+                href="#latest"
+                onClick={() => setMenuOpen(false)}
+                className={`flex items-center justify-center h-10 w-10 rounded-full transition-all duration-300 relative group ${
+                  activeNavSection === "latest"
+                    ? "text-[#ff0033]"
+                    : "text-neutral-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <Play
+                  size={20}
+                  className={`transition-all duration-300 ${
+                    activeNavSection === "latest" ? "scale-110 drop-shadow-[0_0_8px_rgba(255,0,51,0.65)]" : "group-hover:scale-105"
+                  }`}
+                />
+                {activeNavSection === "latest" && (
+                  <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#ff0033] shadow-[0_0_4px_rgba(255,0,51,0.8)]" />
+                )}
+              </a>
+
+              {/* Glowing Center Menu Toggle Button */}
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="relative flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[#ff0033] to-[#ff2d55] text-white shadow-[0_0_20px_rgba(255,0,51,0.6),inset_0_1px_1px_rgba(255,255,255,0.25)] transition-transform duration-300 active:scale-90 hover:scale-105 z-50 border border-white/20"
+              >
+                {menuOpen ? (
+                  <X size={20} className="transition-transform duration-300 rotate-90" />
+                ) : (
+                  <LayoutGrid size={20} className="transition-transform duration-300" />
+                )}
+              </button>
+
+              {/* Arena */}
+              <a
+                href="#arena"
+                onClick={() => setMenuOpen(false)}
+                className={`flex items-center justify-center h-10 w-10 rounded-full transition-all duration-300 relative group ${
+                  activeNavSection === "arena"
+                    ? "text-[#ff0033]"
+                    : "text-neutral-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <Swords
+                  size={20}
+                  className={`transition-all duration-300 ${
+                    activeNavSection === "arena" ? "scale-110 drop-shadow-[0_0_8px_rgba(255,0,51,0.65)]" : "group-hover:scale-105"
+                  }`}
+                />
+                {activeNavSection === "arena" && (
+                  <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#ff0033] shadow-[0_0_4px_rgba(255,0,51,0.8)]" />
+                )}
+              </a>
+
+              {/* Shop */}
+              <a
+                href="#merch"
+                onClick={() => setMenuOpen(false)}
+                className={`flex items-center justify-center h-10 w-10 rounded-full transition-all duration-300 relative group ${
+                  activeNavSection === "merch"
+                    ? "text-[#ff0033]"
+                    : "text-neutral-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <ShoppingBag
+                  size={20}
+                  className={`transition-all duration-300 ${
+                    activeNavSection === "merch" ? "scale-110 drop-shadow-[0_0_8px_rgba(255,0,51,0.65)]" : "group-hover:scale-105"
+                  }`}
+                />
+                {activeNavSection === "merch" && (
+                  <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#ff0033] shadow-[0_0_4px_rgba(255,0,51,0.8)]" />
+                )}
+              </a>
+            </div>
+          </div>
+        </>
       )}
 
       <AuthModal

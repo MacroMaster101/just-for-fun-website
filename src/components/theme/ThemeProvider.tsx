@@ -19,7 +19,7 @@ interface ThemeContextValue {
 }
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
-const STORAGE_KEY = "jff-theme";
+const STORAGE_KEY = "j4fn-theme";
 
 const getSystem = (): Resolved =>
   typeof window !== "undefined" &&

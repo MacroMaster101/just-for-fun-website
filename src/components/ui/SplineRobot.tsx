@@ -136,7 +136,10 @@ export const SplineRobot = ({
       heroRect = heroSection.getBoundingClientRect();
     };
 
-    const dispatchPointer = (type: "pointerenter" | "pointermove" | "pointerleave", e: PointerEvent) => {
+    const dispatchPointer = (
+      type: "pointerenter" | "pointermove" | "pointerleave" | "pointerdown" | "pointerup",
+      e: PointerEvent
+    ) => {
       const nx = clamp((e.clientX - heroRect.left) / heroRect.width);
       const ny = clamp((e.clientY - heroRect.top) / heroRect.height);
       const clientX = canvasRect.left + nx * canvasRect.width;
@@ -215,6 +218,16 @@ export const SplineRobot = ({
       }
     };
 
+    const onHeroPointerDown = (e: PointerEvent) => {
+      if (!e.isTrusted) return;
+      dispatchPointer("pointerdown", e);
+    };
+
+    const onHeroPointerUp = (e: PointerEvent) => {
+      if (!e.isTrusted) return;
+      dispatchPointer("pointerup", e);
+    };
+
     refreshRects();
     window.addEventListener("resize", refreshRects);
     window.addEventListener("scroll", refreshRects, { passive: true });
@@ -223,6 +236,8 @@ export const SplineRobot = ({
     observer.observe(heroSection);
     heroSection.addEventListener("pointermove", onHeroPointerMove, { passive: true });
     heroSection.addEventListener("pointerleave", onHeroPointerLeave, { passive: true });
+    heroSection.addEventListener("pointerdown", onHeroPointerDown, { passive: true });
+    heroSection.addEventListener("pointerup", onHeroPointerUp, { passive: true });
 
     return () => {
       if (raf) cancelAnimationFrame(raf);
@@ -231,11 +246,17 @@ export const SplineRobot = ({
       observer.disconnect();
       heroSection.removeEventListener("pointermove", onHeroPointerMove);
       heroSection.removeEventListener("pointerleave", onHeroPointerLeave);
+      heroSection.removeEventListener("pointerdown", onHeroPointerDown);
+      heroSection.removeEventListener("pointerup", onHeroPointerUp);
     };
   }, [loaded]);
 
   return (
-    <div ref={containerRef} className={`relative h-full w-full ${className}`}>
+    <div
+      ref={containerRef}
+      className={`relative h-full w-full ${className}`}
+      style={{ touchAction: "none" }}
+    >
       {/* Placeholder is always rendered underneath. Once Spline loads,
           it fades in on top — placeholder fades out via opacity. */}
       <div

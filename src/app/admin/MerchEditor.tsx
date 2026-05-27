@@ -71,7 +71,7 @@ export const MerchEditor: React.FC<Props> = ({
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="JFF 'Cyber-Obsidian' Hoodie"
+            placeholder="J4FN 'Cyber-Obsidian' Hoodie"
             maxLength={80}
           />
         </label>

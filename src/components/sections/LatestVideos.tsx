@@ -59,14 +59,14 @@ export const LatestVideos = () => {
     }
 
     window.dispatchEvent(
-      new CustomEvent("jff:video-theater", { detail: { open: true } })
+      new CustomEvent("j4fn:video-theater", { detail: { open: true } })
     );
 
     return () => {
       body.style.overflow = previousOverflow;
       body.style.paddingRight = previousPaddingRight;
       window.dispatchEvent(
-        new CustomEvent("jff:video-theater", { detail: { open: false } })
+        new CustomEvent("j4fn:video-theater", { detail: { open: false } })
       );
     };
   }, [selectedVideo]);

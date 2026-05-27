@@ -10,7 +10,7 @@ type PlayerCommandArgs = "" | PlayerCommandArg[];
 const readStoredAmbientVolume = () => {
   if (typeof window === "undefined") return 35;
   try {
-    const localVol = window.localStorage.getItem("jff:music-volume");
+    const localVol = window.localStorage.getItem("j4fn:music-volume");
     if (!localVol) return 35;
     const parsed = Number(localVol);
     return Number.isFinite(parsed) && parsed >= 0 && parsed <= 100
@@ -65,7 +65,7 @@ export const AmbientPlayer = () => {
     isMobileRef.current = checkMobile();
 
     try {
-      const saved = window.localStorage.getItem("jff:ambient-collapsed");
+      const saved = window.localStorage.getItem("j4fn:ambient-collapsed");
       if (saved === "true") {
         setIsCollapsed(true);
       } else if (saved === "false") {
@@ -97,7 +97,7 @@ export const AmbientPlayer = () => {
     if (isCollapsed) {
       setIsCollapsed(false);
       try {
-        window.localStorage.setItem("jff:ambient-collapsed", "false");
+        window.localStorage.setItem("j4fn:ambient-collapsed", "false");
       } catch {}
     } else {
       toggleAmbient();
@@ -108,9 +108,9 @@ export const AmbientPlayer = () => {
   const [iframeAutoplay] = useState(() => {
     if (typeof window === "undefined") return 0;
     try {
-      const firstVisit = !window.localStorage.getItem("jff:visited");
+      const firstVisit = !window.localStorage.getItem("j4fn:visited");
       if (firstVisit) return 1;
-      const wasPlaying = window.localStorage.getItem("jff:music-state") === "playing";
+      const wasPlaying = window.localStorage.getItem("j4fn:music-state") === "playing";
       return wasPlaying ? 1 : 0;
     } catch {
       return 0;
@@ -206,7 +206,7 @@ export const AmbientPlayer = () => {
     setAmbientVolume(newVol);
     applyVolume(newVol);
     try {
-      window.localStorage.setItem("jff:music-volume", String(newVol));
+      window.localStorage.setItem("j4fn:music-volume", String(newVol));
     } catch {}
   };
 
@@ -239,7 +239,7 @@ export const AmbientPlayer = () => {
           // Only update local volume from server if the user hasn't explicitly set their own volume
           let hasLocalVol = false;
           try {
-            hasLocalVol = Boolean(window.localStorage.getItem("jff:music-volume"));
+            hasLocalVol = Boolean(window.localStorage.getItem("j4fn:music-volume"));
           } catch {}
           if (!hasLocalVol) {
             setAmbientVolume((prev) => prev === nextVolume ? prev : nextVolume);
@@ -290,8 +290,8 @@ export const AmbientPlayer = () => {
 
     let firstVisit = false;
     try {
-      firstVisit = !window.localStorage.getItem("jff:visited");
-      if (firstVisit) window.localStorage.setItem("jff:visited", "1");
+      firstVisit = !window.localStorage.getItem("j4fn:visited");
+      if (firstVisit) window.localStorage.setItem("j4fn:visited", "1");
     } catch {
       firstVisit = true;
     }
@@ -300,7 +300,7 @@ export const AmbientPlayer = () => {
       try {
         // Marker the Header reads to show the theme-toggle hint for ~10s
         // on the same fresh visit.
-        window.sessionStorage.setItem("jff:fresh-session", "1");
+        window.sessionStorage.setItem("j4fn:fresh-session", "1");
       } catch {
         // sessionStorage blocked — no big deal.
       }
@@ -322,9 +322,9 @@ export const AmbientPlayer = () => {
     let savedPosition = 0;
     let savedVideoId: string | null = null;
     try {
-      wasPlaying = window.localStorage.getItem("jff:music-state") === "playing";
-      savedVideoId = window.localStorage.getItem("jff:music-track");
-      const rawTime = window.localStorage.getItem("jff:music-time");
+      wasPlaying = window.localStorage.getItem("j4fn:music-state") === "playing";
+      savedVideoId = window.localStorage.getItem("j4fn:music-track");
+      const rawTime = window.localStorage.getItem("j4fn:music-time");
       const parsed = rawTime ? Number(rawTime) : 0;
       if (Number.isFinite(parsed) && parsed > 0) savedPosition = Math.floor(parsed);
     } catch {
@@ -508,8 +508,8 @@ export const AmbientPlayer = () => {
       try {
         const t = lastKnownTimeRef.current;
         if (t > 0) {
-          window.localStorage.setItem("jff:music-time", String(Math.floor(t)));
-          window.localStorage.setItem("jff:music-track", activeYoutubeId);
+          window.localStorage.setItem("j4fn:music-time", String(Math.floor(t)));
+          window.localStorage.setItem("j4fn:music-track", activeYoutubeId);
         }
       } catch {
         // localStorage blocked — silent skip.
@@ -538,7 +538,7 @@ export const AmbientPlayer = () => {
     if (!didHydrateRef.current) return;
     try {
       window.localStorage.setItem(
-        "jff:music-state",
+        "j4fn:music-state",
         ambientPlaying ? "playing" : "paused"
       );
     } catch {
@@ -654,8 +654,8 @@ export const AmbientPlayer = () => {
       resumeAfterTheaterRef.current = false;
     };
 
-    window.addEventListener("jff:video-theater", onVideoTheater);
-    return () => window.removeEventListener("jff:video-theater", onVideoTheater);
+    window.addEventListener("j4fn:video-theater", onVideoTheater);
+    return () => window.removeEventListener("j4fn:video-theater", onVideoTheater);
   }, [initiatePause, sendPlayerCommand]);
 
   // Auto-hide the first-visit hint tooltip after 10s.
@@ -838,15 +838,15 @@ export const AmbientPlayer = () => {
           )}
         </button>
 
-        {!isCollapsed && (
-          <div className={`flex items-end gap-0.5 h-5 ml-3 transition-all duration-500 group-hover:opacity-0 group-hover:translate-x-2 group-hover:scale-75 group-hover:pointer-events-none ${
-            ambientPlaying ? "opacity-100 translate-x-0 scale-100" : "opacity-0 -translate-x-3 scale-75 pointer-events-none"
-          }`}>
-            <span className="w-0.5 bg-[#ff0033] rounded-full ambient-wave-1" style={{ animationDelay: "0.1s" }} />
-            <span className="w-0.5 bg-[#ff2d55] rounded-full ambient-wave-2" style={{ animationDelay: "0.3s" }} />
-            <span className="w-0.5 bg-[#ff0033] rounded-full ambient-wave-3" style={{ animationDelay: "0.2s" }} />
-          </div>
-        )}
+        <div className={`flex items-end gap-0.5 h-5 ml-3 transition-all duration-500 ${
+          !isCollapsed ? "group-hover:opacity-0 group-hover:translate-x-2 group-hover:scale-75 group-hover:pointer-events-none" : ""
+        } ${
+          ambientPlaying ? "opacity-100 translate-x-0 scale-100" : "opacity-0 -translate-x-3 scale-75 pointer-events-none"
+        }`}>
+          <span className="w-0.5 bg-[#ff0033] rounded-full ambient-wave-1" style={{ animationDelay: "0.1s" }} />
+          <span className="w-0.5 bg-[#ff2d55] rounded-full ambient-wave-2" style={{ animationDelay: "0.3s" }} />
+          <span className="w-0.5 bg-[#ff0033] rounded-full ambient-wave-3" style={{ animationDelay: "0.2s" }} />
+        </div>
 
         {/* Hover Slide-out Volume Panel (Outer wrapper provides a generous hover zone and a 300ms exit delay to prevent accidental slip-offs) */}
         {!isCollapsed && (
@@ -894,7 +894,7 @@ export const AmbientPlayer = () => {
               e.stopPropagation();
               setIsCollapsed(true);
               try {
-                window.localStorage.setItem("jff:ambient-collapsed", "true");
+                window.localStorage.setItem("j4fn:ambient-collapsed", "true");
               } catch {}
             }}
             className="absolute left-full ml-1.5 lg:left-[-26px] lg:ml-0 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-[#0a0a0a]/95 text-neutral-400 hover:text-white hover:border-[#ff0033]/30 hover:bg-[#ff0033]/20 transition-all duration-300 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:focus:opacity-100 z-50 cursor-pointer shadow-sm group/collapse"

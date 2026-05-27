@@ -46,10 +46,18 @@ export const Hero = () => {
   // the model without a redeploy. Undefined falls back to the SplineRobot
   // component's own default so the site never breaks on a fresh DB.
   const [splineScene, setSplineScene] = useState<string | undefined>(undefined);
-  // Games with logos pulled from /api/games. When present, the bottom
-  // marquee renders logo+name cards; when empty, falls back to the
-  // text-only DEFAULT_MARQUEE list.
   const [games, setGames] = useState<Array<{ id: string; name: string; logoUrl: string }>>([]);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const updateMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    updateMobile();
+    window.addEventListener("resize", updateMobile);
+    return () => window.removeEventListener("resize", updateMobile);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -181,7 +189,7 @@ export const Hero = () => {
                 <Image src={stats.avatar} alt={stats.title} fill sizes="80px" className="object-cover" />
               ) : (
                 <div className="flex h-full w-full items-center justify-center font-display text-2xl font-black">
-                  JFF
+                  J4FN
                 </div>
               )}
               <span className="absolute inset-0 border-neon rounded-2xl" aria-hidden />
@@ -201,28 +209,102 @@ export const Hero = () => {
             <span className="block text-gradient-animated text-glow-red">Fun</span>
           </h1>
 
+          {/* Mobile Spline Robot Sandwich */}
+          {isMobile && (
+            <div className="lg:hidden relative mx-auto aspect-square w-full max-w-[280px] my-6 animate-fade-in">
+              {/* Glow rings behind robot */}
+              <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(255,0,51,0.35)_0%,transparent_55%)] animate-glow-pulse" />
+              <div className="absolute inset-8 rounded-full border border-[#ff0033]/20 animate-spin-slow" />
+              <div className="absolute inset-16 rounded-full border border-[#ff2d55]/15" />
+
+              {/* Orbiting badges */}
+              <div className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2">
+                <span className="absolute h-3 w-3 rounded-full bg-[#ff0033] shadow-[0_0_18px_rgba(255,0,51,0.9)] animate-mobile-orbit" />
+                <span
+                  className="absolute h-2 w-2 rounded-full bg-white shadow-[0_0_14px_rgba(255,255,255,0.8)] animate-mobile-orbit"
+                  style={{ animationDelay: "-7s", animationDuration: "18s" }}
+                />
+                <span
+                  className="absolute h-2.5 w-2.5 rounded-full bg-[#ff2d55] shadow-[0_0_16px_rgba(255,45,85,0.8)] animate-mobile-orbit"
+                  style={{ animationDelay: "-14s", animationDuration: "26s" }}
+                />
+              </div>
+
+              {/* Floating game logos — drifting behind/around the robot */}
+              <FloatingGameLogos games={games} />
+
+              <SplineRobot scene={splineScene} className="relative z-10" />
+            </div>
+          )}
+
           <p className="mt-6 max-w-xl text-base font-medium leading-7 text-neutral-300 animate-fade-in-up [animation-delay:0.15s] sm:text-lg">
             {stats.description}
           </p>
 
-          <div className="mt-8 flex flex-wrap gap-3 animate-fade-in-up [animation-delay:0.2s]">
+          {/* Custom styles for Hero interactions */}
+          <style>{`
+            @keyframes bellShake {
+              0%, 100% { transform: rotate(0deg); }
+              15% { transform: rotate(12deg); }
+              30% { transform: rotate(-10deg); }
+              45% { transform: rotate(8deg); }
+              60% { transform: rotate(-6deg); }
+              75% { transform: rotate(4deg); }
+              90% { transform: rotate(-2deg); }
+            }
+            .group:hover .animate-bell-shake {
+              animation: bellShake 0.65s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+            }
+            @keyframes mobileOrbit {
+              0% { transform: rotate(0deg) translateX(76px) rotate(0deg); }
+              100% { transform: rotate(360deg) translateX(76px) rotate(-360deg); }
+            }
+            .animate-mobile-orbit {
+              animation: mobileOrbit 12s linear infinite;
+            }
+          `}</style>
+
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 animate-fade-in-up [animation-delay:0.2s]">
             <a
               href={`${channelUrl}?sub_confirmation=1`}
               target="_blank"
               rel="noopener noreferrer"
+              className="w-full sm:w-auto"
             >
-              <Button size="lg" glow className="gap-2">
-                <Bell size={18} /> Subscribe
+              <Button
+                size="lg"
+                glow
+                className="w-full justify-center gap-2.5 bg-gradient-to-r from-[#ff0033] to-[#ff2d55] border border-white/20 text-white shadow-[0_0_24px_rgba(255,0,51,0.45)] transition-all duration-300 font-black uppercase tracking-[0.16em]"
+              >
+                <Bell size={16} className="animate-bell-shake transition-transform" />
+                Subscribe
               </Button>
             </a>
-            <a href="#latest">
-              <Button variant="secondary" size="lg" className="gap-2">
-                <Play size={18} /> Latest Videos
+
+            <a href="#latest" className="w-full sm:w-auto">
+              <Button
+                variant="secondary"
+                size="lg"
+                className="w-full justify-center gap-2.5 bg-white/5 border border-white/10 hover:border-white/20 text-neutral-100 hover:bg-white/10 hover:shadow-[0_0_20px_rgba(255,255,255,0.12)] backdrop-blur-md font-bold uppercase tracking-wider"
+              >
+                <Play size={16} className="transition-transform group-hover:scale-110" />
+                Latest Videos
               </Button>
             </a>
-            <a href={channelUrl} target="_blank" rel="noopener noreferrer">
-              <Button variant="outline" size="lg" className="gap-2">
-                <Youtube size={18} /> Channel
+
+            <a
+              href={channelUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full sm:w-auto"
+            >
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full justify-center gap-2.5 border border-white/10 hover:border-[#ff0000]/50 hover:bg-[#ff0000]/10 text-white hover:shadow-[0_0_20px_rgba(255,0,0,0.2)] backdrop-blur-sm transition-all duration-300 font-bold uppercase tracking-wider"
+              >
+                <Youtube size={16} className="transition-transform group-hover:scale-110" />
+                Channel
               </Button>
             </a>
           </div>
@@ -238,25 +320,25 @@ export const Hero = () => {
               return (
                 <div
                   key={item.label}
-                  className="group relative overflow-hidden rounded-xl border border-white/10 bg-[#131313]/70 p-3 backdrop-blur-xl glass-hover sm:p-4"
+                  className="group relative overflow-hidden rounded-xl border border-white/10 bg-[#131313]/70 p-2.5 sm:p-4 backdrop-blur-xl glass-hover"
                   style={{
                     transform: `perspective(900px) rotateX(calc(var(--py) * ${4 + idx * 2}deg)) rotateY(calc(var(--px) * ${-4 - idx * 2}deg))`,
                   }}
                 >
                   <div className="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-[#ff0033]/12 blur-2xl transition-opacity group-hover:opacity-100" />
                   <div className="relative">
-                    <div className="mb-1.5 flex h-7 w-7 items-center justify-center rounded-lg bg-[#ff0033]/15 text-[#ff2d55] sm:mb-2 sm:h-9 sm:w-9">
-                      <Icon size={14} className="sm:hidden" />
+                    <div className="mb-1 flex h-6 w-6 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-[#ff0033]/15 text-[#ff2d55] sm:mb-2">
+                      <Icon size={12} className="sm:hidden" />
                       <Icon size={17} className="hidden sm:block" />
                     </div>
-                    <div className="font-display text-lg font-black text-white sm:text-2xl">
+                    <div className="font-display text-sm font-black text-white sm:text-2xl">
                       {loading ? (
-                        <span className="block h-6 w-12 animate-pulse rounded bg-white/10 sm:h-7 sm:w-16" />
+                        <span className="block h-5 w-10 animate-pulse rounded bg-white/10 sm:h-7 sm:w-16" />
                       ) : (
                         item.value
                       )}
                     </div>
-                    <p className="mt-1 text-[9px] font-black uppercase tracking-[0.18em] text-neutral-500 sm:text-[10px] sm:tracking-[0.22em]">
+                    <p className="mt-1 text-[8px] font-black uppercase tracking-[0.14em] text-neutral-500 sm:text-[10px] sm:tracking-[0.22em]">
                       {item.label}
                     </p>
                   </div>
@@ -267,57 +349,59 @@ export const Hero = () => {
         </div>
 
         {/* RIGHT: Spline 3D Robot */}
-        <div className="relative lg:col-span-5">
-          <div className="relative mx-auto aspect-square w-full max-w-[300px] sm:max-w-[460px] lg:max-w-[560px]">
-            {/* Glow rings behind robot */}
-            <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(255,0,51,0.35)_0%,transparent_55%)] animate-glow-pulse" />
-            <div className="absolute inset-8 rounded-full border border-[#ff0033]/20 animate-spin-slow" />
-            <div className="absolute inset-16 rounded-full border border-[#ff2d55]/15" />
+        {!isMobile && (
+          <div className="relative hidden lg:block lg:col-span-5">
+            <div className="relative mx-auto aspect-square w-full max-w-[300px] sm:max-w-[460px] lg:max-w-[560px]">
+              {/* Glow rings behind robot */}
+              <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(255,0,51,0.35)_0%,transparent_55%)] animate-glow-pulse" />
+              <div className="absolute inset-8 rounded-full border border-[#ff0033]/20 animate-spin-slow" />
+              <div className="absolute inset-16 rounded-full border border-[#ff2d55]/15" />
 
-            {/* Orbiting badges */}
-            <div className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2">
-              <span className="absolute h-3 w-3 rounded-full bg-[#ff0033] shadow-[0_0_18px_rgba(255,0,51,0.9)] animate-orbit" />
-              <span
-                className="absolute h-2 w-2 rounded-full bg-white shadow-[0_0_14px_rgba(255,255,255,0.8)] animate-orbit"
-                style={{ animationDelay: "-7s", animationDuration: "18s" }}
-              />
-              <span
-                className="absolute h-2.5 w-2.5 rounded-full bg-[#ff2d55] shadow-[0_0_16px_rgba(255,45,85,0.8)] animate-orbit"
-                style={{ animationDelay: "-14s", animationDuration: "26s" }}
-              />
+              {/* Orbiting badges */}
+              <div className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2">
+                <span className="absolute h-3 w-3 rounded-full bg-[#ff0033] shadow-[0_0_18px_rgba(255,0,51,0.9)] animate-orbit" />
+                <span
+                  className="absolute h-2 w-2 rounded-full bg-white shadow-[0_0_14px_rgba(255,255,255,0.8)] animate-orbit"
+                  style={{ animationDelay: "-7s", animationDuration: "18s" }}
+                />
+                <span
+                  className="absolute h-2.5 w-2.5 rounded-full bg-[#ff2d55] shadow-[0_0_16px_rgba(255,45,85,0.8)] animate-orbit"
+                  style={{ animationDelay: "-14s", animationDuration: "26s" }}
+                />
+              </div>
+
+              {/* Floating game logos — drifting behind the robot */}
+              <FloatingGameLogos games={games} className="hidden sm:block" />
+
+              <SplineRobot scene={splineScene} className="relative z-10" />
             </div>
 
-            {/* Floating game logos — drifting behind the robot */}
-            <FloatingGameLogos games={games} className="hidden sm:block" />
-
-            <SplineRobot scene={splineScene} className="relative z-10" />
-          </div>
-
-          {/* Scroll Down mouse wheel indicator centered under the robot */}
-          <div
-            onClick={() => {
-              document.getElementById("about")?.scrollIntoView({ behavior: "smooth" });
-            }}
-            className="absolute -bottom-20 left-1/2 z-20 hidden -translate-x-1/2 cursor-pointer select-none flex-col items-center gap-2 transition-all duration-300 hover:scale-105 sm:flex"
-          >
-            <style>{`
-              @keyframes scrollDotMove {
-                0% { transform: translateY(0); opacity: 1; }
-                50% { transform: translateY(6px); opacity: 0.3; }
-                100% { transform: translateY(0); opacity: 1; }
-              }
-              .animate-scroll-dot-move {
-                animation: scrollDotMove 1.6s ease-in-out infinite;
-              }
-            `}</style>
-            <div className="w-5 h-8 border border-neutral-400 rounded-full flex justify-center p-1.5 group-hover:border-[#ff0033] group-hover:shadow-[0_0_10px_rgba(255,0,51,0.25)] transition-all duration-300">
-              <div className="w-1 h-2 bg-[#ff0033] rounded-full animate-scroll-dot-move shadow-[0_0_8px_rgba(255,0,51,0.8)]" />
+            {/* Scroll Down mouse wheel indicator centered under the robot */}
+            <div
+              onClick={() => {
+                document.getElementById("about")?.scrollIntoView({ behavior: "smooth" });
+              }}
+              className="absolute -bottom-20 left-1/2 z-20 hidden -translate-x-1/2 cursor-pointer select-none flex-col items-center gap-2 transition-all duration-300 hover:scale-105 sm:flex"
+            >
+              <style>{`
+                @keyframes scrollDotMove {
+                  0% { transform: translateY(0); opacity: 1; }
+                  50% { transform: translateY(6px); opacity: 0.3; }
+                  100% { transform: translateY(0); opacity: 1; }
+                }
+                .animate-scroll-dot-move {
+                  animation: scrollDotMove 1.6s ease-in-out infinite;
+                }
+              `}</style>
+              <div className="w-5 h-8 border border-neutral-400 rounded-full flex justify-center p-1.5 group-hover:border-[#ff0033] group-hover:shadow-[0_0_10px_rgba(255,0,51,0.25)] transition-all duration-300">
+                <div className="w-1 h-2 bg-[#ff0033] rounded-full animate-scroll-dot-move shadow-[0_0_8px_rgba(255,0,51,0.8)]" />
+              </div>
+              <span className="text-[9px] font-black uppercase tracking-[0.24em] text-neutral-400 group-hover:text-glow-red group-hover:text-white transition-all duration-300 whitespace-nowrap">
+                Scroll to Deploy
+              </span>
             </div>
-            <span className="text-[9px] font-black uppercase tracking-[0.24em] text-neutral-400 group-hover:text-glow-red group-hover:text-white transition-all duration-300 whitespace-nowrap">
-              Scroll to Deploy
-            </span>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Marquee strip at bottom. Two render modes:

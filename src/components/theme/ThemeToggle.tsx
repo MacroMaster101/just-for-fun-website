@@ -46,11 +46,59 @@ export const ThemeToggle = ({ showHint = false }: ThemeToggleProps = {}) => {
       return;
     }
 
-    doc.documentElement.classList.add("theme-switching");
-    setTheme(value);
-    window.setTimeout(() => {
-      doc.documentElement.classList.remove("theme-switching");
-    }, 320);
+    // Fallback for browsers without View Transitions (Safari / Firefox / mobile).
+    // Instead of transitioning thousands of elements (causes massive lag),
+    // we create a single full-screen overlay, fade it to opaque, swap the
+    // theme instantly while hidden, then fade the overlay out. This is ONE
+    // GPU-composited layer — zero per-element transition cost.
+    const overlay = doc.createElement("div");
+    Object.assign(overlay.style, {
+      position: "fixed",
+      inset: "0",
+      zIndex: "99999",
+      backgroundColor: value === "light" ? "#f5f5f7" : "#060606",
+      opacity: "0",
+      transition: "opacity 0.18s ease-in",
+      pointerEvents: "none",
+    });
+    doc.body.appendChild(overlay);
+
+    // Force layout so the initial opacity:0 is committed before we transition
+    overlay.getBoundingClientRect();
+    overlay.style.opacity = "1";
+
+    // After the overlay is fully opaque, swap theme instantly underneath
+    const onFadeIn = () => {
+      overlay.removeEventListener("transitionend", onFadeIn);
+      doc.documentElement.classList.add("theme-switching");
+      setTheme(value);
+
+      // Let one frame pass so the browser repaints with the new theme
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          doc.documentElement.classList.remove("theme-switching");
+          overlay.style.transition = "opacity 0.18s ease-out";
+          overlay.style.opacity = "0";
+
+          const onFadeOut = () => {
+            overlay.removeEventListener("transitionend", onFadeOut);
+            overlay.remove();
+          };
+          overlay.addEventListener("transitionend", onFadeOut);
+
+          // Safety cleanup in case transitionend doesn't fire
+          setTimeout(() => overlay.remove(), 400);
+        });
+      });
+    };
+    overlay.addEventListener("transitionend", onFadeIn);
+
+    // Safety: if transitionend never fires, proceed anyway
+    setTimeout(() => {
+      if (doc.body.contains(overlay)) {
+        onFadeIn();
+      }
+    }, 300);
   };
 
   return (

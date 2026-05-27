@@ -5,7 +5,7 @@
  * ProfileModal, Crew Wall, etc.
  *
  * The `bottts-neutral` style fits the cyberpunk red theme; backgrounds
- * are forced into the JFF gradient so every fallback feels on-brand.
+ * are forced into the J4FN gradient so every fallback feels on-brand.
  */
 export const diceBearAvatar = (seed: string): string =>
   `https://api.dicebear.com/9.x/bottts-neutral/svg?seed=${encodeURIComponent(seed)}&backgroundType=gradientLinear&backgroundColor=ff0033,b30024,1c1c1c&radius=50`;

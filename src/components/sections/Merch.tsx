@@ -175,7 +175,7 @@ export const Merch = () => {
           Creator Shop
         </h2>
         <p className="text-neutral-400 text-xs sm:text-sm tracking-wider uppercase font-semibold">
-          Rep the JFF brand with heavy-duty premium armor and equipment drops!
+          Rep the J4FN brand with heavy-duty premium armor and equipment drops!
         </p>
       </div>
 
@@ -317,7 +317,7 @@ export const Merch = () => {
                     <Sparkles size={12} /> Purchase Complete!
                   </h4>
                   <p className="text-[10px] leading-relaxed">
-                    Holographic transmission success. Merch order simulated and sent to the JFF Loot division. Thank you for supporting!
+                    Holographic transmission success. Merch order simulated and sent to the J4FN Loot division. Thank you for supporting!
                   </p>
                   <button
                     onClick={() => setCheckoutSuccess(false)}
@@ -449,7 +449,7 @@ const ComingSoonPanel = ({ loading }: { loading: boolean }) => (
           <p className="text-neutral-400 text-sm leading-relaxed">
             {loading
               ? "Pinging the loot vault…"
-              : "The JFF Creator Shop is currently being forged in the cyber-foundry. Hoodies, caps, deskmats, and limited drops are inbound. Stay tuned for the first season launch."}
+              : "The J4FN Creator Shop is currently being forged in the cyber-foundry. Hoodies, caps, deskmats, and limited drops are inbound. Stay tuned for the first season launch."}
           </p>
         </div>
 
