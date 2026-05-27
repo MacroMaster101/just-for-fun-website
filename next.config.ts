@@ -1,14 +1,11 @@
 import type { NextConfig } from "next";
 
+const isProduction = process.env.NODE_ENV === "production";
+
 /**
  * Security response headers applied to every route. We allow what we
  * actually need (YouTube iframes, Supabase storage, Spline 3D, Google
  * fonts) and deny everything else.
- *
- * CSP is set in Report-Only mode at first if you want a soft rollout —
- * change `Content-Security-Policy-Report-Only` to `Content-Security-Policy`
- * below to enforce. Keep an eye on browser console for blocked-resource
- * reports for a day or two before enforcing.
  */
 const ContentSecurityPolicy = [
   "default-src 'self'",
@@ -52,15 +49,15 @@ const securityHeaders = [
     key: "Strict-Transport-Security",
     value: "max-age=63072000; includeSubDomains; preload",
   },
-  // Content Security Policy — initially Report-Only so a missed source
-  // doesn't break the site. Flip the header name to enforce.
+  // Enforce CSP in production. Keep it report-only in local development so
+  // dev-only tooling can warn without breaking HMR or experiments.
   {
-    key: "Content-Security-Policy-Report-Only",
+    key: isProduction
+      ? "Content-Security-Policy"
+      : "Content-Security-Policy-Report-Only",
     value: ContentSecurityPolicy,
   },
 ];
-
-const isProduction = process.env.NODE_ENV === "production";
 
 const nextConfig: NextConfig = {
   turbopack: {
