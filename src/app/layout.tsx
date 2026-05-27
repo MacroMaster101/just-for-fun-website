@@ -5,6 +5,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { CustomCursor } from "@/components/ui/CustomCursor";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { YouTubeProvider } from "@/components/providers/YouTubeProvider";
+import { ConsoleSilencer } from "@/components/providers/ConsoleSilencer";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { AmbientPlayer } from "@/components/layout/AmbientPlayer";
 import { BugReportButton } from "@/components/layout/BugReportButton";
@@ -60,6 +61,7 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <YouTubeProvider>
+              <ConsoleSilencer />
               <CustomCursor />
               <ScrollRestorer />
               {children}

@@ -1,19 +1,34 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import type { User } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
 
 const KINDS = new Set(["video", "sound"]);
 
+async function getFavoriteUser(): Promise<{
+  user: User | null;
+  authUnavailable: boolean;
+}> {
+  try {
+    const supabase = await supabaseServer();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    return { user, authUnavailable: false };
+  } catch (error) {
+    console.warn("Favorites auth check unavailable:", error);
+    return { user: null, authUnavailable: true };
+  }
+}
+
 /** GET — list current user's favorites, optionally filtered by ?kind=video|sound */
 export async function GET(request: Request) {
-  const supabase = await supabaseServer();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user } = await getFavoriteUser();
   if (!user) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    return NextResponse.json({ favorites: [] }, { status: 200 });
   }
 
   const kind = new URL(request.url).searchParams.get("kind");
@@ -35,10 +50,10 @@ export async function GET(request: Request) {
 
 /** POST — add a favorite. Body: { kind: "video"|"sound", itemId, itemTitle? } */
 export async function POST(request: Request) {
-  const supabase = await supabaseServer();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user, authUnavailable } = await getFavoriteUser();
+  if (authUnavailable) {
+    return NextResponse.json({ error: "auth unavailable" }, { status: 503 });
+  }
   if (!user) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
@@ -86,10 +101,10 @@ export async function POST(request: Request) {
 
 /** DELETE — remove a favorite. Body: { kind, itemId } */
 export async function DELETE(request: Request) {
-  const supabase = await supabaseServer();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user, authUnavailable } = await getFavoriteUser();
+  if (authUnavailable) {
+    return NextResponse.json({ error: "auth unavailable" }, { status: 503 });
+  }
   if (!user) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }

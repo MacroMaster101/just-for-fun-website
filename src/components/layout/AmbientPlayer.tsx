@@ -975,17 +975,17 @@ export const AmbientPlayer = () => {
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,0,51,0.15),transparent_70%)] pointer-events-none" />
           <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,255,0,0.06))] bg-[size:100%_4px,6px_100%] pointer-events-none" />
 
-          <div className="relative text-center max-w-sm px-6 py-10 rounded-3xl border border-white/10 bg-[#050505]/65 backdrop-blur-xl shadow-2xl flex flex-col items-center gap-6 group">
+          <div className="relative isolate text-center max-w-sm px-6 py-10 rounded-3xl border border-white/10 bg-[#050505]/65 backdrop-blur-xl shadow-2xl flex flex-col items-center gap-6 group">
             {/* Glowing active outline */}
-            <div className="absolute -inset-[1px] rounded-3xl bg-gradient-to-r from-[#ff0033] to-[#ff2d55] opacity-30 blur-sm group-hover:opacity-60 transition duration-500" />
+            <div className="pointer-events-none absolute -inset-[1px] z-0 rounded-3xl bg-gradient-to-r from-[#ff0033] to-[#ff2d55] opacity-30 blur-sm transition duration-500 group-hover:opacity-60" />
             
             {/* Logo Icon */}
-            <div className="relative h-16 w-16 rounded-full bg-[#0a0a0a] border border-white/10 flex items-center justify-center shadow-2xl animate-pulse">
+            <div className="relative z-10 h-16 w-16 rounded-full bg-[#0a0a0a] border border-white/10 flex items-center justify-center shadow-2xl animate-pulse">
               <span className="text-2xl">🎮</span>
-              <div className="absolute inset-0 rounded-full bg-[#ff0033]/10 animate-ping" />
+              <div className="pointer-events-none absolute inset-0 rounded-full bg-[#ff0033]/10 animate-ping" />
             </div>
 
-            <div className="space-y-1">
+            <div className="relative z-10 space-y-1">
               <h1 className="font-display font-black text-xl uppercase tracking-widest text-white drop-shadow-[0_0_12px_rgba(255,255,255,0.1)]">
                 JUST FOR FUN
               </h1>
@@ -994,11 +994,12 @@ export const AmbientPlayer = () => {
               </p>
             </div>
 
-            <p className="text-[11px] text-neutral-400 font-medium leading-relaxed max-w-xs text-center">
+            <p className="relative z-10 text-[11px] text-neutral-400 font-medium leading-relaxed max-w-xs text-center">
               Welcome to the Arena. We play hand-selected Synthwave beats to elevate your stay. Click below to tune in.
             </p>
 
             <button
+              type="button"
               onClick={() => {
                 setShowEnterScreen(false);
                 sendPlayerCommand("setVolume", [0]);
@@ -1006,7 +1007,7 @@ export const AmbientPlayer = () => {
                 setAmbientPlaying(true);
                 setBootAutoplay(false);
               }}
-              className="mt-1 px-7 py-3 bg-gradient-to-r from-[#ff0033] to-[#ff2d55] text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-[0_0_20px_rgba(255,0,51,0.4)] hover:shadow-[0_0_30px_rgba(255,0,51,0.6)] hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer flex items-center gap-2 border border-white/20"
+              className="relative z-10 mt-1 px-7 py-3 bg-gradient-to-r from-[#ff0033] to-[#ff2d55] text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-[0_0_20px_rgba(255,0,51,0.4)] hover:shadow-[0_0_30px_rgba(255,0,51,0.6)] hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer flex items-center gap-2 border border-white/20"
             >
               <span>📻 Tune In & Enter</span>
             </button>

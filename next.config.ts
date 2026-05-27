@@ -60,9 +60,14 @@ const securityHeaders = [
   },
 ];
 
+const isProduction = process.env.NODE_ENV === "production";
+
 const nextConfig: NextConfig = {
   turbopack: {
     root: __dirname,
+  },
+  compiler: {
+    removeConsole: isProduction,
   },
   async headers() {
     return [

@@ -1,7 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
+import { createFetchWithTimeout } from "@/lib/supabase/fetchWithTimeout";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseFetch = createFetchWithTimeout();
 
 /**
  * Service-role Supabase client. BYPASSES RLS — only use in server-side
@@ -17,5 +19,8 @@ export function supabaseAdmin() {
   }
   return createClient(url, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false },
+    global: {
+      fetch: supabaseFetch,
+    },
   });
 }

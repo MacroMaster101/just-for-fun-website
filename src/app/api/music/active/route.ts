@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 const DEFAULT_VOLUME = 35;
+const QUERY_TIMEOUT_MS = 3000;
 
 function parseVolume(value?: string | null) {
   const parsed = Number(value);
@@ -13,12 +14,25 @@ function parseVolume(value?: string | null) {
 
 export async function GET() {
   try {
-    const activeTrack = await prisma.musicTrack.findFirst({
-      where: { isActive: true },
+    const query = Promise.all([
+      prisma.musicTrack.findFirst({
+        where: { isActive: true },
+      }),
+      prisma.siteSetting.findUnique({
+        where: { key: "music.volume" },
+      }),
+    ]).catch((error) => {
+      console.error("GET Active Music DB Error:", error);
+      return null;
     });
-    const volumeSetting = await prisma.siteSetting.findUnique({
-      where: { key: "music.volume" },
-    });
+
+    const result = await Promise.race([
+      query,
+      new Promise<null>((resolve) =>
+        setTimeout(() => resolve(null), QUERY_TIMEOUT_MS)
+      ),
+    ]);
+    const [activeTrack, volumeSetting] = result ?? [null, null];
     const volume = parseVolume(volumeSetting?.value);
 
     if (activeTrack) {

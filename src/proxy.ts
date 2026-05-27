@@ -1,8 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { createFetchWithTimeout } from "@/lib/supabase/fetchWithTimeout";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseFetch = createFetchWithTimeout();
 
 /**
  * Runs on every request matched by the `config.matcher` below.
@@ -60,6 +62,9 @@ export async function proxy(request: NextRequest) {
 
   try {
     const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: {
+        fetch: supabaseFetch,
+      },
       cookies: {
         getAll() {
           return request.cookies.getAll();
