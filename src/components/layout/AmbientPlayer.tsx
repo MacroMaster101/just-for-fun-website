@@ -60,19 +60,22 @@ export const AmbientPlayer = () => {
   const isMobileRef = useRef(false);
 
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect -- one-time hydration from localStorage */
     const checkMobile = () => window.innerWidth < 1024;
     isMobileRef.current = checkMobile();
 
-    if (isMobileRef.current) {
-      // Mobile: ALWAYS start collapsed (half-hidden), ignore localStorage
-      setIsCollapsed(true);
-    } else {
-      // Desktop: respect localStorage preference
-      try {
-        const saved = window.localStorage.getItem("jff:ambient-collapsed");
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration from localStorage
-        if (saved === "true") setIsCollapsed(true);
-      } catch {}
+    try {
+      const saved = window.localStorage.getItem("jff:ambient-collapsed");
+      if (saved === "true") {
+        setIsCollapsed(true);
+      } else if (saved === "false") {
+        setIsCollapsed(false);
+      } else {
+        // No saved preference: default to collapsed on mobile, expanded on desktop
+        setIsCollapsed(isMobileRef.current);
+      }
+    } catch {
+      setIsCollapsed(isMobileRef.current);
     }
 
     // Listen for viewport changes (e.g. rotating device, responsive mode)
@@ -87,6 +90,7 @@ export const AmbientPlayer = () => {
     };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
   const handlePlayerClick = () => {
@@ -741,7 +745,7 @@ export const AmbientPlayer = () => {
         className={`fixed bottom-24 lg:bottom-4 z-[100] group flex items-center scale-90 origin-bottom-left sm:scale-100 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
           isCollapsed
             ? "left-0 -translate-x-[36px] opacity-75 hover:opacity-100 hover:-translate-x-[24px]"
-            : "left-1 lg:left-10 translate-x-0"
+            : "left-1 lg:left-8 translate-x-0"
         }`}
       >
         <style dangerouslySetInnerHTML={{ __html: `
@@ -893,7 +897,7 @@ export const AmbientPlayer = () => {
                 window.localStorage.setItem("jff:ambient-collapsed", "true");
               } catch {}
             }}
-            className="absolute left-[-26px] top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-[#0a0a0a]/95 text-neutral-400 hover:text-white hover:border-[#ff0033]/30 hover:bg-[#ff0033]/20 transition-all duration-300 opacity-0 group-hover:opacity-100 focus:opacity-100 z-50 cursor-pointer shadow-sm group/collapse"
+            className="absolute left-full ml-1.5 lg:left-[-26px] lg:ml-0 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-[#0a0a0a]/95 text-neutral-400 hover:text-white hover:border-[#ff0033]/30 hover:bg-[#ff0033]/20 transition-all duration-300 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:focus:opacity-100 z-50 cursor-pointer shadow-sm group/collapse"
             aria-label="Hide music player"
           >
             <ChevronLeft size={10} />

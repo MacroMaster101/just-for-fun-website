@@ -23,19 +23,22 @@ export const BugReportButton = () => {
   const isMobileRef = useRef(false);
 
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect -- one-time hydration from localStorage */
     const checkMobile = () => window.innerWidth < 1024;
     isMobileRef.current = checkMobile();
 
-    if (isMobileRef.current) {
-      // Mobile: ALWAYS start collapsed (half-hidden), ignore localStorage
-      setIsCollapsed(true);
-    } else {
-      // Desktop: respect localStorage preference
-      try {
-        const saved = window.localStorage.getItem("jff:bug-collapsed");
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration from localStorage
-        if (saved === "true") setIsCollapsed(true);
-      } catch {}
+    try {
+      const saved = window.localStorage.getItem("jff:bug-collapsed");
+      if (saved === "true") {
+        setIsCollapsed(true);
+      } else if (saved === "false") {
+        setIsCollapsed(false);
+      } else {
+        // No saved preference: default to collapsed on mobile, expanded on desktop
+        setIsCollapsed(isMobileRef.current);
+      }
+    } catch {
+      setIsCollapsed(isMobileRef.current);
     }
 
     // Listen for viewport changes (e.g. rotating device, responsive mode)
@@ -50,6 +53,7 @@ export const BugReportButton = () => {
     };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
   const handleButtonClick = () => {
@@ -150,7 +154,7 @@ export const BugReportButton = () => {
   return (
     <>
       <div 
-        className={`fixed bottom-24 lg:bottom-4 z-[90] group flex items-center transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+        className={`fixed bottom-24 lg:bottom-4 z-[90] group flex items-center scale-90 origin-bottom-right sm:scale-100 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
           isCollapsed
             ? "right-0 translate-x-[36px] opacity-75 hover:opacity-100 hover:translate-x-[24px]"
             : "right-1 lg:right-8 translate-x-0"
@@ -192,7 +196,7 @@ export const BugReportButton = () => {
                 window.localStorage.setItem("jff:bug-collapsed", "true");
               } catch {}
             }}
-            className="absolute right-[-26px] top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-[#0a0a0a]/95 text-neutral-400 hover:text-white hover:border-[#ff0033]/30 hover:bg-[#ff0033]/20 transition-all duration-300 opacity-0 group-hover:opacity-100 focus:opacity-100 z-50 cursor-pointer shadow-sm group/collapse"
+            className="absolute right-full mr-1.5 lg:right-[-26px] lg:mr-0 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-[#0a0a0a]/95 text-neutral-400 hover:text-white hover:border-[#ff0033]/30 hover:bg-[#ff0033]/20 transition-all duration-300 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:focus:opacity-100 z-50 cursor-pointer shadow-sm group/collapse"
             aria-label="Hide bug button"
           >
             <ChevronRight size={10} />
