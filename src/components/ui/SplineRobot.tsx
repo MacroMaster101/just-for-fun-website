@@ -128,11 +128,18 @@ export const SplineRobot = ({
     let lastEvent: PointerEvent | null = null;
     let pointerInside = false;
     let canvasRect = canvas.getBoundingClientRect();
+    let containerRect = container.getBoundingClientRect();
     let heroRect = heroSection.getBoundingClientRect();
+    let activeTouchPointerId: number | null = null;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchGesture: "idle" | "pending" | "drag" | "scroll" = "idle";
+    const touchSlop = 8;
 
     const clamp = (value: number) => Math.min(Math.max(value, 0), 1);
     const refreshRects = () => {
       canvasRect = canvas.getBoundingClientRect();
+      containerRect = container.getBoundingClientRect();
       heroRect = heroSection.getBoundingClientRect();
     };
 
@@ -140,8 +147,9 @@ export const SplineRobot = ({
       type: "pointerenter" | "pointermove" | "pointerleave" | "pointerdown" | "pointerup",
       e: PointerEvent
     ) => {
-      const nx = clamp((e.clientX - heroRect.left) / heroRect.width);
-      const ny = clamp((e.clientY - heroRect.top) / heroRect.height);
+      const sourceRect = e.pointerType === "touch" ? containerRect : heroRect;
+      const nx = clamp((e.clientX - sourceRect.left) / sourceRect.width);
+      const ny = clamp((e.clientY - sourceRect.top) / sourceRect.height);
       const clientX = canvasRect.left + nx * canvasRect.width;
       const clientY = canvasRect.top + ny * canvasRect.height;
       const pageX = clientX + window.scrollX;
@@ -191,9 +199,56 @@ export const SplineRobot = ({
       dispatchPointer("pointermove", lastEvent);
     };
 
+    const queuePointerMove = (e: PointerEvent) => {
+      lastEvent = e;
+      if (!raf) raf = requestAnimationFrame(flush);
+    };
+
+    const endTouchProxy = (e: PointerEvent, sendPointerUp: boolean) => {
+      if (activeTouchPointerId !== e.pointerId) return false;
+      if (raf) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+      if (touchGesture !== "scroll" && pointerInside) {
+        if (sendPointerUp) dispatchPointer("pointerup", e);
+        dispatchPointer("pointerleave", e);
+      }
+      lastEvent = null;
+      pointerInside = false;
+      activeTouchPointerId = null;
+      touchGesture = "idle";
+      return true;
+    };
+
     const onHeroPointerMove = (e: PointerEvent) => {
       // Prevent recursive trigger loops from proxied events.
       if (!e.isTrusted) return;
+
+      if (e.pointerType === "touch") {
+        if (activeTouchPointerId !== e.pointerId) return;
+
+        const dx = e.clientX - touchStartX;
+        const dy = e.clientY - touchStartY;
+        if (touchGesture === "pending" && Math.hypot(dx, dy) > touchSlop) {
+          touchGesture = Math.abs(dy) > Math.abs(dx) * 1.15 ? "scroll" : "drag";
+          if (touchGesture === "scroll") {
+            if (raf) {
+              cancelAnimationFrame(raf);
+              raf = 0;
+            }
+            lastEvent = null;
+            if (pointerInside) {
+              dispatchPointer("pointerleave", e);
+              pointerInside = false;
+            }
+            return;
+          }
+        }
+
+        if (touchGesture !== "scroll") queuePointerMove(e);
+        return;
+      }
 
       // Native pointer events are best while hovering the actual Spline canvas.
       if (container.contains(e.target as Node)) {
@@ -201,12 +256,12 @@ export const SplineRobot = ({
         return;
       }
 
-      lastEvent = e;
-      if (!raf) raf = requestAnimationFrame(flush);
+      queuePointerMove(e);
     };
 
     const onHeroPointerLeave = (e: PointerEvent) => {
       if (!e.isTrusted) return;
+      if (e.pointerType === "touch" && endTouchProxy(e, false)) return;
       if (raf) {
         cancelAnimationFrame(raf);
         raf = 0;
@@ -220,12 +275,34 @@ export const SplineRobot = ({
 
     const onHeroPointerDown = (e: PointerEvent) => {
       if (!e.isTrusted) return;
+      if (e.pointerType === "touch") {
+        if (!container.contains(e.target as Node)) return;
+        if (activeTouchPointerId !== null && activeTouchPointerId !== e.pointerId) return;
+
+        activeTouchPointerId = e.pointerId;
+        touchStartX = e.clientX;
+        touchStartY = e.clientY;
+        touchGesture = "pending";
+        if (!pointerInside) {
+          dispatchPointer("pointerenter", e);
+          pointerInside = true;
+        }
+        dispatchPointer("pointerdown", e);
+        queuePointerMove(e);
+        return;
+      }
       dispatchPointer("pointerdown", e);
     };
 
     const onHeroPointerUp = (e: PointerEvent) => {
       if (!e.isTrusted) return;
+      if (e.pointerType === "touch" && endTouchProxy(e, true)) return;
       dispatchPointer("pointerup", e);
+    };
+
+    const onHeroPointerCancel = (e: PointerEvent) => {
+      if (!e.isTrusted) return;
+      if (e.pointerType === "touch") endTouchProxy(e, false);
     };
 
     refreshRects();
@@ -238,6 +315,7 @@ export const SplineRobot = ({
     heroSection.addEventListener("pointerleave", onHeroPointerLeave, { passive: true });
     heroSection.addEventListener("pointerdown", onHeroPointerDown, { passive: true });
     heroSection.addEventListener("pointerup", onHeroPointerUp, { passive: true });
+    heroSection.addEventListener("pointercancel", onHeroPointerCancel, { passive: true });
 
     return () => {
       if (raf) cancelAnimationFrame(raf);
@@ -248,14 +326,36 @@ export const SplineRobot = ({
       heroSection.removeEventListener("pointerleave", onHeroPointerLeave);
       heroSection.removeEventListener("pointerdown", onHeroPointerDown);
       heroSection.removeEventListener("pointerup", onHeroPointerUp);
+      heroSection.removeEventListener("pointercancel", onHeroPointerCancel);
     };
+  }, [loaded]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    const media = window.matchMedia("(pointer: coarse)");
+    const applyTouchAction = () => {
+      const action = media.matches ? "pan-y pinch-zoom" : "auto";
+      container.style.touchAction = action;
+      container.querySelectorAll<HTMLElement>("canvas").forEach((canvas) => {
+        canvas.style.touchAction = action;
+      });
+    };
+
+    applyTouchAction();
+    media.addEventListener("change", applyTouchAction);
+
+    return () => media.removeEventListener("change", applyTouchAction);
   }, [loaded]);
 
   return (
     <div
       ref={containerRef}
       className={`relative h-full w-full ${className}`}
-      style={{ touchAction: "none" }}
+      style={{ touchAction: "pan-y pinch-zoom" }}
     >
       {/* Placeholder is always rendered underneath. Once Spline loads,
           it fades in on top — placeholder fades out via opacity. */}
