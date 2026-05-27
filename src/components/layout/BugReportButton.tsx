@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import { AlertCircle, Bug, CheckCircle2, Send, X } from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { AlertCircle, Bug, CheckCircle2, Send, X, ChevronRight } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
@@ -17,6 +17,51 @@ export const BugReportButton = () => {
   const [guestEmail, setGuestEmail] = useState("");
   const [status, setStatus] = useState<SubmitState>("idle");
   const [error, setError] = useState<string | null>(null);
+
+  // Collapsed state for sliding the bug button off-screen
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const isMobileRef = useRef(false);
+
+  useEffect(() => {
+    const checkMobile = () => window.innerWidth < 1024;
+    isMobileRef.current = checkMobile();
+
+    if (isMobileRef.current) {
+      // Mobile: ALWAYS start collapsed (half-hidden), ignore localStorage
+      setIsCollapsed(true);
+    } else {
+      // Desktop: respect localStorage preference
+      try {
+        const saved = window.localStorage.getItem("jff:bug-collapsed");
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration from localStorage
+        if (saved === "true") setIsCollapsed(true);
+      } catch {}
+    }
+
+    // Listen for viewport changes (e.g. rotating device, responsive mode)
+    const onResize = () => {
+      const wasMobile = isMobileRef.current;
+      const nowMobile = checkMobile();
+      isMobileRef.current = nowMobile;
+      if (!wasMobile && nowMobile) {
+        // Switched to mobile → collapse
+        setIsCollapsed(true);
+      }
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  const handleButtonClick = () => {
+    if (isCollapsed) {
+      setIsCollapsed(false);
+      try {
+        window.localStorage.setItem("jff:bug-collapsed", "false");
+      } catch {}
+    } else {
+      setOpen(true);
+    }
+  };
 
   const userName = useMemo(
     () =>
@@ -104,19 +149,58 @@ export const BugReportButton = () => {
 
   return (
     <>
-      <div className="fixed bottom-4 right-4 z-[90] group">
-        <div className="pointer-events-none absolute bottom-full right-0 mb-3 translate-y-1 whitespace-nowrap rounded-full border border-white/10 bg-[#0a0a0a]/95 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-white opacity-0 shadow-[0_12px_28px_rgba(0,0,0,0.35)] backdrop-blur transition group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100">
-          Report a bug
-          <span className="absolute right-5 top-full h-2 w-2 -translate-y-1 rotate-45 border-b border-r border-white/10 bg-[#0a0a0a]/95" />
-        </div>
+      <div 
+        className={`fixed bottom-24 lg:bottom-4 z-[90] group flex items-center transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+          isCollapsed
+            ? "right-0 translate-x-[36px] opacity-75 hover:opacity-100 hover:translate-x-[24px]"
+            : "right-1 lg:right-8 translate-x-0"
+        }`}
+      >
+        {!isCollapsed && (
+          <div className="pointer-events-none absolute bottom-full right-0 mb-3 translate-y-1 whitespace-nowrap rounded-full border border-white/10 bg-[#0a0a0a]/95 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-white opacity-0 shadow-[0_12px_28px_rgba(0,0,0,0.35)] backdrop-blur transition group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100">
+            Report a bug
+            <span className="absolute right-5 top-full h-2 w-2 -translate-y-1 rotate-45 border-b border-r border-white/10 bg-[#0a0a0a]/95" />
+          </div>
+        )}
+
+        {isCollapsed && (
+          <div className="pointer-events-none absolute right-full mr-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100 bg-[#0a0a0a]/95 border border-white/10 text-white text-[9px] font-black uppercase tracking-wider px-2 py-1.5 rounded-lg shadow-lg whitespace-nowrap hidden lg:block z-50">
+            Expand Bug Tracker
+            <div className="absolute left-full top-1/2 -translate-y-1/2 border-4 border-transparent border-l-[#0a0a0a]" />
+          </div>
+        )}
+
         <button
           type="button"
-          onClick={() => setOpen(true)}
-          className="flex h-14 w-14 items-center justify-center rounded-full border border-white/15 bg-[#0a0a0a]/90 text-white shadow-[0_0_24px_rgba(255,0,51,0.35),0_14px_32px_rgba(0,0,0,0.4)] backdrop-blur transition hover:scale-105 hover:border-[#ff0033]/70 hover:bg-[#ff0033] focus:outline-none focus:ring-2 focus:ring-[#ff0033]/50"
-          aria-label="Report a bug"
+          onClick={handleButtonClick}
+          className={`flex h-14 w-14 items-center justify-center rounded-full border border-white/15 bg-[#0a0a0a]/90 text-white shadow-[0_0_24px_rgba(255,0,51,0.35),0_14px_32px_rgba(0,0,0,0.4)] backdrop-blur transition hover:scale-105 hover:border-[#ff0033]/70 hover:bg-[#ff0033] focus:outline-none focus:ring-2 focus:ring-[#ff0033]/50 cursor-pointer ${
+            isCollapsed ? "shadow-[0_0_15px_rgba(255,0,51,0.4)] border border-[#ff0033]/30" : ""
+          }`}
+          aria-label={isCollapsed ? "Show bug button" : "Report a bug"}
         >
           <Bug size={22} />
         </button>
+
+        {/* Slide/Hide Toggle Handle (Only visible on hover when expanded, placed just outside the right edge of the bug button) */}
+        {!isCollapsed && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsCollapsed(true);
+              try {
+                window.localStorage.setItem("jff:bug-collapsed", "true");
+              } catch {}
+            }}
+            className="absolute right-[-26px] top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-[#0a0a0a]/95 text-neutral-400 hover:text-white hover:border-[#ff0033]/30 hover:bg-[#ff0033]/20 transition-all duration-300 opacity-0 group-hover:opacity-100 focus:opacity-100 z-50 cursor-pointer shadow-sm group/collapse"
+            aria-label="Hide bug button"
+          >
+            <ChevronRight size={10} />
+            <span className="pointer-events-none absolute left-full ml-2 scale-90 opacity-0 transition-all group-hover/collapse:scale-100 group-hover/collapse:opacity-100 bg-[#0a0a0a] border border-white/10 text-white text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded shadow-lg whitespace-nowrap hidden lg:block">
+              Collapse Bug Tracker
+            </span>
+          </button>
+        )}
       </div>
 
       {open && (

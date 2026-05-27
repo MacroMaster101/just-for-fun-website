@@ -81,9 +81,9 @@ export const ScrollRestorer = () => {
     }
 
     // Poll for layout readiness — try to scroll once the document is tall
-    // enough to actually reach savedY. Bail after ~3s so we don't run
+    // enough to actually reach savedY. Bail after ~10s so we don't run
     // forever if the page never gets that tall.
-    const deadline = performance.now() + 3000;
+    const deadline = performance.now() + 10000;
     let raf = 0;
     const tryRestore = () => {
       const maxScroll =

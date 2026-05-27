@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Sparkles,
   RotateCcw,
@@ -225,6 +225,11 @@ export const ChallengeWheel = () => {
   const [spinCount, setSpinCount] = useState(0);
   const [reportStatus, setReportStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
+  const [isDragging, setIsDragging] = useState(false);
+  const dragYStartRef = useRef(0);
+  const currentDragYRef = useRef(0);
+  const [dragDelta, setDragDelta] = useState(0);
+
   const reportToDiscord = async () => {
     if (!result || reportStatus === "sending" || reportStatus === "sent") return;
     setReportStatus("sending");
@@ -280,6 +285,63 @@ export const ChallengeWheel = () => {
     }, 100);
   };
 
+  // Keep spin in a ref so the effect callback always has the latest version.
+  const spinRef = useRef(spin);
+  useEffect(() => {
+    spinRef.current = spin;
+  });
+
+  const handleStart = (clientY: number) => {
+    if (isSpinning || locked) return;
+    setIsDragging(true);
+    dragYStartRef.current = clientY;
+    currentDragYRef.current = clientY;
+    setDragDelta(0);
+  };
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const onMove = (clientY: number) => {
+      currentDragYRef.current = clientY;
+      setDragDelta(clientY - dragYStartRef.current);
+    };
+
+    const onEnd = () => {
+      setIsDragging(false);
+      const delta = currentDragYRef.current - dragYStartRef.current;
+      if (delta > 50) {
+        spinRef.current();
+      } else {
+        setPulled(false);
+      }
+      setDragDelta(0);
+    };
+
+    const handleMouseMove = (e: MouseEvent) => onMove(e.clientY);
+    const handleTouchMove = (e: TouchEvent) => onMove(e.touches[0].clientY);
+    const handleMouseUp = () => onEnd();
+    const handleTouchEnd = () => onEnd();
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
+    window.addEventListener("touchend", handleTouchEnd);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [isDragging]);
+
+  const dragAngle = useMemo(() => {
+    if (isSpinning) return 110;
+    if (!isDragging) return pulled ? 110 : 0;
+    return Math.min(110, Math.max(0, (dragDelta / 120) * 110));
+  }, [isDragging, dragDelta, pulled, isSpinning]);
+
   const clearResult = () => {
     setResult(null);
     setTargetIndex(-1); // signals reels to reset
@@ -308,9 +370,9 @@ export const ChallengeWheel = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-20 items-stretch max-w-6xl mx-auto">
-          {/* Slot Machine Cabinet — nudged left on lg+ so the lever has breathing room */}
+          {/* Slot Machine Cabinet — nudged left on all viewports so the side lever fits perfectly */}
           <div className="lg:col-span-7 flex items-center justify-center lg:justify-start">
-            <div className="relative">
+            <div className="relative w-full max-w-[280px] xs:max-w-[320px] sm:max-w-[420px] md:max-w-[460px] lg:max-w-none mr-8 xs:mr-10 sm:mr-12 lg:mr-0">
               {/* Cabinet outer frame — brushed metal look */}
               <div className="slot-cabinet relative rounded-[20px] border border-white/[0.08] p-3 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8),inset_0_2px_0_rgba(255,255,255,0.08)] sm:rounded-[28px] sm:p-7">
                 {/* Marquee lights — running around the cabinet edge */}
@@ -447,8 +509,7 @@ export const ChallengeWheel = () => {
 
               {/* Side lever — swings vertically (top → bottom) around a pivot at its base */}
               <div
-                className="hidden lg:block absolute"
-                style={{ right: -52, top: "50%", transform: "translateY(-50%)", width: 60, height: 260 }}
+                className="absolute right-[-44px] sm:right-[-52px] top-1/2 -translate-y-1/2 w-[60px] h-[260px] origin-left scale-[0.75] xs:scale-[0.85] sm:scale-100"
               >
                 {/* Mounting plate — visually attaches the pivot base to the cabinet's right edge */}
                 <div className="absolute left-0 bottom-6 w-6 h-14 rounded-r-lg bg-gradient-to-r from-[#1a1a1a] to-[#333] border-y border-r border-black/60 shadow-[inset_-2px_0_4px_rgba(0,0,0,0.6),2px_0_6px_rgba(0,0,0,0.5)]" />
@@ -464,11 +525,17 @@ export const ChallengeWheel = () => {
                 </div>
 
                 <button
-                  onClick={spin}
+                  onMouseDown={(e) => {
+                    if (e.button === 0) handleStart(e.clientY);
+                  }}
+                  onTouchStart={(e) => {
+                    handleStart(e.touches[0].clientY);
+                  }}
                   disabled={isSpinning || locked}
                   title="Pull the lever"
                   className="group absolute inset-0 cursor-pointer disabled:cursor-not-allowed bg-transparent border-0 p-0"
                   aria-label="Spin the slot"
+                  style={{ touchAction: "none" }}
                 >
                   {/* Lever arm — pivot at the BOTTOM-CENTER of the arm.
                       Rest state: 0deg = arm points straight UP (ball at top).
@@ -481,9 +548,11 @@ export const ChallengeWheel = () => {
                       bottom: 19.5,
                       width: 14, // arm thickness
                       height: 180, // arm length (vertical)
-                      transform: `translateX(-50%) rotate(${pulled ? 110 : 0}deg)`,
+                      transform: `translateX(-50%) rotate(${dragAngle}deg)`,
                       transformOrigin: "50% 100%",
-                      transition: pulled
+                      transition: isDragging
+                        ? "none"
+                        : isSpinning || pulled
                         ? "transform 240ms cubic-bezier(.4,.05,.6,1)"
                         : "transform 750ms cubic-bezier(.34,1.56,.64,1)",
                     }}
@@ -519,17 +588,6 @@ export const ChallengeWheel = () => {
                 >
                   {isSpinning ? "Spinning…" : locked ? "Locked" : "Pull ↓"}
                 </div>
-              </div>
-
-              {/* Mobile/tablet spin button — replaces the side lever below lg */}
-              <div className="lg:hidden mt-5 flex justify-center">
-                <button
-                  onClick={spin}
-                  disabled={isSpinning || locked}
-                  className="px-8 py-3 rounded-full bg-gradient-to-r from-[#ff0033] to-[#b30024] text-white font-display font-black uppercase tracking-widest text-sm shadow-[0_8px_24px_rgba(255,0,51,0.45)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer hover:scale-105 transition-transform"
-                >
-                  {isSpinning ? "Spinning..." : locked ? "Locked" : "Pull Lever"}
-                </button>
               </div>
             </div>
           </div>
@@ -578,11 +636,11 @@ export const ChallengeWheel = () => {
                       </h4>
                     </div>
 
-                    <div className="pt-4 border-t border-white/5 flex flex-col sm:flex-row gap-3">
+                    <div className="pt-4 border-t border-white/5 flex flex-row items-center gap-3">
                       <button
                         onClick={reportToDiscord}
                         disabled={reportStatus === "sending" || reportStatus === "sent"}
-                        className={`flex-grow py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer disabled:cursor-default ${
+                        className={`flex-grow h-10 rounded-xl border text-xs font-bold transition-all cursor-pointer disabled:cursor-default flex items-center justify-center px-4 ${
                           reportStatus === "sent"
                             ? "border-[#22c55e]/40 bg-[#22c55e]/10 text-[#22c55e]"
                             : reportStatus === "error"
@@ -593,17 +651,17 @@ export const ChallengeWheel = () => {
                         }`}
                       >
                         {reportStatus === "sending"
-                          ? "Sending to Discord…"
+                          ? "Sending..."
                           : reportStatus === "sent"
-                          ? "✓ Posted to #challenge-gaming-content"
+                          ? "✓ Posted"
                           : reportStatus === "error"
-                          ? "✕ Failed — try again"
-                          : "Post to Discord Chat"}
+                          ? "✕ Failed"
+                          : "Post to Discord"}
                       </button>
                       <button
                         onClick={clearResult}
                         title="Clear result"
-                        className="p-2.5 rounded-xl border border-[#ff0033]/20 bg-[#ff0033]/10 text-[#ff4b5f] hover:bg-[#ff0033]/20 hover:text-white transition-all cursor-pointer"
+                        className="h-10 w-10 flex items-center justify-center rounded-xl border border-[#ff0033]/20 bg-[#ff0033]/10 text-[#ff4b5f] hover:bg-[#ff0033]/20 hover:text-white transition-all cursor-pointer shrink-0"
                       >
                         <RotateCcw size={16} />
                       </button>

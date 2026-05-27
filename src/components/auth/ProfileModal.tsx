@@ -318,7 +318,7 @@ export const ProfileModal = ({
         </button>
 
         {/* Header w/ avatar uploader */}
-        <div className="flex items-center gap-4 border-b border-white/10 p-6">
+        <div className="flex items-center gap-3 sm:gap-4 border-b border-white/10 p-4 sm:p-6">
           <div className="relative">
             {avatar ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -392,7 +392,7 @@ export const ProfileModal = ({
         </div>
 
         {/* Body */}
-        <div className="max-h-[60vh] overflow-y-auto p-6">
+        <div className="max-h-[60vh] overflow-y-auto p-4 sm:p-6">
           {loading ? (
             <div className="flex items-center justify-center gap-2 py-12 text-sm text-neutral-500">
               <Loader2 size={14} className="animate-spin" /> Loading...
@@ -495,36 +495,45 @@ export const ProfileModal = ({
             // Account tab
             <div className="grid gap-6">
               {/* Identity info */}
-              <div className="rounded-lg border border-white/10 bg-white/[0.02] p-4">
-                <div className="mb-2 flex items-center gap-2">
-                  <ShieldCheck size={14} className="text-[#ff4b5f]" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500">
+              <div className="relative rounded-xl border border-white/10 bg-gradient-to-br from-white/[0.03] to-transparent p-5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] overflow-hidden">
+                <div className="absolute top-0 right-0 -mr-6 -mt-6 h-24 w-24 rounded-full bg-gradient-to-br from-[#ff0033]/10 to-transparent blur-xl pointer-events-none" />
+                <div className="mb-3 flex items-center gap-2">
+                  <ShieldCheck size={16} className="text-[#ff2d55]" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-400">
                     Sign-in Method
                   </span>
                 </div>
-                <p className="text-sm text-white">
-                  {hasPasswordIdentity && oauthProvider
-                    ? `Email + ${capitalize(oauthProvider)}`
-                    : hasPasswordIdentity
-                      ? "Email & password"
-                      : oauthProvider
-                        ? capitalize(oauthProvider)
-                        : "Unknown"}
-                </p>
-                <p className="mt-0.5 text-xs text-neutral-500">{user.email}</p>
+                <div className="flex items-center gap-3">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 border border-white/10 font-bold text-white text-xs">
+                    {oauthProvider ? capitalize(oauthProvider).substring(0, 3).toUpperCase() : "PWD"}
+                  </span>
+                  <div>
+                    <p className="text-sm font-bold text-white">
+                      {hasPasswordIdentity && oauthProvider
+                        ? `Email + ${capitalize(oauthProvider)}`
+                        : hasPasswordIdentity
+                          ? "Email & Password"
+                          : oauthProvider
+                            ? capitalize(oauthProvider)
+                            : "Unknown"}
+                    </p>
+                    <p className="mt-0.5 text-xs text-neutral-400">{user.email}</p>
+                  </div>
+                </div>
               </div>
 
               {/* Password change — only for users with an email/password identity */}
               {hasPasswordIdentity ? (
-                <form onSubmit={handlePasswordChange} className="grid gap-3">
-                  <div className="flex items-center gap-2">
-                    <KeyRound size={14} className="text-[#ff4b5f]" />
+                <form onSubmit={handlePasswordChange} className="relative rounded-xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-5 grid gap-4">
+                  <div className="flex items-center gap-2 border-b border-white/5 pb-3">
+                    <KeyRound size={16} className="text-[#ff2d55]" />
                     <h3 className="font-display text-xs font-black uppercase tracking-[0.2em] text-white">
                       Change Password
                     </h3>
                   </div>
+                  
                   <label className="grid gap-1.5">
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-400">
                       New Password
                     </span>
                     <div className="relative">
@@ -535,7 +544,7 @@ export const ProfileModal = ({
                         value={newPw}
                         onChange={(e) => setNewPw(e.target.value)}
                         placeholder="At least 6 characters"
-                        className="w-full rounded-lg border border-white/10 bg-[#0a0a0a] pl-3 pr-10 py-2.5 text-sm text-white placeholder:text-neutral-600 focus:border-[#ff0033] focus:outline-none"
+                        className="w-full rounded-lg border border-white/10 bg-[#0a0a0a]/90 pl-3 pr-10 py-2.5 text-sm text-white placeholder:text-neutral-600 focus:border-[#ff0033] focus:ring-1 focus:ring-[#ff0033]/50 focus:outline-none transition-all duration-300"
                       />
                       <button
                         type="button"
@@ -547,8 +556,9 @@ export const ProfileModal = ({
                       </button>
                     </div>
                   </label>
+                  
                   <label className="grid gap-1.5">
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-400">
                       Confirm Password
                     </span>
                     <div className="relative">
@@ -559,7 +569,7 @@ export const ProfileModal = ({
                         value={confirmPw}
                         onChange={(e) => setConfirmPw(e.target.value)}
                         placeholder="Re-enter new password"
-                        className="w-full rounded-lg border border-white/10 bg-[#0a0a0a] pl-3 pr-10 py-2.5 text-sm text-white placeholder:text-neutral-600 focus:border-[#ff0033] focus:outline-none"
+                        className="w-full rounded-lg border border-white/10 bg-[#0a0a0a]/90 pl-3 pr-10 py-2.5 text-sm text-white placeholder:text-neutral-600 focus:border-[#ff0033] focus:ring-1 focus:ring-[#ff0033]/50 focus:outline-none transition-all duration-300"
                       />
                       <button
                         type="button"
@@ -571,15 +581,17 @@ export const ProfileModal = ({
                       </button>
                     </div>
                   </label>
+                  
                   {pwError && (
                     <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
                       {pwError}
                     </p>
                   )}
+                  
                   <button
                     type="submit"
                     disabled={pwBusy}
-                    className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#ff0033] to-[#ff2d55] px-4 py-2.5 text-sm font-black uppercase tracking-wide text-white shadow-[0_0_18px_rgba(255,0,51,0.35)] disabled:opacity-60"
+                    className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#ff0033] to-[#ff2d55] px-4 py-2.5 text-xs font-black uppercase tracking-wider text-white shadow-[0_0_18px_rgba(255,0,51,0.35)] hover:shadow-[0_0_24px_rgba(255,0,51,0.55)] transition-all duration-300 disabled:opacity-60"
                   >
                     {pwBusy ? (
                       <>
@@ -593,39 +605,36 @@ export const ProfileModal = ({
                   </button>
                 </form>
               ) : (
-                <div className="rounded-lg border border-dashed border-white/10 px-4 py-6 text-center">
-                  <KeyRound size={20} className="mx-auto mb-2 text-neutral-600" />
-                  <p className="text-sm text-neutral-400">
+                <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/[0.02] to-transparent p-5 text-center relative overflow-hidden">
+                  <KeyRound size={24} className="mx-auto mb-3 text-neutral-500" />
+                  <p className="text-sm text-neutral-300 leading-relaxed">
                     You signed in with{" "}
                     <span className="font-bold text-white">
                       {oauthProvider ? capitalize(oauthProvider) : "OAuth"}
                     </span>
-                    . Manage your password from your{" "}
-                    {oauthProvider ? capitalize(oauthProvider) : "provider"}{" "}
-                    account settings.
+                    .
+                  </p>
+                  <p className="mt-1 text-xs text-neutral-500 max-w-sm mx-auto">
+                    Manage your password directly within your {oauthProvider ? capitalize(oauthProvider) : "external provider"} account settings.
                   </p>
                 </div>
               )}
 
               {/* Danger Zone — permanently delete this account */}
-              <div className="mt-2 rounded-lg border border-red-500/30 bg-red-500/[0.04] p-4">
-                <div className="mb-3 flex items-center gap-2">
-                  <Trash2 size={14} className="text-red-400" />
+              <div className="rounded-xl border border-red-500/20 bg-red-500/[0.02] p-5 shadow-[inset_0_1px_1px_rgba(239,68,68,0.05)]">
+                <div className="mb-3 flex items-center gap-2 border-b border-red-500/10 pb-3">
+                  <Trash2 size={16} className="text-red-400" />
                   <h3 className="font-display text-xs font-black uppercase tracking-[0.2em] text-red-400">
                     Danger Zone
                   </h3>
                 </div>
                 <p className="text-xs text-neutral-400 leading-relaxed">
-                  Deleting your account is <span className="font-bold text-white">permanent</span>.
-                  All your favorites, uploaded avatar, and sign-in credentials
-                  will be erased. You can sign up again with the same email
-                  later, but your history won&apos;t come back.
+                  Deleting your account is <span className="font-bold text-red-300">permanent</span> and cannot be undone. All your favorites, custom profile data, and sign-in credentials will be instantly purged.
                 </p>
+                
                 <label className="mt-4 grid gap-1.5">
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500">
-                    Type{" "}
-                    <span className="font-mono text-red-400">DELETE</span>{" "}
-                    to confirm
+                    Type <span className="font-mono text-red-400 font-black">DELETE</span> to confirm
                   </span>
                   <input
                     type="text"
@@ -635,12 +644,12 @@ export const ProfileModal = ({
                       if (deleteError) setDeleteError(null);
                     }}
                     placeholder="DELETE"
-                    className="rounded-lg border border-white/10 bg-[#0a0a0a] px-3 py-2.5 text-sm font-mono text-white placeholder:text-neutral-700 focus:border-red-500 focus:outline-none"
+                    className="rounded-lg border border-white/10 bg-[#0a0a0a] px-3 py-2.5 text-sm font-mono text-white placeholder:text-neutral-700 focus:border-red-500 focus:ring-1 focus:ring-red-500/50 focus:outline-none transition-all duration-300"
                   />
                 </label>
 
                 {deleteError && (
-                  <p className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-300">
+                  <p className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-300 animate-pulse">
                     {deleteError}
                   </p>
                 )}
@@ -649,7 +658,7 @@ export const ProfileModal = ({
                   type="button"
                   onClick={handleDeleteAccount}
                   disabled={deleting || deleteConfirm.trim() !== "DELETE"}
-                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-red-500/50 bg-red-500/10 px-4 py-2.5 text-sm font-black uppercase tracking-wide text-red-300 transition hover:bg-red-500/20 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 px-4 py-2.5 text-xs font-black uppercase tracking-wider text-red-300 transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-30"
                 >
                   {deleting ? (
                     <>
@@ -682,13 +691,13 @@ const TabBtn = ({
 }) => (
   <button
     onClick={onClick}
-    className={`relative flex-1 px-4 py-3 text-xs font-black uppercase tracking-[0.18em] transition ${
+    className={`relative flex-1 px-2 py-3 sm:px-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.1em] sm:tracking-[0.18em] transition ${
       active ? "text-white" : "text-neutral-500 hover:text-neutral-300"
     }`}
   >
     {children}
     {active && (
-      <span className="absolute inset-x-4 bottom-0 h-[2px] bg-[#ff0033]" />
+      <span className="absolute inset-x-2 sm:inset-x-4 bottom-0 h-[2px] bg-[#ff0033]" />
     )}
   </button>
 );

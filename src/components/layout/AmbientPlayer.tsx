@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { Volume1, Volume2, VolumeX } from "lucide-react";
+import { Volume1, Volume2, VolumeX, ChevronLeft } from "lucide-react";
 
 type PlayerCommandArg = string | number | boolean;
 type PlayerCommandArgs = "" | PlayerCommandArg[];
@@ -54,6 +54,51 @@ export const AmbientPlayer = () => {
   const bootAutoplayRef = useRef(false);
   const [isMounted, setIsMounted] = useState(false);
   const [showEnterScreen, setShowEnterScreen] = useState(false);
+
+  // Collapsed state for sliding the music disc off-screen
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const isMobileRef = useRef(false);
+
+  useEffect(() => {
+    const checkMobile = () => window.innerWidth < 1024;
+    isMobileRef.current = checkMobile();
+
+    if (isMobileRef.current) {
+      // Mobile: ALWAYS start collapsed (half-hidden), ignore localStorage
+      setIsCollapsed(true);
+    } else {
+      // Desktop: respect localStorage preference
+      try {
+        const saved = window.localStorage.getItem("jff:ambient-collapsed");
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration from localStorage
+        if (saved === "true") setIsCollapsed(true);
+      } catch {}
+    }
+
+    // Listen for viewport changes (e.g. rotating device, responsive mode)
+    const onResize = () => {
+      const wasMobile = isMobileRef.current;
+      const nowMobile = checkMobile();
+      isMobileRef.current = nowMobile;
+      if (!wasMobile && nowMobile) {
+        // Switched to mobile → collapse
+        setIsCollapsed(true);
+      }
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  const handlePlayerClick = () => {
+    if (isCollapsed) {
+      setIsCollapsed(false);
+      try {
+        window.localStorage.setItem("jff:ambient-collapsed", "false");
+      } catch {}
+    } else {
+      toggleAmbient();
+    }
+  };
 
   // Initialize iframeAutoplay state synchronously on client side to prevent reload
   const [iframeAutoplay] = useState(() => {
@@ -692,7 +737,13 @@ export const AmbientPlayer = () => {
   return (
     <>
       {/* Floating Ambient Music Controller */}
-      <div className="fixed bottom-3 left-3 z-[100] group flex items-center scale-90 origin-bottom-left sm:scale-100 sm:bottom-4 sm:left-4">
+      <div 
+        className={`fixed bottom-24 lg:bottom-4 z-[100] group flex items-center scale-90 origin-bottom-left sm:scale-100 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+          isCollapsed
+            ? "left-0 -translate-x-[36px] opacity-75 hover:opacity-100 hover:-translate-x-[24px]"
+            : "left-1 lg:left-10 translate-x-0"
+        }`}
+      >
         <style dangerouslySetInnerHTML={{ __html: `
           @keyframes musicWaveBounce {
             0%, 100% { height: 4px; }
@@ -704,25 +755,36 @@ export const AmbientPlayer = () => {
         `}} />
 
         {/* Tooltip — hover + first-visit auto-show for 10s. */}
-        <div
-          className={`absolute bottom-full left-0 mb-4 px-3 py-1.5 bg-[#0c0c0c]/95 border border-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-lg shadow-2xl pointer-events-none transition-all duration-300 whitespace-nowrap z-50 group-hover:opacity-100 group-hover:translate-y-0 ${
-            showFirstVisitTooltip
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 translate-y-1"
-          }`}
-        >
-          {showFirstVisitTooltip
-            ? "🎵 Synthwave is playing — click to pause"
-            : ambientPlaying
-              ? "Pause Synthwave Theme"
-              : "Play Synthwave Theme"}
-          <div className="absolute top-full left-6 border-4 border-transparent border-t-[#0c0c0c] filter drop-shadow-[0_1px_0_rgba(255,255,255,0.08)]" />
-        </div>
+        {!isCollapsed && (
+          <div
+            className={`absolute bottom-full left-0 mb-4 px-3 py-1.5 bg-[#0c0c0c]/95 border border-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-lg shadow-2xl pointer-events-none transition-all duration-300 whitespace-nowrap z-50 group-hover:opacity-100 group-hover:translate-y-0 ${
+              showFirstVisitTooltip
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-1"
+            }`}
+          >
+            {showFirstVisitTooltip
+              ? "🎵 Synthwave is playing — click to pause"
+              : ambientPlaying
+                ? "Pause Synthwave Theme"
+                : "Play Synthwave Theme"}
+            <div className="absolute top-full left-6 border-4 border-transparent border-t-[#0c0c0c] filter drop-shadow-[0_1px_0_rgba(255,255,255,0.08)]" />
+          </div>
+        )}
+
+        {isCollapsed && (
+          <div className="pointer-events-none absolute left-full ml-3 translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100 bg-[#0a0a0a]/95 border border-white/10 text-white text-[9px] font-black uppercase tracking-wider px-2 py-1.5 rounded-lg shadow-lg whitespace-nowrap hidden lg:block z-50">
+            Expand Music Player
+            <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-[#0a0a0a]" />
+          </div>
+        )}
 
         <button
-          onClick={toggleAmbient}
-          className="relative flex h-14 w-14 items-center justify-center rounded-full bg-[#050505]/40 backdrop-blur-md transition-all duration-500 hover:scale-105 active:scale-95 focus:outline-none group/btn cursor-pointer"
-          aria-label="Toggle ambient music"
+          onClick={handlePlayerClick}
+          className={`relative flex h-14 w-14 items-center justify-center rounded-full bg-[#050505]/40 backdrop-blur-md transition-all duration-500 hover:scale-105 active:scale-95 focus:outline-none group/btn cursor-pointer ${
+            isCollapsed ? "shadow-[0_0_15px_rgba(255,0,51,0.4)] border border-[#ff0033]/30" : ""
+          }`}
+          aria-label={isCollapsed ? "Show music player" : "Toggle ambient music"}
         >
           <div className={`absolute inset-0 rounded-full transition-all duration-700 ${
             ambientPlaying
@@ -772,49 +834,74 @@ export const AmbientPlayer = () => {
           )}
         </button>
 
-        <div className={`flex items-end gap-0.5 h-5 ml-3 transition-all duration-500 group-hover:opacity-0 group-hover:translate-x-2 group-hover:scale-75 group-hover:pointer-events-none ${
-          ambientPlaying ? "opacity-100 translate-x-0 scale-100" : "opacity-0 -translate-x-3 scale-75 pointer-events-none"
-        }`}>
-          <span className="w-0.5 bg-[#ff0033] rounded-full ambient-wave-1" style={{ animationDelay: "0.1s" }} />
-          <span className="w-0.5 bg-[#ff2d55] rounded-full ambient-wave-2" style={{ animationDelay: "0.3s" }} />
-          <span className="w-0.5 bg-[#ff0033] rounded-full ambient-wave-3" style={{ animationDelay: "0.2s" }} />
-        </div>
+        {!isCollapsed && (
+          <div className={`flex items-end gap-0.5 h-5 ml-3 transition-all duration-500 group-hover:opacity-0 group-hover:translate-x-2 group-hover:scale-75 group-hover:pointer-events-none ${
+            ambientPlaying ? "opacity-100 translate-x-0 scale-100" : "opacity-0 -translate-x-3 scale-75 pointer-events-none"
+          }`}>
+            <span className="w-0.5 bg-[#ff0033] rounded-full ambient-wave-1" style={{ animationDelay: "0.1s" }} />
+            <span className="w-0.5 bg-[#ff2d55] rounded-full ambient-wave-2" style={{ animationDelay: "0.3s" }} />
+            <span className="w-0.5 bg-[#ff0033] rounded-full ambient-wave-3" style={{ animationDelay: "0.2s" }} />
+          </div>
+        )}
 
         {/* Hover Slide-out Volume Panel (Outer wrapper provides a generous hover zone and a 300ms exit delay to prevent accidental slip-offs) */}
-        <div className="absolute left-full -top-3 py-4 pr-6 pl-2 flex items-center opacity-0 -translate-x-4 pointer-events-none group-hover:opacity-100 group-hover:translate-x-0 group-hover:pointer-events-auto transition-all duration-500 delay-300 group-hover:delay-0 z-50">
-          <div className="flex items-center gap-2.5 bg-[#050505]/85 backdrop-blur-md border border-white/10 rounded-full py-1.5 px-3.5 shadow-2xl">
-            {/* Speaker Button (Click to mute/unmute) */}
-            <button
-              onClick={toggleMute}
-              className="text-[var(--color-text-muted)] hover:text-[#ff2d55] transition-colors cursor-pointer flex items-center justify-center shrink-0"
-              aria-label={isMuted ? "Unmute" : "Mute"}
-            >
-              {isMuted || ambientVolume === 0 ? (
-                <VolumeX size={15} />
-              ) : ambientVolume < 35 ? (
-                <Volume1 size={15} />
-              ) : (
-                <Volume2 size={15} />
-              )}
-            </button>
+        {!isCollapsed && (
+          <div className="absolute left-full -top-3 py-4 pr-6 pl-2 flex items-center opacity-0 -translate-x-4 pointer-events-none group-hover:opacity-100 group-hover:translate-x-0 group-hover:pointer-events-auto transition-all duration-500 delay-300 group-hover:delay-0 z-50">
+            <div className="flex items-center gap-2.5 bg-[#050505]/85 backdrop-blur-md border border-white/10 rounded-full py-1.5 px-3.5 shadow-2xl">
+              {/* Speaker Button (Click to mute/unmute) */}
+              <button
+                onClick={toggleMute}
+                className="text-[var(--color-text-muted)] hover:text-[#ff2d55] transition-colors cursor-pointer flex items-center justify-center shrink-0"
+                aria-label={isMuted ? "Unmute" : "Mute"}
+              >
+                {isMuted || ambientVolume === 0 ? (
+                  <VolumeX size={15} />
+                ) : ambientVolume < 35 ? (
+                  <Volume1 size={15} />
+                ) : (
+                  <Volume2 size={15} />
+                )}
+              </button>
 
-            {/* Volume Slider Track */}
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={isMuted ? 0 : ambientVolume}
-              onChange={(e) => handleVolumeChange(Number(e.target.value))}
-              className="w-20 h-1 rounded-full bg-neutral-800 accent-[#ff0033] cursor-pointer outline-none transition-all hover:scale-y-125"
-              aria-label="Volume level"
-            />
+              {/* Volume Slider Track */}
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={isMuted ? 0 : ambientVolume}
+                onChange={(e) => handleVolumeChange(Number(e.target.value))}
+                className="w-20 h-1 rounded-full bg-neutral-800 accent-[#ff0033] cursor-pointer outline-none transition-all hover:scale-y-125"
+                aria-label="Volume level"
+              />
 
-            {/* Volume Percent Text */}
-            <span className="font-mono text-[9px] font-black text-[var(--color-text)] tracking-wider min-w-[24px] text-right">
-              {isMuted ? 0 : ambientVolume}%
-            </span>
+              {/* Volume Percent Text */}
+              <span className="font-mono text-[9px] font-black text-[var(--color-text)] tracking-wider min-w-[24px] text-right">
+                {isMuted ? 0 : ambientVolume}%
+              </span>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Slide/Hide Toggle Handle (Only visible on hover when expanded, placed just outside the left edge of the disc) */}
+        {!isCollapsed && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsCollapsed(true);
+              try {
+                window.localStorage.setItem("jff:ambient-collapsed", "true");
+              } catch {}
+            }}
+            className="absolute left-[-26px] top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-[#0a0a0a]/95 text-neutral-400 hover:text-white hover:border-[#ff0033]/30 hover:bg-[#ff0033]/20 transition-all duration-300 opacity-0 group-hover:opacity-100 focus:opacity-100 z-50 cursor-pointer shadow-sm group/collapse"
+            aria-label="Hide music player"
+          >
+            <ChevronLeft size={10} />
+            <span className="pointer-events-none absolute right-full mr-2 scale-90 opacity-0 transition-all group-hover/collapse:scale-100 group-hover/collapse:opacity-100 bg-[#0a0a0a] border border-white/10 text-white text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded shadow-lg whitespace-nowrap hidden lg:block">
+              Collapse Player
+            </span>
+          </button>
+        )}
       </div>
 
       {/* Hidden YouTube Ambient Audio Player. We boot with autoplay=1 when

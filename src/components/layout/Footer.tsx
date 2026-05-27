@@ -78,39 +78,41 @@ export const Footer = () => {
           </div>
         </div>
 
-        <div className="md:col-span-3">
-          <h4 className="mb-4 font-display text-xs font-black uppercase tracking-[0.28em] text-[#ff2d55]">
-            Watch
-          </h4>
-          <ul className="space-y-2.5 text-sm font-medium text-neutral-400">
-            {watchLinks.map((l) => (
-              <li key={l.href}>
-                <a href={l.href} className="inline-flex items-center gap-2 transition hover:text-white">
-                  <span className="h-px w-3 bg-[#ff0033] transition-all group-hover:w-5" />
-                  {l.label}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <div className="grid grid-cols-2 gap-8 md:col-span-7">
+          <div>
+            <h4 className="mb-4 font-display text-xs font-black uppercase tracking-[0.28em] text-[#ff2d55]">
+              Watch
+            </h4>
+            <ul className="space-y-2.5 text-sm font-medium text-neutral-400">
+              {watchLinks.map((l) => (
+                <li key={l.href}>
+                  <a href={l.href} className="inline-flex items-center gap-2 transition hover:text-white">
+                    <span className="h-px w-3 bg-[#ff0033] transition-all group-hover:w-5" />
+                    {l.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-        <div className="md:col-span-4">
-          <h4 className="mb-4 font-display text-xs font-black uppercase tracking-[0.28em] text-[#ff2d55]">
-            Community
-          </h4>
-          <ul className="space-y-2.5 text-sm font-medium text-neutral-400">
-            {communityLinks.map((l) => (
-              <li key={l.href}>
-                <a href={l.href} className="transition hover:text-white">
-                  {l.label}
-                </a>
-              </li>
-            ))}
-          </ul>
+          <div>
+            <h4 className="mb-4 font-display text-xs font-black uppercase tracking-[0.28em] text-[#ff2d55]">
+              Community
+            </h4>
+            <ul className="space-y-2.5 text-sm font-medium text-neutral-400">
+              {communityLinks.map((l) => (
+                <li key={l.href}>
+                  <a href={l.href} className="transition hover:text-white">
+                    {l.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
 
-      <div className="relative z-10 mx-auto flex max-w-7xl flex-col gap-3 border-t border-white/10 px-5 py-6 text-[11px] font-bold uppercase tracking-[0.22em] text-neutral-500 sm:px-6 md:flex-row md:items-center md:justify-between">
+      <div className="relative z-10 mx-auto flex max-w-7xl flex-col items-center text-center gap-3 border-t border-white/10 px-5 pt-6 pb-44 text-[11px] font-bold uppercase tracking-[0.22em] text-neutral-500 sm:px-6 md:flex-row md:pb-6 md:items-center md:justify-between md:text-left">
         <span>&copy; {year} Just For Fun</span>
         <span className="flex items-center gap-2">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#ff0033]" />

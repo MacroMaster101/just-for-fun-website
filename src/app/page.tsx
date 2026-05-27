@@ -29,10 +29,10 @@ export default function Home() {
             <Hero />
             <About />
             <SquadRoster />
+            <Schedule />
             <LatestVideos />
             <Soundboard />
             <ChallengeWheel />
-            <Schedule />
             <Merch />
             <Socials />
             <Community />

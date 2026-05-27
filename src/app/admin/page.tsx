@@ -257,6 +257,22 @@ export default function AdminPage() {
     return () => window.removeEventListener("hashchange", syncTabFromHash);
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const container = document.getElementById("admin-mobile-bottom-nav-container");
+    const activeBtn = document.getElementById(`admin-bottom-nav-${activeTab}`);
+    if (container && activeBtn) {
+      const containerWidth = container.clientWidth;
+      const btnWidth = activeBtn.clientWidth;
+      const btnLeft = activeBtn.offsetLeft;
+      const targetScrollLeft = btnLeft - (containerWidth / 2) + (btnWidth / 2);
+      container.scrollTo({
+        left: targetScrollLeft,
+        behavior: "smooth",
+      });
+    }
+  }, [activeTab]);
+
   // Message reading modal/drawer state
   const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
   const [replyText, setReplyText] = useState("");
@@ -1674,7 +1690,7 @@ export default function AdminPage() {
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)] bg-grid-subtle pt-28 pb-16 relative transition-colors duration-300">
+      <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)] bg-grid-subtle pt-28 pb-44 lg:pb-16 relative transition-colors duration-300">
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ff0033]/45 to-transparent" />
 
         <div className="max-w-7xl mx-auto px-5 sm:px-6">
@@ -1701,7 +1717,7 @@ export default function AdminPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Left Column: Tab Menu Selector */}
-            <div className="lg:col-span-3 space-y-2.5">
+            <div className="hidden lg:block lg:col-span-3 space-y-2.5">
               {adminTabs.map((tab) => (
                 <button
                   key={tab.id}
@@ -1829,7 +1845,7 @@ export default function AdminPage() {
                     </div>
                   </Card>
 
-                  <Card className="p-8 border-[var(--color-border)] relative overflow-hidden">
+                  <Card className="p-4 sm:p-8 border-[var(--color-border)] relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-1.5 h-full bg-[#ff0033]" />
                     <div className="space-y-4">
                       <h3 className="font-display font-extrabold text-xl text-[var(--color-text)]">
@@ -2490,43 +2506,47 @@ export default function AdminPage() {
                         {streamSlots.map((s) => (
                           <div
                             key={s.id}
-                            className="flex items-center gap-4 p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]"
+                            className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]"
                           >
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[var(--color-surface-2)] font-display font-black text-sm text-[var(--color-text)] shrink-0">
-                              {s.day}
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[var(--color-surface-2)] font-display font-black text-sm text-[var(--color-text)] shrink-0">
+                                {s.day}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-bold text-sm text-[var(--color-text)] flex items-center gap-2">
+                                  <span>{s.icon}</span>
+                                  <span className="truncate">{s.title}</span>
+                                  {s.featured && (
+                                    <Badge variant="primary" className="text-[9px]">Featured</Badge>
+                                  )}
+                                </p>
+                                <p className="text-xs text-[var(--color-text-muted)] truncate">
+                                  {s.time}
+                                </p>
+                              </div>
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-bold text-sm text-[var(--color-text)] flex items-center gap-2">
-                                <span>{s.icon}</span>
-                                <span className="truncate">{s.title}</span>
-                                {s.featured && (
-                                  <Badge variant="primary" className="text-[9px]">Featured</Badge>
-                                )}
-                              </p>
-                              <p className="text-xs text-[var(--color-text-muted)] truncate">
-                                {s.time}
-                              </p>
+                            <div className="flex items-center gap-2 self-end sm:self-auto">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingSlot(s);
+                                  setCreatingSlot(null);
+                                  setSlotFormError(null);
+                                  setSlotFormSuccess(null);
+                                }}
+                                className="gap-1.5"
+                              >
+                                <UserCog size={12} /> Edit
+                              </Button>
+                              <button
+                                onClick={() => handleDeleteSlot(s.id, s.title)}
+                                className="p-2 rounded-lg text-red-500 hover:bg-red-500/10 transition cursor-pointer"
+                                aria-label={`Delete ${s.title}`}
+                              >
+                                <Trash2 size={14} />
+                              </button>
                             </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setEditingSlot(s);
-                                setCreatingSlot(null);
-                                setSlotFormError(null);
-                                setSlotFormSuccess(null);
-                              }}
-                              className="gap-1.5"
-                            >
-                              <UserCog size={12} /> Edit
-                            </Button>
-                            <button
-                              onClick={() => handleDeleteSlot(s.id, s.title)}
-                              className="p-2 rounded-lg text-red-500 hover:bg-red-500/10 transition cursor-pointer"
-                              aria-label={`Delete ${s.title}`}
-                            >
-                              <Trash2 size={14} />
-                            </button>
                           </div>
                         ))}
                       </div>
@@ -2563,7 +2583,7 @@ export default function AdminPage() {
                           Synth buttons shown on the homepage <code className="bg-[var(--color-surface-2)] px-1.5 py-0.5 rounded text-[10px]">Highlights &amp; Sound Arena</code>. Empty list falls back to the built-in defaults.
                         </p>
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span
                           className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[11px] font-bold font-mono tracking-wider ${Math.min(sounds.length, PUBLIC_SOUND_LIMIT) === PUBLIC_SOUND_LIMIT
                               ? "border-[#ff0033]/40 bg-[#ff0033]/10 text-[#ff4b5f]"
@@ -2630,47 +2650,51 @@ export default function AdminPage() {
                           return (
                             <div
                               key={s.id}
-                              className={`flex items-center gap-4 p-3 rounded-lg border bg-[var(--color-surface)] ${isPublic ? "border-[var(--color-border)]" : "border-dashed border-[var(--color-border)] opacity-60"
+                              className={`flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border bg-[var(--color-surface)] ${isPublic ? "border-[var(--color-border)]" : "border-dashed border-[var(--color-border)] opacity-60"
                                 }`}
                             >
-                              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[var(--color-surface-2)] text-2xl shrink-0">
-                                {s.emoji}
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[var(--color-surface-2)] text-2xl shrink-0">
+                                  {s.emoji}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-bold text-sm text-[var(--color-text)] truncate flex items-center gap-2">
+                                    <span className="truncate">{s.name}</span>
+                                    {!isPublic && (
+                                      <Badge variant="secondary" className="text-[9px] shrink-0">Hidden</Badge>
+                                    )}
+                                    {s.source === "upload" && (
+                                      <Badge variant="primary" className="text-[9px] shrink-0">Audio</Badge>
+                                    )}
+                                  </p>
+                                  <p className="text-xs text-[var(--color-text-muted)] truncate">
+                                    <span className="uppercase font-mono text-[10px] mr-2">{s.type}</span>
+                                    {s.description}
+                                  </p>
+                                </div>
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-bold text-sm text-[var(--color-text)] truncate flex items-center gap-2">
-                                  <span className="truncate">{s.name}</span>
-                                  {!isPublic && (
-                                    <Badge variant="secondary" className="text-[9px] shrink-0">Hidden</Badge>
-                                  )}
-                                  {s.source === "upload" && (
-                                    <Badge variant="primary" className="text-[9px] shrink-0">Audio</Badge>
-                                  )}
-                                </p>
-                                <p className="text-xs text-[var(--color-text-muted)] truncate">
-                                  <span className="uppercase font-mono text-[10px] mr-2">{s.type}</span>
-                                  {s.description}
-                                </p>
+                              <div className="flex items-center gap-2 self-end sm:self-auto">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setEditingSound(s);
+                                    setCreatingSound(null);
+                                    setSoundFormError(null);
+                                    setSoundFormSuccess(null);
+                                  }}
+                                  className="gap-1.5"
+                                >
+                                  <UserCog size={12} /> Edit
+                                </Button>
+                                <button
+                                  onClick={() => handleDeleteSound(s.id, s.name)}
+                                  className="p-2 rounded-lg text-red-500 hover:bg-red-500/10 transition cursor-pointer"
+                                  aria-label={`Delete ${s.name}`}
+                                >
+                                  <Trash2 size={14} />
+                                </button>
                               </div>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  setEditingSound(s);
-                                  setCreatingSound(null);
-                                  setSoundFormError(null);
-                                  setSoundFormSuccess(null);
-                                }}
-                                className="gap-1.5"
-                              >
-                                <UserCog size={12} /> Edit
-                              </Button>
-                              <button
-                                onClick={() => handleDeleteSound(s.id, s.name)}
-                                className="p-2 rounded-lg text-red-500 hover:bg-red-500/10 transition cursor-pointer"
-                                aria-label={`Delete ${s.name}`}
-                              >
-                                <Trash2 size={14} />
-                              </button>
                             </div>
                           );
                         })}
@@ -2967,7 +2991,7 @@ export default function AdminPage() {
               {activeTab === "settings" && (
                 <div className="space-y-6">
                   {/* Hero Robot — Spline scene URL editor with live preview. */}
-                  <Card className="p-8 border-[var(--color-border)] relative overflow-hidden">
+                  <Card className="p-4 sm:p-8 border-[var(--color-border)] relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-1.5 h-full bg-[#ff0033]" />
                     <div className="space-y-6">
                       <div className="flex items-center gap-3">
@@ -3041,7 +3065,7 @@ export default function AdminPage() {
                   </Card>
 
                   {/* Floating Game Logos Card — Custom floating items around robot */}
-                  <Card className="p-8 border-[var(--color-border)] relative overflow-hidden">
+                  <Card className="p-4 sm:p-8 border-[var(--color-border)] relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-1.5 h-full bg-[#ff0033]" />
                     <div className="space-y-6">
                       <div className="flex items-center gap-3">
@@ -3272,7 +3296,7 @@ export default function AdminPage() {
                   </Card>
 
                   {/* Floating Sci-Fi Words Card — Custom drift text pill capsules */}
-                  <Card className="p-8 border-[var(--color-border)] relative overflow-hidden">
+                  <Card className="p-4 sm:p-8 border-[var(--color-border)] relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-1.5 h-full bg-[#ff0033]" />
                     <div className="space-y-6">
                       <div className="flex items-center gap-3">
@@ -3493,7 +3517,7 @@ export default function AdminPage() {
               {activeTab === "games" && (
                 <div className="space-y-6">
                   {/* Games with logos — drives the hero bottom marquee. */}
-                  <Card className="p-8 border-[var(--color-border)] relative overflow-hidden">
+                  <Card className="p-4 sm:p-8 border-[var(--color-border)] relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-1.5 h-full bg-[#ff0033]" />
                     <div className="space-y-5">
                       <div className="flex items-center gap-3">
@@ -3604,72 +3628,76 @@ export default function AdminPage() {
                           {games.map((g) => (
                             <div
                               key={g.id}
-                              className="flex items-center gap-3 p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]"
+                              className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]"
                             >
-                              <div className="h-12 w-12 rounded-lg overflow-hidden border border-[var(--color-border)] bg-[var(--color-surface-2)] flex items-center justify-center shrink-0">
-                                {g.logoUrl ? (
-                                  // eslint-disable-next-line @next/next/no-img-element
-                                  <img
-                                    src={g.logoUrl}
-                                    alt={g.name}
-                                    className="h-full w-full object-contain"
-                                  />
-                                ) : (
-                                  <Gamepad2 size={18} className="text-[var(--color-text-muted)]" />
-                                )}
-                              </div>
-                              <input
-                                type="text"
-                                value={g.name}
-                                onChange={(e) => {
-                                  const newName = e.target.value;
-                                  setGames((prev) =>
-                                    prev.map((x) =>
-                                      x.id === g.id ? { ...x, name: newName } : x
-                                    )
-                                  );
-                                }}
-                                onBlur={(e) => {
-                                  if (e.target.value.trim() !== g.name) {
-                                    handleRenameGame(g.id, e.target.value.trim());
-                                  }
-                                }}
-                                maxLength={60}
-                                className="flex-1 min-w-0 bg-transparent border-0 outline-none text-sm font-bold text-[var(--color-text)] focus:underline"
-                              />
-                              <label className="cursor-pointer shrink-0">
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <div className="h-12 w-12 rounded-lg overflow-hidden border border-[var(--color-border)] bg-[var(--color-surface-2)] flex items-center justify-center shrink-0">
+                                  {g.logoUrl ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                      src={g.logoUrl}
+                                      alt={g.name}
+                                      className="h-full w-full object-contain"
+                                    />
+                                  ) : (
+                                    <Gamepad2 size={18} className="text-[var(--color-text-muted)]" />
+                                  )}
+                                </div>
                                 <input
-                                  type="file"
-                                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                                  type="text"
+                                  value={g.name}
                                   onChange={(e) => {
-                                    const f = e.target.files?.[0];
-                                    if (f) handleUploadGameLogo(g.id, f);
-                                    e.target.value = ""; // allow re-uploading same file
+                                    const newName = e.target.value;
+                                    setGames((prev) =>
+                                      prev.map((x) =>
+                                        x.id === g.id ? { ...x, name: newName } : x
+                                      )
+                                    );
                                   }}
-                                  disabled={gameUploadingFor === g.id}
-                                  className="hidden"
+                                  onBlur={(e) => {
+                                    if (e.target.value.trim() !== g.name) {
+                                      handleRenameGame(g.id, e.target.value.trim());
+                                    }
+                                  }}
+                                  maxLength={60}
+                                  className="flex-1 min-w-0 bg-transparent border-0 outline-none text-sm font-bold text-[var(--color-text)] focus:underline"
                                 />
-                                <span
-                                  className={`inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-2.5 py-1.5 text-[11px] font-bold transition ${gameUploadingFor === g.id
-                                      ? "opacity-50 cursor-not-allowed"
-                                      : "text-[var(--color-text-muted)] hover:border-[#ff0033]/40 hover:text-[var(--color-text)]"
-                                    }`}
+                              </div>
+                              <div className="flex items-center gap-2 self-end sm:self-auto">
+                                <label className="cursor-pointer shrink-0">
+                                  <input
+                                    type="file"
+                                    accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                                    onChange={(e) => {
+                                      const f = e.target.files?.[0];
+                                      if (f) handleUploadGameLogo(g.id, f);
+                                      e.target.value = ""; // allow re-uploading same file
+                                    }}
+                                    disabled={gameUploadingFor === g.id}
+                                    className="hidden"
+                                  />
+                                  <span
+                                    className={`inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-2.5 py-1.5 text-[11px] font-bold transition ${gameUploadingFor === g.id
+                                        ? "opacity-50 cursor-not-allowed"
+                                        : "text-[var(--color-text-muted)] hover:border-[#ff0033]/40 hover:text-[var(--color-text)]"
+                                      }`}
+                                  >
+                                    <Plus size={12} />
+                                    {gameUploadingFor === g.id
+                                      ? "Uploading…"
+                                      : g.logoUrl
+                                        ? "Replace"
+                                        : "Upload"}
+                                  </span>
+                                </label>
+                                <button
+                                  onClick={() => handleDeleteGame(g.id, g.name)}
+                                  className="p-2 rounded-lg text-red-500 hover:bg-red-500/10 transition cursor-pointer shrink-0"
+                                  aria-label={`Delete ${g.name}`}
                                 >
-                                  <Plus size={12} />
-                                  {gameUploadingFor === g.id
-                                    ? "Uploading…"
-                                    : g.logoUrl
-                                      ? "Replace"
-                                      : "Upload"}
-                                </span>
-                              </label>
-                              <button
-                                onClick={() => handleDeleteGame(g.id, g.name)}
-                                className="p-2 rounded-lg text-red-500 hover:bg-red-500/10 transition cursor-pointer shrink-0"
-                                aria-label={`Delete ${g.name}`}
-                              >
-                                <Trash2 size={14} />
-                              </button>
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -3683,7 +3711,7 @@ export default function AdminPage() {
               {activeTab === "merch" && (
                 <div className="space-y-6">
                   {/* Live toggle */}
-                  <Card className="p-8 border-[var(--color-border)] relative overflow-hidden">
+                  <Card className="p-4 sm:p-8 border-[var(--color-border)] relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-1.5 h-full bg-[#ff0033]" />
                     <div className="space-y-5">
                       <div className="flex items-center gap-3">
@@ -3746,7 +3774,7 @@ export default function AdminPage() {
                   </Card>
 
                   {/* Product list */}
-                  <Card className="p-8 border-[var(--color-border)] relative overflow-hidden">
+                  <Card className="p-4 sm:p-8 border-[var(--color-border)] relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-1.5 h-full bg-[#ff0033]" />
                     <div className="space-y-5">
                       <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -3846,7 +3874,7 @@ export default function AdminPage() {
 
                   {/* Create / Edit form modal-ish (inline) */}
                   {(creatingMerch || editingMerch) && (
-                    <Card className="p-8 border-[var(--color-border)] relative overflow-hidden">
+                    <Card className="p-4 sm:p-8 border-[var(--color-border)] relative overflow-hidden">
                       <div className="absolute top-0 left-0 w-1.5 h-full bg-[#ff0033]" />
                       <MerchEditor
                         initial={editingMerch ?? creatingMerch!}
@@ -3867,7 +3895,7 @@ export default function AdminPage() {
               {/* Tab 7: YouTube Cache controls */}
               {activeTab === "cache" && (
                 <div className="space-y-6">
-                  <Card className="p-8 border-[var(--color-border)] relative overflow-hidden">
+                  <Card className="p-4 sm:p-8 border-[var(--color-border)] relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-1.5 h-full bg-[#ff0033]" />
                     <div className="space-y-6">
                       <div className="space-y-2">
@@ -4340,6 +4368,42 @@ export default function AdminPage() {
           </Card>
         </div>
       )}
+      {/* Floating Bottom Nav for Admin Panel on Mobile */}
+      <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-md rounded-2xl border border-white/10 bg-[#070708]/85 p-1.5 backdrop-blur-xl shadow-[0_12px_45px_rgba(0,0,0,0.85)] lg:hidden">
+        <div
+          id="admin-mobile-bottom-nav-container"
+          className="flex items-center gap-1.5 overflow-x-auto scrollbar-none snap-x snap-mandatory px-1"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          {adminTabs.map((tab) => {
+            const active = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                id={`admin-bottom-nav-${tab.id}`}
+                onClick={() => handleAdminTabChange(tab.id)}
+                className={`flex flex-col items-center justify-center min-w-[80px] px-3.5 py-1.5 rounded-xl transition-all duration-300 snap-center cursor-pointer flex-shrink-0 ${
+                  active
+                    ? "bg-gradient-to-br from-[#ff0033] to-[#ff2d55] text-white shadow-[0_0_16px_rgba(255,0,51,0.5)] scale-[1.03]"
+                    : "text-neutral-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <div className={`${active ? "scale-110" : ""} transition-transform duration-300`}>
+                  {tab.icon}
+                </div>
+                <span className={`text-[9px] font-bold uppercase tracking-wider mt-1 leading-none whitespace-nowrap ${active ? "font-black" : ""}`}>
+                  {tab.name}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        <style dangerouslySetInnerHTML={{__html: `
+          .scrollbar-none::-webkit-scrollbar {
+            display: none !important;
+          }
+        `}} />
+      </div>
     </>
   );
 }

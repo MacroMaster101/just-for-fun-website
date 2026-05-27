@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Bell } from "lucide-react";
+import { Bell, X } from "lucide-react";
+import { createPortal } from "react-dom";
 import { useAuth } from "@/components/auth/AuthProvider";
 
 interface Notification {
@@ -29,12 +30,21 @@ export const NotificationBell = ({ variant = "desktop" }: NotificationBellProps)
   const [notifications, setNotifications] = useState<Notification[] | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const anchorRef = useRef<HTMLDivElement | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   const userId = user?.id ?? null;
 
+  // Track viewport changes to decide whether to render as viewport modal or relative dropdown
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   // Reset cached state during render when the user logs out, so the stale
-  // count from the previous session can't briefly flash. The comparison
-  // pattern avoids the "setState inside an effect" lint rule.
+  // count from the previous session can't briefly flash.
   const [prevUserId, setPrevUserId] = useState<string | null>(userId);
   if (prevUserId !== userId) {
     setPrevUserId(userId);
@@ -45,7 +55,6 @@ export const NotificationBell = ({ variant = "desktop" }: NotificationBellProps)
   }
 
   // Background poll for unread count every 30s so the badge stays fresh
-  // even when the dropdown is closed. Skipped when there's no user.
   useEffect(() => {
     if (!userId) return;
     let cancelled = false;
@@ -57,7 +66,7 @@ export const NotificationBell = ({ variant = "desktop" }: NotificationBellProps)
           if (typeof d.unreadCount === "number") setUnreadCount(d.unreadCount);
         })
         .catch(() => {
-          // ignore — badge just won't update this tick.
+          // ignore
         });
     };
     refresh();
@@ -81,8 +90,7 @@ export const NotificationBell = ({ variant = "desktop" }: NotificationBellProps)
     };
   }, [userId]);
 
-  // Load the full notification list whenever the dropdown opens, so the
-  // list is always fresh and matches the latest unread count.
+  // Load the full notification list whenever the dropdown opens
   useEffect(() => {
     if (!open || !userId) return;
     let cancelled = false;
@@ -161,6 +169,73 @@ export const NotificationBell = ({ variant = "desktop" }: NotificationBellProps)
 
   const badgeLabel = unreadCount > 9 ? "9+" : String(unreadCount);
 
+  const renderNotificationContent = () => {
+    return (
+      <div className="max-h-80 overflow-y-auto">
+        {notifications === null ? (
+          <p className="px-2 py-6 text-center text-[11px] text-[var(--color-text-muted)]">
+            Loading…
+          </p>
+        ) : notifications.length === 0 ? (
+          <div className="px-2 py-8 text-center">
+            <Bell size={24} className="mx-auto mb-2 text-neutral-600 animate-pulse" />
+            <p className="text-xs font-bold text-white">
+              No notifications yet.
+            </p>
+            <p className="mt-1 text-[10px] text-[var(--color-text-muted)]/70">
+              Replies from the team show up here.
+            </p>
+          </div>
+        ) : (
+          <ul className="space-y-1">
+            {notifications.map((n) => {
+              const isUnread = !n.readAt;
+              return (
+                <li key={n.id}>
+                  <button
+                    onClick={() => markOneRead(n.id)}
+                    className={`w-full rounded-md border px-3 py-2.5 text-left transition ${
+                      isUnread
+                        ? "border-[#ff0033]/30 bg-[#ff0033]/8 hover:bg-[#ff0033]/12"
+                        : "border-[var(--color-border)] bg-[var(--color-surface)] hover:bg-[var(--color-surface-2)]"
+                    }`}
+                  >
+                    <div className="flex items-baseline justify-between gap-2">
+                      <p
+                        className={`truncate text-xs font-bold ${
+                          isUnread
+                            ? "text-[var(--color-text)]"
+                            : "text-[var(--color-text-muted)]"
+                        }`}
+                      >
+                        {n.title}
+                      </p>
+                      <span className="shrink-0 text-[9px] text-[var(--color-text-muted)]/70">
+                        {new Date(n.createdAt).toLocaleDateString(undefined, {
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </span>
+                    </div>
+                    <p
+                      className={`mt-1 line-clamp-4 whitespace-pre-wrap text-[11px] leading-snug ${
+                        isUnread
+                          ? "text-[var(--color-text)]/85"
+                          : "text-[var(--color-text-muted)]"
+                      }`}
+                    >
+                      {n.body}
+                    </p>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div ref={anchorRef} className="relative">
       <button
@@ -194,15 +269,32 @@ export const NotificationBell = ({ variant = "desktop" }: NotificationBellProps)
         )}
       </button>
 
-      {open && (
+      {/* Render absolute dropdown on desktop viewports */}
+      {open && !isMobile && variant === "desktop" && (
         <div
           role="menu"
-          className={
-            variant === "desktop"
-              ? "auth-surface absolute right-0 top-full z-50 mt-2 w-80 origin-top-right rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-soft)] p-2 shadow-[0_20px_50px_rgba(0,0,0,0.25)] animate-fade-in-up"
-              : "auth-surface relative z-10 mt-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-soft)] p-2"
-          }
+          className="auth-surface absolute right-0 top-full z-50 mt-2 w-80 origin-top-right rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-soft)] p-2 shadow-[0_20px_50px_rgba(0,0,0,0.25)] animate-fade-in-up"
         >
+          <div className="mb-2 flex items-center justify-between px-2 pt-1 border-b border-white/5 pb-2">
+            <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">
+              Notifications
+            </span>
+            {unreadCount > 0 && (
+              <button
+                onClick={markAllRead}
+                className="text-[10px] font-bold uppercase tracking-wider text-[#ff4b5f] transition hover:text-[#ff0033]"
+              >
+                Mark all read
+              </button>
+            )}
+          </div>
+          {renderNotificationContent()}
+        </div>
+      )}
+
+      {/* Render absolute inline menu for mobile variant list (like in user profile drawers if any) */}
+      {open && variant === "mobile" && (
+        <div className="auth-surface relative z-10 mt-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-soft)] p-2">
           <div className="mb-2 flex items-center justify-between px-2 pt-1">
             <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">
               Notifications
@@ -216,70 +308,51 @@ export const NotificationBell = ({ variant = "desktop" }: NotificationBellProps)
               </button>
             )}
           </div>
-
-          <div className="max-h-80 overflow-y-auto">
-            {notifications === null ? (
-              <p className="px-2 py-6 text-center text-[11px] text-[var(--color-text-muted)]">
-                Loading…
-              </p>
-            ) : notifications.length === 0 ? (
-              <div className="px-2 py-6 text-center">
-                <Bell size={20} className="mx-auto mb-2 text-[var(--color-text-muted)]/60" />
-                <p className="text-[11px] text-[var(--color-text-muted)]">
-                  No notifications yet.
-                </p>
-                <p className="mt-1 text-[10px] text-[var(--color-text-muted)]/70">
-                  Replies from the team show up here.
-                </p>
-              </div>
-            ) : (
-              <ul className="space-y-1">
-                {notifications.map((n) => {
-                  const isUnread = !n.readAt;
-                  return (
-                    <li key={n.id}>
-                      <button
-                        onClick={() => markOneRead(n.id)}
-                        className={`w-full rounded-md border px-3 py-2.5 text-left transition ${
-                          isUnread
-                            ? "border-[#ff0033]/30 bg-[#ff0033]/8 hover:bg-[#ff0033]/12"
-                            : "border-[var(--color-border)] bg-[var(--color-surface)] hover:bg-[var(--color-surface-2)]"
-                        }`}
-                      >
-                        <div className="flex items-baseline justify-between gap-2">
-                          <p
-                            className={`truncate text-xs font-bold ${
-                              isUnread
-                                ? "text-[var(--color-text)]"
-                                : "text-[var(--color-text-muted)]"
-                            }`}
-                          >
-                            {n.title}
-                          </p>
-                          <span className="shrink-0 text-[9px] text-[var(--color-text-muted)]/70">
-                            {new Date(n.createdAt).toLocaleDateString(undefined, {
-                              month: "short",
-                              day: "numeric",
-                            })}
-                          </span>
-                        </div>
-                        <p
-                          className={`mt-1 line-clamp-4 whitespace-pre-wrap text-[11px] leading-snug ${
-                            isUnread
-                              ? "text-[var(--color-text)]/85"
-                              : "text-[var(--color-text-muted)]"
-                          }`}
-                        >
-                          {n.body}
-                        </p>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
+          {renderNotificationContent()}
         </div>
+      )}
+
+      {/* Render viewport modal overlay using React Portal on mobile screen widths */}
+      {open && isMobile && variant === "desktop" && typeof document !== "undefined" && createPortal(
+        <>
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 z-[9998] bg-black/80 backdrop-blur-sm animate-fade-in"
+            onClick={() => setOpen(false)}
+          />
+          
+          {/* Centered Modal Content Card */}
+          <div
+            role="menu"
+            className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[9999] mx-auto my-auto max-w-sm w-[calc(100vw-32px)] bg-[#0c0c0d]/95 backdrop-blur-2xl border border-white/10 p-4 rounded-2xl shadow-[0_24px_70px_rgba(0,0,0,0.95)] animate-fade-in"
+          >
+            <div className="mb-3 flex items-center justify-between border-b border-white/5 pb-2 relative">
+              <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">
+                Notifications
+              </span>
+              <div className="flex items-center gap-3">
+                {unreadCount > 0 && (
+                  <button
+                    onClick={markAllRead}
+                    className="text-[10px] font-bold uppercase tracking-wider text-[#ff4b5f] transition hover:text-[#ff0033] mr-6"
+                  >
+                    Mark all read
+                  </button>
+                )}
+                {/* Close X */}
+                <button
+                  onClick={() => setOpen(false)}
+                  className="p-1.5 text-neutral-400 hover:text-white rounded-full hover:bg-white/10 transition-colors"
+                  aria-label="Close"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+            </div>
+            {renderNotificationContent()}
+          </div>
+        </>,
+        document.body
       )}
     </div>
   );

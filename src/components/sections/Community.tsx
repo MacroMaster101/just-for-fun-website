@@ -135,6 +135,22 @@ export const Community = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const container = document.getElementById("community-tab-container");
+    const activeBtn = document.getElementById(`community-tab-${activeTab}`);
+    if (container && activeBtn) {
+      const containerWidth = container.clientWidth;
+      const btnWidth = activeBtn.clientWidth;
+      const btnLeft = activeBtn.offsetLeft;
+      const targetScrollLeft = btnLeft - (containerWidth / 2) + (btnWidth / 2);
+      container.scrollTo({
+        left: targetScrollLeft,
+        behavior: "smooth",
+      });
+    }
+  }, [activeTab]);
+
   const handleTabChange = (tab: TabId) => {
     setActiveTab(tab);
     setRotationMode("manual");
@@ -209,16 +225,20 @@ export const Community = () => {
           <div className="w-16 h-[2px] bg-gradient-to-r from-[#ff0033] via-white to-[#ff4b5f] mx-auto rounded-full mt-4" />
         </div>
 
-        {/* Tab Selection Switcher */}
-        <div className="flex flex-col items-center mb-12">
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-white/5 bg-[#0c0c0c]/80 p-1.5 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
+        <div className="flex flex-col items-center mb-12 w-full">
+          <div
+            id="community-tab-container"
+            className="flex items-center gap-1.5 rounded-full border border-white/5 bg-[#0c0c0c]/80 p-1.5 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.4)] max-w-full overflow-x-auto scrollbar-none snap-x snap-mandatory px-3 sm:px-1.5"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
             {tabs.map((tab) => {
               const active = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
+                  id={`community-tab-${tab.id}`}
                   onClick={() => handleTabChange(tab.id)}
-                  className={`relative flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-black uppercase tracking-wider transition-all duration-300 cursor-pointer ${
+                  className={`relative flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-black uppercase tracking-wider transition-all duration-300 cursor-pointer snap-center shrink-0 ${
                     active
                       ? "bg-[#ff0033] text-white shadow-[0_0_15px_rgba(255,0,51,0.45)] scale-105"
                       : "text-neutral-400 hover:text-neutral-200 hover:bg-white/5"
@@ -230,12 +250,19 @@ export const Community = () => {
               );
             })}
           </div>
+          <style dangerouslySetInnerHTML={{__html: `
+            .scrollbar-none::-webkit-scrollbar {
+              display: none !important;
+            }
+          `}} />
 
           {/* Futuristic Cyber Charging Progress Bar */}
-          <div className="w-48 h-[2px] bg-white/5 rounded-full mt-4 overflow-hidden border border-white/5 shadow-[0_0_10px_rgba(0,0,0,0.5)] relative">
+          <div className="w-56 h-[14px] bg-white/15 rounded-full mt-4 overflow-hidden border border-white/20 shadow-[0_0_12px_rgba(0,0,0,0.6)] relative flex items-center">
             <div
-              className={`h-full bg-[#ff0033] shadow-[0_0_8px_rgba(255,0,51,0.85)] transition-all ease-linear ${
-                isTyping || rotationMode === "manual" ? "opacity-40 animate-pulse bg-neutral-500 shadow-none" : ""
+              className={`h-full bg-gradient-to-r from-[#ff0033] to-[#ff3b58] shadow-[0_0_8px_rgba(255,0,51,0.85)] transition-all ease-linear rounded-full ${
+                isTyping || rotationMode === "manual"
+                  ? "bg-gradient-to-r from-[#ff0033] via-[#ff526c] to-[#ff0033] shadow-[0_0_15px_rgba(255,0,51,0.9)] animate-pulse"
+                  : ""
               }`}
               style={{
                 width: isTyping || rotationMode === "manual" ? "100%" : `${progress}%`,
@@ -243,7 +270,7 @@ export const Community = () => {
               }}
             />
             {(isTyping || rotationMode === "manual") && (
-              <span className="absolute inset-0 flex items-center justify-center text-[7px] font-black uppercase tracking-widest text-neutral-400 scale-[0.9] select-none">
+              <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black uppercase tracking-[0.3em] text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)] select-none leading-none">
                 {isTyping ? "TYPING..." : "MANUAL"}
               </span>
             )}
