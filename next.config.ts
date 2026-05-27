@@ -19,16 +19,16 @@ const ContentSecurityPolicy = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: blob: https://i.ytimg.com https://img.youtube.com https://images.unsplash.com https://media.rawg.io https://yt3.ggpht.com https://yt4.ggpht.com https://yt3.googleusercontent.com https://yt4.googleusercontent.com https://*.supabase.co https://api.dicebear.com https://lh3.googleusercontent.com https://cdn.discordapp.com",
-  // YouTube embeds + Spline 3D scene canvas
-  "frame-src https://www.youtube.com https://youtube.com https://*.spline.design",
-  // Outbound fetches: same origin, Supabase project, YouTube API
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.googleapis.com https://*.spline.design",
+  "media-src 'self' data: https://*.supabase.co",
+  // YouTube/Discord embeds + Spline 3D scene canvas
+  "frame-src https://www.youtube.com https://youtube.com https://*.spline.design https://discord.com",
+  // Outbound fetches: same origin, Supabase project, YouTube API, unpkg (for spline)
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.googleapis.com https://*.spline.design https://unpkg.com",
   "worker-src 'self' blob:",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
   "frame-ancestors 'none'",
-  "upgrade-insecure-requests",
 ].join("; ");
 
 const securityHeaders = [
