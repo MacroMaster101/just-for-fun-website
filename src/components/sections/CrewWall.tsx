@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { Users, Sparkles, UserPlus } from "lucide-react";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { resolveAvatarUrl } from "@/lib/avatar";
 
 interface Member {
@@ -23,6 +24,7 @@ const formatJoined = (iso: string) => {
 };
 
 export const CrewWall = () => {
+  const { onlineUserIds } = useAuth();
   const [members, setMembers] = useState<Member[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -52,26 +54,22 @@ export const CrewWall = () => {
   // Visible avatars in the main grid. Cap at 30 to keep layout tight;
   // the count chip shows the true total.
   const visible = useMemo(() => members.slice(0, 30), [members]);
-  // A second slice rotated through the marquee strip for personality.
-  const marquee = useMemo(() => {
-    if (members.length === 0) return [];
-    // Repeat to fill the strip even with few members.
-    const pool = [...members];
-    while (pool.length < 12) pool.push(...members);
-    return pool.slice(0, 24);
-  }, [members]);
+  const onlineCount = useMemo(
+    () => members.filter((member) => onlineUserIds.has(member.id)).length,
+    [members, onlineUserIds]
+  );
 
   return (
     <div className="relative z-10 mx-auto max-w-7xl">
       {/* Header */}
       <div className="mb-10 flex flex-col justify-between gap-6 border-b border-white/5 pb-6 md:flex-row md:items-end">
         <div className="space-y-3">
-          <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.4em] text-[#ff4b5f] flex items-center gap-2">
+          <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.4em] text-[#38d56f] sm:text-xs">
             <span className="relative flex h-2 w-2">
-              <span className="absolute inset-0 animate-ping rounded-full bg-[#ff0033] opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-[#ff0033]" />
+              <span className="absolute inset-0 animate-ping rounded-full bg-[#22c55e] opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-[#22c55e]" />
             </span>
-            Crew Online
+            {onlineCount} Online
           </p>
           <h2 className="flex flex-wrap items-center gap-3 font-display text-2xl font-extrabold tracking-tight text-white sm:text-4xl">
             <Users
@@ -105,27 +103,44 @@ export const CrewWall = () => {
       ) : visible.length === 0 ? (
         <EmptyState />
       ) : (
-        <>
-          <AvatarGrid members={visible} />
-          {marquee.length > 0 && <MarqueeStrip members={marquee} />}
-        </>
+        <AvatarGrid members={visible} onlineUserIds={onlineUserIds} />
       )}
     </div>
   );
 };
 
-const AvatarGrid = ({ members }: { members: Member[] }) => (
+const AvatarGrid = ({
+  members,
+  onlineUserIds,
+}: {
+  members: Member[];
+  onlineUserIds: Set<string>;
+}) => (
   <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-10 gap-3 sm:gap-4">
     {members.map((m, idx) => (
-      <MemberTile key={m.id} member={m} index={idx} />
+      <MemberTile
+        key={m.id}
+        member={m}
+        index={idx}
+        isOnline={onlineUserIds.has(m.id)}
+      />
     ))}
   </div>
 );
 
-const MemberTile = ({ member, index }: { member: Member; index: number }) => {
+const MemberTile = ({
+  member,
+  index,
+  isOnline,
+}: {
+  member: Member;
+  index: number;
+  isOnline: boolean;
+}) => {
   const src = resolveAvatarUrl(member.avatarUrl, member.id);
   const fallbackLetter = member.name.charAt(0).toUpperCase();
-  const [imgFailed, setImgFailed] = useState(false);
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const imgFailed = failedSrc === src;
 
   return (
     <div
@@ -135,7 +150,13 @@ const MemberTile = ({ member, index }: { member: Member; index: number }) => {
       <div className="relative">
         {/* Glow ring */}
         <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-[#ff0033]/0 via-[#ff0033]/40 to-[#ff4b5f]/0 opacity-0 group-hover:opacity-100 blur-md transition-opacity duration-300" />
-        <div className="relative h-16 w-16 sm:h-20 sm:w-20 rounded-full border border-white/10 bg-[#0c0c0c] overflow-hidden group-hover:border-[#ff0033]/60 transition-colors duration-300">
+        <div
+          className={`relative h-16 w-16 overflow-hidden rounded-full border bg-[#0c0c0c] transition-colors duration-300 sm:h-20 sm:w-20 ${
+            isOnline
+              ? "border-[#22c55e]/70 shadow-[0_0_22px_rgba(34,197,94,0.18)] group-hover:border-[#22c55e]"
+              : "border-white/15 shadow-[0_0_18px_rgba(255,0,51,0.12)] group-hover:border-[#ff0033]/60"
+          }`}
+        >
           {imgFailed ? (
             <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#ff0033] to-[#b30024] text-white font-display font-black text-xl">
               {fallbackLetter}
@@ -148,11 +169,21 @@ const MemberTile = ({ member, index }: { member: Member; index: number }) => {
               src={src}
               alt={member.name}
               loading="lazy"
-              onError={() => setImgFailed(true)}
+              onError={() => setFailedSrc(src)}
               className="h-full w-full object-cover"
             />
           )}
         </div>
+        {isOnline && (
+          <span
+            className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-[#050505] bg-[#050505] sm:h-6 sm:w-6"
+            title="Online now"
+          >
+            <span className="absolute h-3.5 w-3.5 animate-ping rounded-full bg-[#22c55e]/60 sm:h-4 sm:w-4" />
+            <span className="relative h-2.5 w-2.5 rounded-full bg-[#22c55e] shadow-[0_0_10px_rgba(34,197,94,0.95)] sm:h-3 sm:w-3" />
+            <span className="sr-only">Online now</span>
+          </span>
+        )}
         {/* Corner brackets — hover only */}
         <span className="pointer-events-none absolute -top-1 -left-1 h-3 w-3 border-l border-t border-[#ff0033] opacity-0 group-hover:opacity-100 transition-opacity" />
         <span className="pointer-events-none absolute -top-1 -right-1 h-3 w-3 border-r border-t border-[#ff0033] opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -166,52 +197,6 @@ const MemberTile = ({ member, index }: { member: Member; index: number }) => {
       <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.18em] text-neutral-500 truncate w-full">
         {formatJoined(member.joinedAt)}
       </p>
-    </div>
-  );
-};
-
-const MarqueeStrip = ({ members }: { members: Member[] }) => (
-  <div className="relative mt-10 overflow-hidden rounded-2xl border border-white/5 bg-[#0c0c0c]/60 py-4 sm:mt-16">
-    {/* edge fades */}
-    <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-[#060606] to-transparent z-10" />
-    <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#060606] to-transparent z-10" />
-
-    <div className="flex gap-6 animate-marquee whitespace-nowrap">
-      {[...members, ...members].map((m, i) => (
-        <MarqueePill key={`${m.id}-${i}`} member={m} />
-      ))}
-    </div>
-  </div>
-);
-
-const MarqueePill = ({ member }: { member: Member }) => {
-  const [failed, setFailed] = useState(false);
-  const src = resolveAvatarUrl(member.avatarUrl, member.id);
-  const letter = member.name.charAt(0).toUpperCase();
-  return (
-    <div className="flex items-center gap-3 shrink-0 px-2">
-      <div className="h-10 w-10 rounded-full border border-white/10 bg-[#0c0c0c] overflow-hidden flex items-center justify-center">
-        {failed ? (
-          <span className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#ff0033] to-[#b30024] text-white font-display font-black text-sm">
-            {letter}
-          </span>
-        ) : (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={src}
-            alt={member.name}
-            loading="lazy"
-            onError={() => setFailed(true)}
-            className="h-full w-full object-cover"
-          />
-        )}
-      </div>
-      <div className="font-display text-[11px] font-black uppercase tracking-wider text-white">
-        {member.name}
-        <span className="ml-2 text-[9px] font-bold tracking-[0.18em] text-[#ff4b5f]">
-          ●  ONLINE
-        </span>
-      </div>
     </div>
   );
 };

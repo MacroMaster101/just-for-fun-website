@@ -15,6 +15,7 @@ interface AuthContextValue {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  onlineUserIds: Set<string>;
   signOut: () => Promise<void>;
 }
 
@@ -22,13 +23,21 @@ const AuthContext = createContext<AuthContextValue>({
   user: null,
   session: null,
   loading: true,
+  onlineUserIds: new Set(),
   signOut: async () => {},
 });
+
+type PresenceMeta = {
+  user_id?: unknown;
+};
+
+type PresenceState = Record<string, PresenceMeta[]>;
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const client = supabase();
@@ -86,13 +95,69 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
+  useEffect(() => {
+    const client = supabase();
+    const channel = user?.id
+      ? client.channel("crew-wall-presence", {
+          config: { presence: { key: user.id } },
+        })
+      : client.channel("crew-wall-presence");
+
+    const syncPresence = () => {
+      const state = channel.presenceState() as PresenceState;
+      const ids = new Set<string>();
+
+      for (const [presenceKey, presences] of Object.entries(state)) {
+        if (presenceKey) ids.add(presenceKey);
+        for (const presence of presences) {
+          if (typeof presence.user_id === "string" && presence.user_id) {
+            ids.add(presence.user_id);
+          }
+        }
+      }
+
+      setOnlineUserIds(ids);
+    };
+
+    channel
+      .on("presence", { event: "sync" }, syncPresence)
+      .on("presence", { event: "join" }, syncPresence)
+      .on("presence", { event: "leave" }, syncPresence)
+      .subscribe((status) => {
+        if (status !== "SUBSCRIBED") return;
+        if (user?.id) {
+          void channel.track({
+            user_id: user.id,
+            online_at: new Date().toISOString(),
+          });
+        }
+        syncPresence();
+      });
+
+    const refreshPresence = () => {
+      if (document.visibilityState !== "visible" || !user?.id) return;
+      void channel.track({
+        user_id: user.id,
+        online_at: new Date().toISOString(),
+      });
+    };
+
+    document.addEventListener("visibilitychange", refreshPresence);
+
+    return () => {
+      document.removeEventListener("visibilitychange", refreshPresence);
+      if (user?.id) void channel.untrack();
+      void client.removeChannel(channel);
+    };
+  }, [user?.id]);
+
   const signOut = useCallback(async () => {
     await supabase().auth.signOut();
   }, []);
 
   const value = useMemo(
-    () => ({ user, session, loading, signOut }),
-    [user, session, loading, signOut]
+    () => ({ user, session, loading, onlineUserIds, signOut }),
+    [user, session, loading, onlineUserIds, signOut]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

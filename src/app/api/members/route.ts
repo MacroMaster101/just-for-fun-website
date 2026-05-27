@@ -4,6 +4,14 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
+type AuthProfile = {
+  email: string | null;
+  name: string | null;
+  avatarUrl: string | null;
+};
+
+type AuthMetadata = Record<string, unknown> | null | undefined;
+
 /**
  * Public Crew Wall feed. Returns recent non-admin profiles for the
  * homepage "CREW WALL" section. Admins (the root admin from env + every
@@ -21,7 +29,7 @@ export const dynamic = "force-dynamic";
  */
 export async function GET() {
   try {
-    const [adminRows, rootAdmin, rows, authIds] = await Promise.all([
+    const [adminRows, rootAdmin, rows, authUsers] = await Promise.all([
       prisma.adminEmail.findMany({ select: { email: true } }),
       Promise.resolve(process.env.NEXT_PUBLIC_ADMIN_EMAIL),
       prisma.profile.findMany({
@@ -35,7 +43,7 @@ export async function GET() {
           createdAt: true,
         },
       }),
-      listAuthUserIds(),
+      listAuthUsers(),
     ]);
 
     const adminEmails = new Set(
@@ -46,7 +54,7 @@ export async function GET() {
     // If we have a live auth.users id set, drop any profile that's
     // orphaned. If the service-role call failed, fall back to trusting
     // the Profile table (skip the cross-check) so the wall still renders.
-    const liveAuthIds = authIds;
+    const liveAuthIds = authUsers ? new Set(authUsers.keys()) : null;
     const orphans = liveAuthIds
       ? rows.filter((r) => !liveAuthIds.has(r.id)).map((r) => r.id)
       : [];
@@ -60,14 +68,27 @@ export async function GET() {
 
     const members = rows
       .filter((r) => !liveAuthIds || liveAuthIds.has(r.id))
-      .filter((r) => !r.email || !adminEmails.has(r.email.toLowerCase().trim()))
+      .filter((r) => {
+        const auth = authUsers?.get(r.id);
+        const email = (r.email || auth?.email || "").toLowerCase().trim();
+        return !email || !adminEmails.has(email);
+      })
       .slice(0, 60)
-      .map((r) => ({
-        id: r.id,
-        name: r.name?.trim() || deriveNameFromEmail(r.email) || "Anonymous",
-        avatarUrl: r.avatarUrl || "",
-        joinedAt: r.createdAt.toISOString(),
-      }));
+      .map((r) => {
+        const auth = authUsers?.get(r.id);
+        const email = r.email || auth?.email || null;
+
+        return {
+          id: r.id,
+          name:
+            r.name?.trim() ||
+            auth?.name ||
+            deriveNameFromEmail(email) ||
+            "Anonymous",
+          avatarUrl: r.avatarUrl?.trim() || auth?.avatarUrl || "",
+          joinedAt: r.createdAt.toISOString(),
+        };
+      });
 
     return NextResponse.json({
       members,
@@ -80,18 +101,18 @@ export async function GET() {
 }
 
 /**
- * Pull the full set of live auth.users ids from Supabase. Returns null
- * if the service-role client is unavailable so the caller can decide to
- * fall back to its own data instead of returning an empty list.
+ * Pull live auth.users metadata from Supabase. Returns null if the
+ * service-role client is unavailable so the caller can fall back to the
+ * Profile table instead of returning an empty list.
  */
-async function listAuthUserIds(): Promise<Set<string> | null> {
+async function listAuthUsers(): Promise<Map<string, AuthProfile> | null> {
   let admin;
   try {
     admin = supabaseAdmin();
   } catch {
     return null;
   }
-  const ids = new Set<string>();
+  const users = new Map<string, AuthProfile>();
   let page = 1;
   // 1000 is the per-page cap. Loop until we exhaust the pages or hit a
   // safety ceiling of 10k members.
@@ -104,11 +125,25 @@ async function listAuthUserIds(): Promise<Set<string> | null> {
       console.error("listUsers failed:", error);
       return null;
     }
-    for (const u of data.users) ids.add(u.id);
+    for (const u of data.users) {
+      const metadata = u.user_metadata as AuthMetadata;
+      users.set(u.id, {
+        email: u.email ?? null,
+        name: metadataText(metadata, "full_name") || metadataText(metadata, "name"),
+        avatarUrl:
+          metadataText(metadata, "avatar_url") ||
+          metadataText(metadata, "picture"),
+      });
+    }
     if (data.users.length < 1000) break;
     page += 1;
   }
-  return ids;
+  return users;
+}
+
+function metadataText(metadata: AuthMetadata, key: string): string | null {
+  const value = metadata?.[key];
+  return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
 function deriveNameFromEmail(email: string | null): string | null {
