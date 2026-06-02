@@ -147,17 +147,17 @@ const DISCORD_ADMIN_LINKS = [
   {
     title: "YouTube Status Bot",
     description: "Manage Discord updates for YouTube live/status alerts.",
-    url: "https://discord-youtube-status-bot.fly.dev",
+    url: "http://13.212.35.227:8081",
   },
   {
     title: "J4FN Server Bot",
     description: "Open the J4FN Discord server bot admin panel.",
-    url: "https://discord-j4fn-server-bot.fly.dev",
+    url: "http://13.212.35.227:8080",
   },
   {
     title: "Music Bot",
     description: "Control the J4FN Discord music bot dashboard.",
-    url: "https://discord-music-bot-j4fn.fly.dev",
+    url: "http://54.179.1.104:8080",
   },
 ] as const;
 
