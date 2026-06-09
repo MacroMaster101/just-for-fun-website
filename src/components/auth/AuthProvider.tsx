@@ -11,11 +11,23 @@ import {
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
 
+/** Minimal profile shape shared app-wide (name + avatar live in the DB,
+ * not in Supabase auth metadata, so any avatar/name edit must flow through
+ * here for the header/menu to update without a full page refresh). */
+export interface AuthProfile {
+  id: string;
+  name: string | null;
+  avatarUrl: string | null;
+}
+
 interface AuthContextValue {
   user: User | null;
   session: Session | null;
   loading: boolean;
   onlineUserIds: Set<string>;
+  profile: AuthProfile | null;
+  /** Re-fetch the current user's profile (call after editing name/avatar). */
+  refreshProfile: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -24,6 +36,8 @@ const AuthContext = createContext<AuthContextValue>({
   session: null,
   loading: true,
   onlineUserIds: new Set(),
+  profile: null,
+  refreshProfile: async () => {},
   signOut: async () => {},
 });
 
@@ -38,6 +52,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
+  const [profile, setProfile] = useState<AuthProfile | null>(null);
+
+  // Fetch (or re-fetch) the current user's profile. /api/profile GET is an
+  // idempotent upsert, so this both seeds the row and returns the latest
+  // name/avatar. Exposed via context so the modal can refresh the header
+  // pill + dropdown immediately after an avatar/name change.
+  const refreshProfile = useCallback(async () => {
+    try {
+      const res = await fetch("/api/profile", { cache: "no-store" });
+      if (!res.ok) return;
+      const { profile } = await res.json();
+      if (profile) {
+        setProfile({
+          id: profile.id,
+          name: profile.name ?? null,
+          avatarUrl: profile.avatarUrl ?? null,
+        });
+      }
+    } catch {
+      // Non-fatal — components fall back to auth metadata.
+    }
+  }, []);
 
   useEffect(() => {
     const client = supabase();
@@ -50,10 +86,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // is harmless. Cheap network ping, fire-and-forget.
     let seededFor: string | null = null;
     const seedProfile = (userId: string | null) => {
-      if (!userId || seededFor === userId) return;
+      if (!userId) {
+        seededFor = null;
+        setProfile(null);
+        return;
+      }
+      if (seededFor === userId) return;
       seededFor = userId;
-      fetch("/api/profile", { cache: "no-store" }).catch(() => {
-        // Reset so we'll retry on the next auth state change.
+      // Seeds the row AND populates the shared profile (name/avatar).
+      refreshProfile().catch(() => {
         seededFor = null;
       });
     };
@@ -76,6 +117,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       seedProfile(newSession?.user?.id ?? null);
     });
 
+    // Let any component request a profile refresh by dispatching this event
+    // (the ProfileModal fires it after saving name/avatar).
+    const onProfileUpdated = () => {
+      void refreshProfile();
+    };
+    window.addEventListener("profile-updated", onProfileUpdated);
+
     // bfcache guard: whenever the page is restored from the back/forward
     // cache, React state is frozen at whatever it was when the user
     // navigated away — this includes a stuck LoadingScreen or a stale
@@ -92,8 +140,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       mounted = false;
       subscription.unsubscribe();
       window.removeEventListener("pageshow", onPageShow);
+      window.removeEventListener("profile-updated", onProfileUpdated);
     };
-  }, []);
+  }, [refreshProfile]);
 
   useEffect(() => {
     const client = supabase();
@@ -156,8 +205,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const value = useMemo(
-    () => ({ user, session, loading, onlineUserIds, signOut }),
-    [user, session, loading, onlineUserIds, signOut]
+    () => ({
+      user,
+      session,
+      loading,
+      onlineUserIds,
+      profile,
+      refreshProfile,
+      signOut,
+    }),
+    [user, session, loading, onlineUserIds, profile, refreshProfile, signOut]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

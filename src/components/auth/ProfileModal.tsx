@@ -3,12 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
+  Bot,
   Camera,
   Eye,
   EyeOff,
   Heart,
   KeyRound,
   Loader2,
+  Mail,
   Save,
   ShieldCheck,
   Trash2,
@@ -16,7 +18,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { supabase } from "@/lib/supabase/client";
-import { resolveAvatarUrl } from "@/lib/avatar";
+import { diceBearAvatar, resolveAvatarUrl } from "@/lib/avatar";
 
 interface ProfileData {
   id: string;
@@ -47,7 +49,7 @@ export const ProfileModal = ({
   onClose,
   initialTab = "profile",
 }: ProfileModalProps) => {
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const [tab, setTab] = useState<Tab>(initialTab);
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
@@ -98,11 +100,23 @@ export const ProfileModal = ({
     return () => clearTimeout(t);
   }, [isOpen, initialTab]);
 
-  // Lock body scroll + escape-to-close.
+  // Refs mirror the unsaved-changes state so the Escape handler (registered
+  // once per open) can read the latest values without re-binding.
+  const dirtyRef = useRef(false);
+  const savingRef = useRef(false);
+
+  // Lock body scroll + escape-to-close (with unsaved-changes guard).
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key !== "Escape") return;
+      if (dirtyRef.current && !savingRef.current) {
+        const ok = confirm(
+          "You have unsaved changes to your profile. Close without saving?"
+        );
+        if (!ok) return;
+      }
+      onClose();
     };
     document.body.style.overflow = "hidden";
     window.addEventListener("keydown", onKey);
@@ -161,8 +175,34 @@ export const ProfileModal = ({
     return () => clearTimeout(t);
   }, [pwDone]);
 
+  // Mirror unsaved-changes state into refs for the Escape key handler.
+  useEffect(() => {
+    dirtyRef.current =
+      name !== (profile?.name ?? "") || bio !== (profile?.bio ?? "");
+  }, [name, bio, profile]);
+  useEffect(() => {
+    savingRef.current = saving;
+  }, [saving]);
+
   if (!isOpen || !user) return null;
   if (typeof document === "undefined") return null;
+
+  // Name/bio are the only fields gated behind "Save Changes" (avatar actions
+  // apply immediately). Track whether they differ from the saved profile so
+  // we can warn before the user discards unsaved edits.
+  const isDirty =
+    name !== (profile?.name ?? "") || bio !== (profile?.bio ?? "");
+
+  // Close, but warn first if there are unsaved name/bio edits.
+  const handleClose = () => {
+    if (isDirty && !saving) {
+      const ok = confirm(
+        "You have unsaved changes to your profile. Close without saving?"
+      );
+      if (!ok) return;
+    }
+    onClose();
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -177,6 +217,13 @@ export const ProfileModal = ({
       if (!res.ok) throw new Error("Failed to save");
       const { profile } = await res.json();
       setProfile(profile);
+      // Keep Supabase auth metadata in sync so the header pill + dropdown
+      // (which read from user_metadata, not the Profile row) update too.
+      await supabase().auth.updateUser({
+        data: { name: profile.name, full_name: profile.name },
+      });
+      await supabase().auth.refreshSession();
+      await refreshProfile();
       setJustSaved(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Save failed");
@@ -202,8 +249,10 @@ export const ProfileModal = ({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upload failed");
       setProfile(data.profile);
-      // Refresh the auth user so the header avatar updates immediately.
+      // Refresh the auth user + shared profile so the header avatar updates
+      // immediately (no page refresh needed).
       await supabase().auth.refreshSession();
+      await refreshProfile();
     } catch (err) {
       setAvatarError(err instanceof Error ? err.message : "Upload failed");
     } finally {
@@ -221,6 +270,85 @@ export const ProfileModal = ({
       if (!res.ok) throw new Error(data.error || "Failed");
       setProfile(data.profile);
       await supabase().auth.refreshSession();
+      await refreshProfile();
+    } catch (err) {
+      setAvatarError(err instanceof Error ? err.message : "Failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Set avatar to a random DiceBear cartoon avatar
+  const handleUseDiceBear = async () => {
+    setUploading(true);
+    setAvatarError(null);
+    try {
+      const seed = `${user.id}-${Date.now()}`;
+      const url = diceBearAvatar(seed);
+      const res = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ avatarUrl: url }),
+      });
+      if (!res.ok) throw new Error("Failed to set avatar");
+      const { profile } = await res.json();
+      setProfile(profile);
+      // NOTE: do NOT write the DiceBear URL into user_metadata.avatar_url /
+      // picture — those hold the original OAuth (Google) photo, which we need
+      // to keep so "Use email photo" can restore it later. The Profile row's
+      // avatarUrl is the source of truth for the custom avatar.
+      await supabase().auth.refreshSession();
+      await refreshProfile();
+    } catch (err) {
+      setAvatarError(err instanceof Error ? err.message : "Failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // The original OAuth/Google email-linked photo.
+  //
+  // Primary source: the OAuth identity's identity_data. Supabase populates
+  // this from the provider at sign-in and `updateUser` NEVER touches it, so
+  // it survives even if user_metadata.avatar_url got clobbered by an older
+  // build that wrote a DiceBear URL there. We fall back to user_metadata
+  // (filtering out DiceBear URLs) for older sessions that predate this.
+  const identityPhoto = (() => {
+    for (const id of user.identities ?? []) {
+      if (id.provider === "email") continue;
+      const data = id.identity_data as Record<string, unknown> | undefined;
+      const url =
+        (data?.avatar_url as string | undefined) ||
+        (data?.picture as string | undefined);
+      if (url && !url.includes("api.dicebear.com")) return url;
+    }
+    return null;
+  })();
+  const metadataPhoto =
+    (user.user_metadata?.avatar_url as string | undefined) ||
+    (user.user_metadata?.picture as string | undefined) ||
+    null;
+  const oauthAvatarUrl =
+    identityPhoto ||
+    (metadataPhoto && !metadataPhoto.includes("api.dicebear.com")
+      ? metadataPhoto
+      : null);
+
+  const handleUseEmailPhoto = async () => {
+    if (!oauthAvatarUrl) return;
+    setUploading(true);
+    setAvatarError(null);
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ avatarUrl: oauthAvatarUrl }),
+      });
+      if (!res.ok) throw new Error("Failed to set avatar");
+      const { profile } = await res.json();
+      setProfile(profile);
+      await supabase().auth.refreshSession();
+      await refreshProfile();
     } catch (err) {
       setAvatarError(err instanceof Error ? err.message : "Failed");
     } finally {
@@ -303,14 +431,14 @@ export const ProfileModal = ({
   return createPortal(
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
-      onClick={onClose}
+      onClick={handleClose}
     >
       <div
         className="auth-surface relative my-auto w-full max-w-2xl rounded-2xl border border-white/10 bg-[#0c0c0c] shadow-[0_20px_60px_rgba(0,0,0,0.6)]"
         onClick={(e) => e.stopPropagation()}
       >
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="absolute right-4 top-4 z-10 rounded-full p-1 text-neutral-400 transition hover:bg-white/10 hover:text-white"
           aria-label="Close"
         >
@@ -362,15 +490,44 @@ export const ProfileModal = ({
             {avatarError && (
               <p className="mt-1 text-[11px] text-red-400">{avatarError}</p>
             )}
-            {profile?.avatarUrl && (
+            {/* Avatar quick-action buttons */}
+            <div className="mt-2 flex flex-wrap items-center gap-2">
               <button
-                onClick={handleAvatarRemove}
+                onClick={handleUseDiceBear}
                 disabled={uploading}
-                className="mt-1 flex items-center gap-1 text-[10px] font-bold text-neutral-500 transition hover:text-[#ff2d55] disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-full border border-[#ff0033]/30 bg-[#ff0033]/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-[#ff4b5f] transition-all duration-300 hover:bg-[#ff0033]/20 hover:border-[#ff0033] hover:text-white hover:shadow-[0_0_12px_rgba(255,0,51,0.2)] disabled:opacity-50 cursor-pointer"
               >
-                <Trash2 size={10} /> Remove custom photo
+                {uploading ? (
+                  <Loader2 size={10} className="animate-spin" />
+                ) : (
+                  <Bot size={10} />
+                )}
+                Use cartoon avatar
               </button>
-            )}
+              {oauthAvatarUrl && (
+                <button
+                  onClick={handleUseEmailPhoto}
+                  disabled={uploading}
+                  className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-neutral-400 transition-all duration-300 hover:bg-white/10 hover:border-white/20 hover:text-white disabled:opacity-50 cursor-pointer"
+                >
+                  {uploading ? (
+                    <Loader2 size={10} className="animate-spin" />
+                  ) : (
+                    <Mail size={10} />
+                  )}
+                  Use email photo
+                </button>
+              )}
+              {profile?.avatarUrl && (
+                <button
+                  onClick={handleAvatarRemove}
+                  disabled={uploading}
+                  className="flex items-center gap-1 text-[10px] font-bold text-neutral-600 transition hover:text-[#ff2d55] disabled:opacity-50 cursor-pointer"
+                >
+                  <Trash2 size={10} /> Remove
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -434,9 +591,16 @@ export const ProfileModal = ({
                 </p>
               )}
 
+              {isDirty && !saving && (
+                <p className="flex items-center gap-1.5 text-[11px] font-bold text-amber-400">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  Unsaved changes — click Save Changes to keep them.
+                </p>
+              )}
+
               <button
                 type="submit"
-                disabled={saving}
+                disabled={saving || !isDirty}
                 className="mt-1 flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#ff0033] to-[#ff2d55] px-4 py-2.5 text-sm font-black uppercase tracking-wide text-white shadow-[0_0_18px_rgba(255,0,51,0.35)] disabled:opacity-60"
               >
                 {saving ? (

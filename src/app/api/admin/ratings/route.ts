@@ -69,6 +69,8 @@ export async function PATCH(request: Request) {
 
     const body = (await request.json().catch(() => null)) as {
       ratingId?: string;
+      isHearted?: boolean;
+      isFlagged?: boolean;
     } | null;
 
     if (!body || !body.ratingId) {
@@ -83,9 +85,19 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Review not found" }, { status: 404 });
     }
 
+    const updateData: { isHearted?: boolean; isFlagged?: boolean } = {};
+    if (body.isHearted !== undefined) {
+      updateData.isHearted = body.isHearted;
+    }
+    if (body.isFlagged !== undefined) {
+      updateData.isFlagged = body.isFlagged;
+    } else if (body.isHearted === undefined) {
+      updateData.isFlagged = false;
+    }
+
     const updated = await prisma.pageRating.update({
       where: { id: body.ratingId },
-      data: { isFlagged: false },
+      data: updateData,
     });
 
     return NextResponse.json({ success: true, rating: updated }, { status: 200 });

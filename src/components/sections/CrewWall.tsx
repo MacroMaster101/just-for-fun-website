@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Users, Sparkles, UserPlus } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { resolveAvatarUrl } from "@/lib/avatar";
@@ -24,39 +24,62 @@ const formatJoined = (iso: string) => {
 };
 
 export const CrewWall = () => {
-  const { onlineUserIds } = useAuth();
+  const { onlineUserIds, profile } = useAuth();
   const [members, setMembers] = useState<Member[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch("/api/members", { cache: "no-store" });
-        if (!res.ok) throw new Error();
-        const data = (await res.json()) as { members?: Member[]; total?: number };
-        if (cancelled) return;
-        setMembers(Array.isArray(data.members) ? data.members : []);
-        setTotal(typeof data.total === "number" ? data.total : 0);
-      } catch {
-        if (!cancelled) setError(true);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+  const loadMembers = useCallback(async (signal?: { cancelled: boolean }) => {
+    try {
+      const res = await fetch("/api/members", { cache: "no-store" });
+      if (!res.ok) throw new Error();
+      const data = (await res.json()) as { members?: Member[]; total?: number };
+      if (signal?.cancelled) return;
+      setMembers(Array.isArray(data.members) ? data.members : []);
+      setTotal(typeof data.total === "number" ? data.total : 0);
+    } catch {
+      if (!signal?.cancelled) setError(true);
+    } finally {
+      if (!signal?.cancelled) setLoading(false);
+    }
   }, []);
+
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    const signal = { cancelled: false };
+    void loadMembers(signal);
+    return () => {
+      signal.cancelled = true;
+    };
+  }, [loadMembers]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  // When the signed-in user edits their name/avatar (AuthProvider's shared
+  // profile changes), overlay their own tile so the wall reflects the change
+  // immediately without a page reload — derived, not stored, to avoid a
+  // cascading setState-in-effect.
+  const patchedMembers = useMemo(() => {
+    if (!profile) return members;
+    return members.map((m) =>
+      m.id === profile.id
+        ? {
+            ...m,
+            name: profile.name || m.name,
+            // Empty string when the custom avatar was removed, so
+            // resolveAvatarUrl falls back to the DiceBear default.
+            avatarUrl: profile.avatarUrl ?? "",
+          }
+        : m
+    );
+  }, [members, profile]);
 
   // Visible avatars in the main grid. Cap at 30 to keep layout tight;
   // the count chip shows the true total.
-  const visible = useMemo(() => members.slice(0, 30), [members]);
+  const visible = useMemo(() => patchedMembers.slice(0, 30), [patchedMembers]);
   const onlineCount = useMemo(
-    () => members.filter((member) => onlineUserIds.has(member.id)).length,
-    [members, onlineUserIds]
+    () => patchedMembers.filter((member) => onlineUserIds.has(member.id)).length,
+    [patchedMembers, onlineUserIds]
   );
 
   return (

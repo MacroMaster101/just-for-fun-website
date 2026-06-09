@@ -34,6 +34,7 @@ import {
   Star,
   Flag,
   Loader2,
+  Heart,
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useRouter } from "next/navigation";
@@ -229,6 +230,7 @@ export default function AdminPage() {
     comment: string;
     isFlagged: boolean;
     isAnonymous: boolean;
+    isHearted: boolean;
     createdAt: string;
     profile: {
       id: string;
@@ -1555,6 +1557,29 @@ export default function AdminPage() {
         }));
       } else {
         alert(data.error || "Failed to dismiss flag.");
+      }
+    } catch {
+      alert("Network error.");
+    } finally {
+      setRatingActionId(null);
+    }
+  };
+
+  const handleToggleRatingHeart = async (id: string, nextHeartedState: boolean) => {
+    setRatingActionId(id);
+    try {
+      const res = await fetch("/api/admin/ratings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ratingId: id, isHearted: nextHeartedState }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setAdminRatings((prev) =>
+          prev.map((r) => (r.id === id ? { ...r, isHearted: nextHeartedState } : r))
+        );
+      } else {
+        alert(data.error || "Failed to update heart status.");
       }
     } catch {
       alert("Network error.");
@@ -4215,6 +4240,23 @@ export default function AdminPage() {
                                           )}
                                         </button>
                                       )}
+
+                                      <button
+                                        onClick={() => handleToggleRatingHeart(r.id, !r.isHearted)}
+                                        disabled={isActioning}
+                                        className={`p-2 rounded-lg border transition cursor-pointer disabled:opacity-40 ${
+                                          r.isHearted
+                                            ? "bg-[#ff0033]/20 border-[#ff0033] text-[#ff4b5f] hover:bg-[#ff0033]/30 hover:text-white"
+                                            : "bg-neutral-950/20 border-white/10 text-neutral-500 hover:bg-[#ff0033]/10 hover:border-[#ff0033]/40 hover:text-[#ff4b5f]"
+                                        }`}
+                                        title={r.isHearted ? "Remove Creator Heart" : "Heart Review as Creator"}
+                                      >
+                                        {isActioning ? (
+                                          <Loader2 size={13} className="animate-spin text-neutral-400" />
+                                        ) : (
+                                          <Heart size={13} className={r.isHearted ? "fill-current" : ""} />
+                                        )}
+                                      </button>
                                       
                                       <button
                                         onClick={() => handleDeleteAdminRating(r.id)}

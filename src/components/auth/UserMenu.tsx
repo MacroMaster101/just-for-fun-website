@@ -17,7 +17,7 @@ export const UserMenu = ({
   variant = "desktop",
   onAfterAction,
 }: UserMenuProps) => {
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -28,6 +28,16 @@ export const UserMenu = ({
   const [avatarError, setAvatarError] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
   const [prevUserId, setPrevUserId] = useState<string | null>(user?.id ?? null);
+  // Track the avatar source so we can reset the error chain when the user
+  // picks a new avatar (otherwise a prior load failure sticks the fallback).
+  const currentAvatarSrc =
+    profile?.avatarUrl ||
+    (user?.user_metadata?.avatar_url as string | undefined) ||
+    (user?.user_metadata?.picture as string | undefined) ||
+    null;
+  const [prevAvatarSrc, setPrevAvatarSrc] = useState<string | null>(
+    currentAvatarSrc
+  );
   const anchorRef = useRef<HTMLDivElement | null>(null);
 
   // Reset avatar load error state when the user identity changes (login/logout)
@@ -37,6 +47,13 @@ export const UserMenu = ({
     if (!user) {
       setIsAdmin(false);
     }
+  }
+  // Reset the avatar error chain whenever the avatar source changes (e.g.
+  // the user just picked a cartoon/email/custom photo) so a stale failure
+  // doesn't pin the fallback image.
+  if (prevAvatarSrc !== currentAvatarSrc) {
+    setPrevAvatarSrc(currentAvatarSrc);
+    setAvatarError(0);
   }
 
   // Check dynamically if the active user holds administrator permissions.
@@ -97,21 +114,26 @@ export const UserMenu = ({
 
   if (!user) return null;
 
+  // Prefer the DB profile (source of truth for custom name/avatar edits, kept
+  // fresh in AuthProvider) over Supabase auth metadata, so changes show
+  // immediately without a page refresh.
   const displayName =
+    profile?.name ||
     (user.user_metadata?.name as string | undefined) ||
     (user.user_metadata?.full_name as string | undefined) ||
     user.email?.split("@")[0] ||
     "User";
-  const oauthAvatar =
+  const customAvatar =
+    profile?.avatarUrl ||
     (user.user_metadata?.avatar_url as string | undefined) ||
     (user.user_metadata?.picture as string | undefined) ||
     null;
-  // 3-stage fallback chain: OAuth/uploaded → DiceBear → initial letter.
+  // 3-stage fallback chain: profile/OAuth/uploaded → DiceBear → initial letter.
   // Seeded by user.id so the DiceBear fallback is stable across sessions
   // and matches what the public Crew Wall renders for the same person.
   const displayAvatar =
     avatarError === 0
-      ? resolveAvatarUrl(oauthAvatar, user.id)
+      ? resolveAvatarUrl(customAvatar, user.id)
       : avatarError === 1
         ? resolveAvatarUrl(null, user.id)
         : null;

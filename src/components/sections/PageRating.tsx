@@ -13,6 +13,7 @@ import {
   Flag,
   ChevronDown,
   RefreshCw,
+  Heart,
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Card } from "@/components/ui/Card";
@@ -26,6 +27,8 @@ interface Rating {
   comment: string;
   isFlagged: boolean;
   isAnonymous: boolean;
+  isHearted: boolean;
+  likedBy: string[];
   createdAt: string;
   updatedAt: string;
   profile: {
@@ -62,6 +65,28 @@ const formatRelativeTime = (iso: string) => {
     day: "numeric",
     year: "numeric",
   });
+};
+
+// Full date+time for tooltips, e.g. "Jun 9, 2026, 4:32 PM".
+const formatFullTimestamp = (iso: string) => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+};
+
+// A review counts as edited when updatedAt is meaningfully after createdAt
+// (allow a small skew so the initial insert's auto-updatedAt doesn't count).
+const wasEdited = (createdAt: string, updatedAt: string) => {
+  const c = new Date(createdAt).getTime();
+  const u = new Date(updatedAt).getTime();
+  if (Number.isNaN(c) || Number.isNaN(u)) return false;
+  return u - c > 2000;
 };
 
 export const PageRating = () => {
@@ -222,6 +247,56 @@ export const PageRating = () => {
       showToast("Failed to report review.", "error");
     } finally {
       setFlaggingId(null);
+    }
+  };
+
+  // Toggle Like (Heart) on a review
+  const handleToggleLike = async (reviewId: string) => {
+    if (!user) {
+      showToast("Please sign in to like reviews.", "error");
+      triggerAuthModal();
+      return;
+    }
+
+    const targetReview = ratings.find((r) => r.id === reviewId);
+    if (!targetReview) return;
+
+    // You can't heart your own review.
+    if (targetReview.userId === user.id) {
+      showToast("You can't heart your own review.", "info");
+      return;
+    }
+
+    const hasLiked = targetReview.likedBy?.includes(user.id) || false;
+    const nextLikedBy = hasLiked
+      ? targetReview.likedBy.filter((id) => id !== user.id)
+      : [...(targetReview.likedBy || []), user.id];
+
+    // Optimistic state update
+    setRatings((prev) =>
+      prev.map((r) => (r.id === reviewId ? { ...r, likedBy: nextLikedBy } : r))
+    );
+
+    try {
+      const res = await fetch("/api/ratings/like", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ratingId: reviewId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to toggle like");
+      }
+      
+      setRatings((prev) =>
+        prev.map((r) => (r.id === reviewId ? { ...r, likedBy: data.likedBy || nextLikedBy } : r))
+      );
+    } catch {
+      // Revert optimistic update on failure
+      setRatings((prev) =>
+        prev.map((r) => (r.id === reviewId ? { ...r, likedBy: targetReview.likedBy } : r))
+      );
+      showToast("Failed to update like status.", "error");
     }
   };
 
@@ -586,9 +661,20 @@ export const PageRating = () => {
                                 />
                               ))}
                             </div>
-                            <span className="font-mono text-[9px] text-neutral-500 font-semibold uppercase">
+                            <span
+                              className="font-mono text-[9px] text-neutral-500 font-semibold uppercase"
+                              title={`Rated ${formatFullTimestamp(review.createdAt)}`}
+                            >
                               {formatRelativeTime(review.createdAt)}
                             </span>
+                            {wasEdited(review.createdAt, review.updatedAt) && (
+                              <span
+                                className="font-mono text-[9px] text-neutral-600 font-semibold lowercase italic"
+                                title={`Edited ${formatFullTimestamp(review.updatedAt)}`}
+                              >
+                                · edited {formatRelativeTime(review.updatedAt)}
+                              </span>
+                            )}
                           </div>
                         </div>
 
@@ -629,6 +715,46 @@ export const PageRating = () => {
                           No comment provided.
                         </p>
                       )}
+
+                      <div className="mt-3 flex items-center gap-2 flex-wrap">
+                        {isOwn ? (
+                          // Own review: show the heart count read-only — you can't heart yourself.
+                          <span
+                            className="flex items-center gap-1.5 px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-wider select-none bg-neutral-900/40 border-white/5 text-neutral-500"
+                            title="You can't heart your own review"
+                          >
+                            <Heart size={10} className="text-neutral-500" />
+                            <span>{(review.likedBy || []).length} Hearts</span>
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleToggleLike(review.id)}
+                            className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-wider transition-all duration-300 cursor-pointer select-none active:scale-95 ${
+                              user && (review.likedBy || []).includes(user.id)
+                                ? "bg-[#ff0033]/15 border-[#ff0033] text-[#ff4b5f] shadow-[0_0_12px_rgba(255,0,51,0.15)]"
+                                : "bg-neutral-900/40 border-white/5 text-neutral-500 hover:border-white/10 hover:text-neutral-300"
+                            }`}
+                            title={user && (review.likedBy || []).includes(user.id) ? "Unlike review" : "Like review"}
+                          >
+                            <Heart
+                              size={10}
+                              className={`transition-transform duration-300 ${
+                                user && (review.likedBy || []).includes(user.id)
+                                  ? "fill-[#ff0033] text-[#ff0033] animate-pulse"
+                                  : "text-neutral-500"
+                              }`}
+                            />
+                            <span>{(review.likedBy || []).length} Hearts</span>
+                          </button>
+                        )}
+
+                        {review.isHearted && (
+                          <div className="flex items-center gap-1.5 rounded-full bg-[#ff0033]/15 border border-[#ff0033]/30 px-2.5 py-1 text-[9px] font-black uppercase text-[#ff4b5f] tracking-widest shadow-[0_0_12px_rgba(255,0,51,0.15)] select-none">
+                            <Heart size={10} className="fill-[#ff0033] text-[#ff0033] animate-pulse" />
+                            <span>Hearted by Creator</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </Card>
                 );

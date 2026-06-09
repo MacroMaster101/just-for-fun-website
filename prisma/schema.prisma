@@ -1,5 +1,5 @@
 datasource db {
-  provider  = "postgresql"
+  provider = "postgresql"
 }
 
 generator client {
@@ -281,6 +281,8 @@ model PageRating {
   comment     String   @default("")
   isFlagged   Boolean  @default(false)
   isAnonymous Boolean  @default(false)
+  isHearted   Boolean  @default(false)
+  likedBy     String[] @default([])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
