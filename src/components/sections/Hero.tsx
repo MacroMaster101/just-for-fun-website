@@ -408,7 +408,7 @@ export const Hero = () => {
             - games (DB)  → logo + name cards, admin-managed
             - fallback    → text-only ★ Name chips from DEFAULT_MARQUEE
           Both duplicate the list twice for a seamless scroll loop. */}
-      <div className="absolute bottom-0 left-0 right-0 overflow-hidden border-y border-white/10 bg-[#0a0a0a]/80 py-3 backdrop-blur">
+      <div className="absolute bottom-0 left-0 right-0 overflow-hidden border-t border-white/10 py-3">
         {games.length > 0 ? (
           <div className="flex w-max animate-marquee gap-8">
             {Array.from({ length: 2 }).map((_, i) => (
