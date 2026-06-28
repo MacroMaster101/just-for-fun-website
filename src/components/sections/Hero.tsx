@@ -310,7 +310,7 @@ export const Hero = () => {
           </div>
 
           {/* Stats strip */}
-          <div className="mt-10 grid grid-cols-3 gap-3 animate-fade-in-up [animation-delay:0.25s]">
+          <div className="mt-10 grid grid-cols-1 xs:grid-cols-3 gap-3 animate-fade-in-up [animation-delay:0.25s]">
             {[
               { label: "Subscribers", value: stats.subscribers, icon: Users },
               { label: "Videos", value: stats.videos, icon: Video },

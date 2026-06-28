@@ -184,7 +184,7 @@ const Reel: React.FC<ReelProps> = ({ items, targetIndex, spinning, duration, ren
 
   return (
     <div
-      className="slot-reel relative overflow-hidden bg-gradient-to-b from-[#0a0a0a] to-[#1a1a1a] border border-white/10 rounded-xl shadow-[inset_0_2px_8px_rgba(0,0,0,0.8)]"
+      className="slot-reel relative overflow-hidden bg-gradient-to-b from-[#0a0a0a] to-[#1a1a1a] border border-white/10 rounded-xl shadow-[inset_0_2px_8px_rgba(0,0,0,0.8)] w-full min-w-0"
       style={{ height: REEL_ITEM_HEIGHT * 3 }}
     >
       {/* Subtle inner highlight on top half */}
@@ -372,7 +372,7 @@ export const ChallengeWheel = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-20 items-stretch max-w-6xl mx-auto">
           {/* Slot Machine Cabinet — nudged left on all viewports so the side lever fits perfectly */}
           <div className="lg:col-span-7 flex items-center justify-center lg:justify-start">
-            <div className="relative w-full max-w-[280px] xs:max-w-[320px] sm:max-w-[420px] md:max-w-[460px] lg:max-w-none mr-8 xs:mr-10 sm:mr-12 lg:mr-0">
+            <div className="relative w-full max-w-[250px] xs:max-w-[290px] sm:max-w-[420px] md:max-w-[460px] lg:max-w-none mr-6 xs:mr-8 sm:mr-12 lg:mr-0">
               {/* Cabinet outer frame — brushed metal look */}
               <div className="slot-cabinet relative rounded-[20px] border border-white/[0.08] p-3 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8),inset_0_2px_0_rgba(255,255,255,0.08)] sm:rounded-[28px] sm:p-7">
                 {/* Marquee lights — running around the cabinet edge */}
@@ -424,7 +424,7 @@ export const ChallengeWheel = () => {
                   </div>
 
                   {/* Three reels */}
-                  <div className="relative grid grid-cols-[1fr_2fr_1fr] gap-1.5 sm:gap-3">
+                  <div className="relative grid grid-cols-[1fr_2fr_1fr] gap-1.5 sm:gap-3 min-w-0">
                     {/* Reel 1 — game icon */}
                     <Reel
                       items={CHALLENGES}
@@ -470,9 +470,9 @@ export const ChallengeWheel = () => {
                       spinning={isSpinning}
                       duration={REEL_DURATIONS[2]}
                       renderCell={(item) => (
-                        <div className="w-full h-full flex items-center justify-center">
+                        <div className="w-full h-full flex items-center justify-center min-w-0">
                           <span
-                            className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-md border tracking-wider ${DIFFICULTY_STYLES[item.difficulty]}`}
+                            className={`text-[8px] xs:text-[10px] font-black uppercase px-1.5 py-0.5 xs:px-2.5 xs:py-1 rounded-md border tracking-wider ${DIFFICULTY_STYLES[item.difficulty]}`}
                           >
                             {item.difficulty}
                           </span>
