@@ -113,7 +113,15 @@ export const Footer = () => {
       </div>
 
       <div className="relative z-10 mx-auto flex max-w-7xl flex-col items-center text-center gap-3 border-t border-white/10 px-5 pt-6 pb-44 text-[11px] font-bold uppercase tracking-[0.22em] text-neutral-500 sm:px-6 md:flex-row md:pb-6 md:items-center md:justify-between md:text-left">
-        <span>&copy; {year} Just For Fun</span>
+        <span className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+          <span>&copy; {year} Just For Fun</span>
+          <a href="/privacy" className="transition hover:text-white">
+            Privacy
+          </a>
+          <a href="/terms" className="transition hover:text-white">
+            Terms
+          </a>
+        </span>
         <span className="flex items-center gap-2">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#ff0033]" />
           Live YouTube Data
