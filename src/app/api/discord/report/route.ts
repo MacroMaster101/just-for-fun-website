@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { resolveAvatarUrl } from "@/lib/avatar";
+import { CHALLENGES } from "@/lib/challenges";
 import { prisma } from "@/lib/prisma";
 import { supabaseServer } from "@/lib/supabase/server";
 
@@ -62,20 +63,16 @@ export async function POST(request: Request) {
       );
     }
 
-    const body = (await request.json()) as {
-      text?: string;
-      game?: string;
-      difficulty?: string;
-      id?: number;
-    };
+    const body = (await request.json().catch(() => null)) as { id?: unknown } | null;
 
-    const { text, game, difficulty, id } = body;
-    if (!text || !game || !difficulty) {
-      return NextResponse.json(
-        { error: "text, game, and difficulty are required." },
-        { status: 400 }
-      );
+    // Only accept a known challenge id and look the content up server-side.
+    // Trusting client-sent text would let anyone post arbitrary messages
+    // (links, spam, @everyone pings) through our webhook.
+    const challenge = CHALLENGES.find((c) => c.id === body?.id);
+    if (!challenge) {
+      return NextResponse.json({ error: "Unknown challenge." }, { status: 400 });
     }
+    const { text, game, difficulty, id } = challenge;
 
     const difficultyColor: Record<string, number> = {
       Easy: 0x22c55e,
@@ -87,6 +84,8 @@ export async function POST(request: Request) {
     const actor = await getChallengeActor();
 
     const payload = {
+      // Display names are user-controlled — never let them ping anyone.
+      allowed_mentions: { parse: [] },
       username: actor.name,
       ...(actor.avatarUrl ? { avatar_url: actor.avatarUrl } : {}),
       embeds: [
@@ -102,9 +101,7 @@ export async function POST(request: Request) {
             { name: "Pulled By", value: actor.name, inline: true },
             { name: "Game", value: game, inline: true },
             { name: "Difficulty", value: difficulty, inline: true },
-            ...(typeof id === "number"
-              ? [{ name: "Challenge #", value: String(id).padStart(2, "0"), inline: true }]
-              : []),
+            { name: "Challenge #", value: String(id).padStart(2, "0"), inline: true },
           ],
           footer: { text: "Pulled from the JustForFun Challenge Slot" },
           timestamp: new Date().toISOString(),
@@ -130,8 +127,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Discord report API error:", error);
-    const message =
-      error instanceof Error ? error.message : "Failed to send challenge to Discord.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to send challenge to Discord." },
+      { status: 500 }
+    );
   }
 }

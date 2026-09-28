@@ -53,6 +53,27 @@ function metadataText(metadata: AuthMetadata, key: string): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
+// Avatar hosts we render (mirrors the CSP img-src list in next.config.ts).
+// Anything else could be a tracking pixel or an arbitrary third-party URL
+// that we'd then show on the Crew Wall and forward to Discord.
+const AVATAR_HOSTS = ["api.dicebear.com", "cdn.discordapp.com"];
+const AVATAR_HOST_SUFFIXES = [".googleusercontent.com", ".supabase.co"];
+
+function isAllowedAvatarUrl(value: string): boolean {
+  const trimmed = value.trim();
+  if (trimmed === "") return true; // clearing the avatar
+  try {
+    const url = new URL(trimmed);
+    if (url.protocol !== "https:") return false;
+    return (
+      AVATAR_HOSTS.includes(url.hostname) ||
+      AVATAR_HOST_SUFFIXES.some((suffix) => url.hostname.endsWith(suffix))
+    );
+  } catch {
+    return false;
+  }
+}
+
 /** PATCH - update the current user's editable profile fields. */
 export async function PATCH(request: Request) {
   const supabase = await supabaseServer();
@@ -71,13 +92,17 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "invalid body" }, { status: 400 });
   }
 
+  if (typeof body.avatarUrl === "string" && !isAllowedAvatarUrl(body.avatarUrl)) {
+    return NextResponse.json({ error: "invalid avatar url" }, { status: 400 });
+  }
+
   const profile = await prisma.profile.update({
     where: { id: user.id },
     data: {
       name: typeof body.name === "string" ? body.name.slice(0, 60) : undefined,
       avatarUrl:
         typeof body.avatarUrl === "string"
-          ? body.avatarUrl.slice(0, 500)
+          ? body.avatarUrl.trim().slice(0, 500)
           : undefined,
       bio: typeof body.bio === "string" ? body.bio.slice(0, 500) : undefined,
     },

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
+import { verifyAdmin } from "@/lib/auth/admin";
 import { prisma } from "@/lib/prisma";
-import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -16,17 +16,6 @@ const ALLOWED_TYPES = new Set([
   "audio/webm",
 ]);
 const BUCKET = "sound-clips";
-
-async function verifyAdmin() {
-  const supabase = await supabaseServer();
-  const { data } = await supabase.auth.getUser();
-  if (!data.user || !data.user.email) return false;
-  const email = data.user.email.toLowerCase().trim();
-  const rootAdmin = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase().trim();
-  if (rootAdmin && email === rootAdmin) return true;
-  const match = await prisma.adminEmail.findUnique({ where: { email } });
-  return !!match;
-}
 
 export async function POST(request: Request) {
   try {

@@ -68,7 +68,7 @@ export async function POST(request: Request) {
   if (uploadErr) {
     console.error("Avatar upload failed:", uploadErr.message);
     return NextResponse.json(
-      { error: uploadErr.message },
+      { error: "Avatar upload failed. Please try again." },
       { status: 500 }
     );
   }

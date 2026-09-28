@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { hostMatches } from "@/lib/hostMatches";
 import { Volume1, Volume2, VolumeX, ChevronLeft } from "lucide-react";
 
 type PlayerCommandArg = string | number | boolean;
@@ -362,7 +363,7 @@ export const AmbientPlayer = () => {
   // and on every src change).
   useEffect(() => {
     const onMessage = (ev: MessageEvent) => {
-      if (!ev.origin.includes("youtube.com")) return;
+      if (!hostMatches(ev.origin, "youtube.com")) return;
       let data: unknown;
       try {
         data = typeof ev.data === "string" ? JSON.parse(ev.data) : ev.data;
