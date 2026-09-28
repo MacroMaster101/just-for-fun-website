@@ -341,8 +341,9 @@ export const PageRating = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left Column: Aggregates & Composer */}
-        <div className="lg:col-span-5 space-y-6">
+        {/* Left Column: Aggregates & Composer — side by side on wide
+            screens so the ratings tab fits in one viewport height. */}
+        <div className="lg:col-span-5 space-y-6 xl:col-span-7 xl:grid xl:grid-cols-2 xl:items-start xl:gap-6 xl:space-y-0">
           
           {/* Aggregate Stats Card */}
           <Card glow className="p-6 border-white/10">
@@ -562,7 +563,7 @@ export const PageRating = () => {
         </div>
 
         {/* Right Column: Review Wall list */}
-        <div className="lg:col-span-7 space-y-4">
+        <div className="space-y-4 lg:col-span-7 xl:col-span-5">
           <div className="flex justify-between items-center mb-2">
             <h3 className="font-display font-extrabold text-sm text-white uppercase tracking-wider flex items-center gap-2">
               <MessageSquare size={16} className="text-[#ff0033]" />

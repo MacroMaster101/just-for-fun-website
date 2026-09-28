@@ -2,6 +2,12 @@
 
 @theme {
   --breakpoint-xs: 480px;
+
+  /* Page containers widen with the viewport so large screens don't get
+     wide empty gutters, independent of the (height-capped) text scale. */
+  --container-5xl: max(64rem, 74vw);
+  --container-6xl: max(72rem, 83vw);
+  --container-7xl: max(80rem, 92vw);
   --font-sans: var(--font-space-grotesk), var(--font-inter), sans-serif;
   --font-display: var(--font-orbitron), sans-serif;
 
@@ -99,16 +105,21 @@
 @layer base {
   html { scroll-behavior: smooth; }
 
-  /* Fluid scale: every rem-based size (containers, cards, text, spacing)
-     grows with the viewport on large screens so layouts fill the width
-     instead of leaving wide empty gutters, and eases down on small phones
-     so everything fits. 16px between 390px and 1440px wide. Tailwind
-     breakpoints are unaffected — media queries use the browser default. */
+  /* Fluid scale for every rem-based size (text, cards, spacing).
+     - Phones: ease down below 390px wide so everything fits.
+     - Desktop: grow with the width (from 1440px), but never past what the
+       viewport *height* allows, so each section still fits on screen on
+       wide-but-short displays (e.g. 1920x930 browser windows). 56rem is
+       the tallest standard section plus the fixed header.
+     Tailwind breakpoints are unaffected — media queries use the browser
+     default font size. */
   @media (max-width: 389.98px) {
     html { font-size: clamp(87.5%, 4.1vw, 100%); }
   }
-  @media (min-width: 1440px) {
-    html { font-size: clamp(100%, calc(100vw / 90), 150%); }
+  @media (min-width: 1024px) {
+    html {
+      font-size: clamp(81.25%, min(max(100%, 100vw / 90), 100vh / 56), 150%);
+    }
   }
 
   /* Theme tokens — dark is default */
@@ -511,19 +522,6 @@ html.light .divider-red {
    look like a stain on light bg. Targets the inline-styled radial. */
 html.light [data-cursor-spotlight] {
   opacity: 0.25;
-}
-
-/* ============================================================
-   HEADER — force solid light bg in light mode so it doesn't
-   appear dark/red while overlaying the dark Hero section.
-   ============================================================ */
-html.light header.fixed {
-  background-color: rgba(255, 255, 255, 0.92) !important;
-  border-bottom-color: rgba(0, 0, 0, 0.08) !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06) !important;
-}
-html.light header.fixed [class*="bg-[var(--color-bg)]"] {
-  background-color: rgba(255, 255, 255, 0.92) !important;
 }
 
 /* ============================================================
@@ -1366,5 +1364,45 @@ html.light button[aria-label="Remove from favorites"] svg {
     border-color: rgba(255, 0, 51, 0.4);
     background: rgba(255, 0, 51, 0.12);
     color: #ff4b5f;
+  }
+}
+
+/* Fixed site header backdrop: a blurred tint that fades to transparent,
+   extending below the header so there's no hard bottom edge. */
+.site-header-backdrop {
+  height: 160%;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--color-bg) 88%, transparent) 0%,
+    color-mix(in srgb, var(--color-bg) 60%, transparent) 55%,
+    transparent 100%
+  );
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 45%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 45%, transparent 100%);
+}
+/* At the top of the page the backdrop only softly tints the hero. In light
+   mode even a soft light tint reads as a white band over the hero, so it
+   stays fully transparent until the page is scrolled. */
+.site-header-backdrop.is-top { opacity: 0.5; }
+html.light .site-header-backdrop.is-top { opacity: 0; }
+
+/* Touch devices (phones/tablets): drop the effects that cost the most GPU
+   time while scrolling. Desktop keeps the full look.
+   - backdrop-filter re-blurs everything behind each element on every
+     scroll frame; card backgrounds are already semi-opaque, so they read
+     the same without it. The site header's blend (.site-header-backdrop)
+     is a single element and keeps its blur.
+   - box-shadow / background-position animations repaint every frame. */
+@media (hover: none) and (pointer: coarse) {
+  [class*="backdrop-blur"] {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  .animate-glow-pulse,
+  .animate-aurora-shift,
+  .text-gradient-animated {
+    animation: none !important;
   }
 }

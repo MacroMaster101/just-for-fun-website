@@ -1,12 +1,60 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { Application } from "@splinetool/runtime";
 
-const Spline = dynamic(() => import("@splinetool/react-spline"), {
-  ssr: false,
-  loading: () => <RobotPlaceholder />,
-});
+/**
+ * Minimal stand-in for `@splinetool/react-spline` that lets us pick the
+ * rendering backend. Runtime 2.x auto-selects its new WebGPU pipeline where
+ * available, and that pipeline doesn't render this scene's emissive eye
+ * panels — the robot's visor comes out blank. Forcing the classic WebGL
+ * pipeline renders the scene exactly as authored.
+ */
+const SplineScene = ({
+  scene,
+  onLoad,
+}: {
+  scene: string;
+  onLoad: (app: Application) => void;
+}) => {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const onLoadRef = useRef(onLoad);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    onLoadRef.current = onLoad;
+  }, [onLoad]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    let disposed = false;
+    let app: Application | null = null;
+
+    // Loaded lazily so the ~650KB runtime stays out of the main bundle.
+    import("@splinetool/runtime")
+      .then(async ({ Application }) => {
+        if (disposed) return;
+        app = new Application(canvas, { renderer: "webgl" });
+        await app.load(scene);
+        if (disposed) return;
+        setReady(true);
+        onLoadRef.current(app);
+      })
+      .catch((err) => console.error("[SplineRobot] failed to load scene:", err));
+
+    return () => {
+      disposed = true;
+      app?.dispose();
+    };
+  }, [scene]);
+
+  return (
+    <div style={{ width: "100%", height: "100%", overflow: "hidden" }}>
+      <canvas ref={canvasRef} style={{ display: ready ? "block" : "none" }} />
+    </div>
+  );
+};
 
 /** Built-in default. Overridden at runtime by Hero passing the value from
  *  the `hero.splineScene` SiteSetting row, so admins can swap the model
@@ -44,6 +92,7 @@ export const SplineRobot = ({
   const [mountScene, setMountScene] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const appRef = useRef<Application | null>(null);
 
   // IntersectionObserver: trip `inView` the first time the container
   // enters the viewport (with 200px margin so it warms up just before
@@ -108,6 +157,36 @@ export const SplineRobot = ({
     };
   }, [delay, inView]);
 
+  // Pause the WebGL render loop whenever the robot is off screen or the
+  // tab is hidden. Otherwise Spline keeps rendering every frame while the
+  // visitor scrolls the rest of the page — the main cause of mobile lag.
+  useEffect(() => {
+    const app = appRef.current;
+    const el = containerRef.current;
+    if (!loaded || !app || !el) return;
+
+    let inView = true;
+    const apply = () => {
+      if (inView && !document.hidden) app.play();
+      else app.stop();
+    };
+
+    const observer =
+      typeof IntersectionObserver !== "undefined"
+        ? new IntersectionObserver(([entry]) => {
+            inView = entry.isIntersecting;
+            apply();
+          })
+        : null;
+    observer?.observe(el);
+    document.addEventListener("visibilitychange", apply);
+
+    return () => {
+      observer?.disconnect();
+      document.removeEventListener("visibilitychange", apply);
+    };
+  }, [loaded]);
+
   // Let the Spline scene react to the whole hero, not just the canvas box.
   // Spline listens to pointer events, so proxy a mapped pointer into the
   // canvas at most once per frame to avoid making the custom cursor feel heavy.
@@ -137,16 +216,25 @@ export const SplineRobot = ({
     const touchSlop = 8;
 
     const clamp = (value: number) => Math.min(Math.max(value, 0), 1);
+    // Scroll/resize only mark the cached rects stale; they're re-measured
+    // lazily on the next pointer event. Measuring on every scroll event
+    // forced a layout on each scroll frame across the whole page.
+    let rectsStale = false;
     const refreshRects = () => {
       canvasRect = canvas.getBoundingClientRect();
       containerRect = container.getBoundingClientRect();
       heroRect = heroSection.getBoundingClientRect();
+      rectsStale = false;
+    };
+    const markRectsStale = () => {
+      rectsStale = true;
     };
 
     const dispatchPointer = (
       type: "pointerenter" | "pointermove" | "pointerleave" | "pointerdown" | "pointerup",
       e: PointerEvent
     ) => {
+      if (rectsStale) refreshRects();
       const sourceRect = e.pointerType === "touch" ? containerRect : heroRect;
       const nx = clamp((e.clientX - sourceRect.left) / sourceRect.width);
       const ny = clamp((e.clientY - sourceRect.top) / sourceRect.height);
@@ -306,9 +394,9 @@ export const SplineRobot = ({
     };
 
     refreshRects();
-    window.addEventListener("resize", refreshRects);
-    window.addEventListener("scroll", refreshRects, { passive: true });
-    const observer = new ResizeObserver(refreshRects);
+    window.addEventListener("resize", markRectsStale);
+    window.addEventListener("scroll", markRectsStale, { passive: true });
+    const observer = new ResizeObserver(markRectsStale);
     observer.observe(canvas);
     observer.observe(heroSection);
     heroSection.addEventListener("pointermove", onHeroPointerMove, { passive: true });
@@ -319,8 +407,8 @@ export const SplineRobot = ({
 
     return () => {
       if (raf) cancelAnimationFrame(raf);
-      window.removeEventListener("resize", refreshRects);
-      window.removeEventListener("scroll", refreshRects);
+      window.removeEventListener("resize", markRectsStale);
+      window.removeEventListener("scroll", markRectsStale);
       observer.disconnect();
       heroSection.removeEventListener("pointermove", onHeroPointerMove);
       heroSection.removeEventListener("pointerleave", onHeroPointerLeave);
@@ -368,15 +456,19 @@ export const SplineRobot = ({
       </div>
 
       {mountScene && (
-        <Suspense fallback={null}>
-          <div
-            className={`absolute inset-0 transition-opacity duration-700 ${
-              loaded ? "opacity-100" : "opacity-0"
-            }`}
-          >
-            <Spline scene={resolvedScene} onLoad={() => setLoaded(true)} />
-          </div>
-        </Suspense>
+        <div
+          className={`absolute inset-0 transition-opacity duration-700 ${
+            loaded ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          <SplineScene
+            scene={resolvedScene}
+            onLoad={(app) => {
+              appRef.current = app;
+              setLoaded(true);
+            }}
+          />
+        </div>
       )}
     </div>
   );

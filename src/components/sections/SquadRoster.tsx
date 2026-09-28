@@ -5,6 +5,7 @@ import { Gamepad2, Monitor, Cpu, Shield, Activity, Zap } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import Image from "next/image";
+import { gameImageUrl } from "@/lib/gameImage";
 
 interface TeamMember {
   id: string;
@@ -343,7 +344,9 @@ export const SquadRoster = () => {
                                 <div className="relative w-4 h-4 overflow-hidden rounded shrink-0">
                                   {/* eslint-disable-next-line @next/next/no-img-element */}
                                   <img
-                                    src={game.logoUrl}
+                                    src={gameImageUrl(game.logoUrl, 64)}
+                                    loading="lazy"
+                                    decoding="async"
                                     alt={game.name}
                                     className="object-contain w-full h-full"
                                   />

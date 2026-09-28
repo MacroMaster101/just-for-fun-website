@@ -97,7 +97,9 @@ export const LoadingScreen = ({
 
   return (
     <div
-      className={`fixed inset-0 z-[100] flex items-center justify-center bg-[#060606] transition-opacity duration-[450ms] ease-out ${
+      // Topmost layer: the ambient music player (z-100) and its first-visit
+      // "Tune In" dialog (z-9999) must stay hidden until loading finishes.
+      className={`fixed inset-0 z-[10000] flex items-center justify-center bg-[#060606] transition-opacity duration-[450ms] ease-out ${
         fading ? "opacity-0 pointer-events-none" : "opacity-100"
       }`}
       aria-hidden={fading}

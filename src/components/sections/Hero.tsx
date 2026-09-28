@@ -161,9 +161,6 @@ export const Hero = () => {
       <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-[#060606]" />
       <CursorSpotlight color="rgba(255, 0, 51, 0.22)" size={800} />
 
-      {/* Animated grid lines */}
-      <div className="absolute inset-x-0 top-24 h-px bg-gradient-to-r from-transparent via-[#ff0033]/60 to-transparent" />
-
       <div className="relative z-10 mx-auto grid min-h-[calc(100vh-6rem)] max-w-7xl grid-cols-1 items-center gap-8 px-5 pb-16 sm:gap-10 sm:px-6 lg:grid-cols-12">
         {/* LEFT: Copy block */}
         <div className="lg:col-span-7">
