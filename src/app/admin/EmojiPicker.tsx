@@ -32,7 +32,7 @@ export const EmojiPicker: React.FC<EmojiPickerProps> = ({ value, onChange, label
 
   return (
     <div ref={ref} className="relative">
-      <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)] mb-1.5">
+      <label className="block text-[0.625rem] font-bold uppercase tracking-wider text-[var(--color-text-muted)] mb-1.5">
         {label}
       </label>
       <div className="flex gap-2">

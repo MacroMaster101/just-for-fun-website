@@ -577,7 +577,7 @@ export const FloatingGameLogos: React.FC<FloatingGameLogosProps> = ({
               /* High-Tech Sci-Fi Text Badge matching Spline UI capsules */
               <button
                 onClick={(e) => handleShoot(logo.id, e)}
-                className="relative w-full h-full rounded-full flex items-center justify-center px-2.5 sm:px-4 font-mono font-black tracking-[0.16em] sm:tracking-[0.24em] text-[7px] sm:text-[9px] uppercase cursor-crosshair group select-none transition-all duration-300"
+                className="relative w-full h-full rounded-full flex items-center justify-center px-2.5 sm:px-4 font-mono font-black tracking-[0.16em] sm:tracking-[0.24em] text-[0.4375rem] sm:text-[0.5625rem] uppercase cursor-crosshair group select-none transition-all duration-300"
                 style={
                   logo.wordStyle === "glassy"
                     ? {

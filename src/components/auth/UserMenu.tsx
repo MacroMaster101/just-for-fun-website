@@ -193,7 +193,7 @@ export const UserMenu = ({
           <span
             className={
               variant === "desktop"
-                ? "hidden max-w-[100px] truncate text-xs font-bold text-white lg:inline"
+                ? "hidden max-w-[6.25rem] truncate text-xs font-bold text-white lg:inline"
                 : "min-w-0 flex-1 truncate text-sm font-bold text-white"
             }
           >
@@ -235,7 +235,7 @@ export const UserMenu = ({
                 <p className="truncate text-sm font-bold text-white">
                   {displayName}
                 </p>
-                <p className="truncate text-[11px] text-neutral-500">
+                <p className="truncate text-[0.6875rem] text-neutral-500">
                   {user.email}
                 </p>
               </div>
@@ -249,7 +249,7 @@ export const UserMenu = ({
               onClick={() => openModal("favorites")}
               trailing={
                 favCount !== null ? (
-                  <span className="text-[10px] font-black text-neutral-500">
+                  <span className="text-[0.625rem] font-black text-neutral-500">
                     {favCount}
                   </span>
                 ) : null

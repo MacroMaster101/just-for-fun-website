@@ -49,17 +49,17 @@ export const StreamSlotEditor = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Day badge *</label>
+          <label className="text-[0.625rem] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Day badge *</label>
           <Input
             value={form.day}
             onChange={(e) => update("day", e.target.value.toUpperCase().slice(0, 6))}
             placeholder="FRI"
             className="mt-2"
           />
-          <p className="mt-1 text-[10px] text-[var(--color-text-muted)]">3–6 character day code shown in the badge.</p>
+          <p className="mt-1 text-[0.625rem] text-[var(--color-text-muted)]">3–6 character day code shown in the badge.</p>
         </div>
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Icon (emoji)</label>
+          <label className="text-[0.625rem] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Icon (emoji)</label>
           <Input
             value={form.icon}
             onChange={(e) => update("icon", e.target.value)}
@@ -68,7 +68,7 @@ export const StreamSlotEditor = ({
           />
         </div>
         <div className="md:col-span-2">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Title *</label>
+          <label className="text-[0.625rem] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Title *</label>
           <Input
             value={form.title}
             onChange={(e) => update("title", e.target.value)}
@@ -77,7 +77,7 @@ export const StreamSlotEditor = ({
           />
         </div>
         <div className="md:col-span-2">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Time *</label>
+          <label className="text-[0.625rem] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Time *</label>
           <Input
             value={form.time}
             onChange={(e) => update("time", e.target.value)}
@@ -86,7 +86,7 @@ export const StreamSlotEditor = ({
           />
         </div>
         <div className="md:col-span-2">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Description</label>
+          <label className="text-[0.625rem] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Description</label>
           <textarea
             value={form.description}
             onChange={(e) => update("description", e.target.value)}
@@ -96,7 +96,7 @@ export const StreamSlotEditor = ({
           />
         </div>
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Sort order</label>
+          <label className="text-[0.625rem] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Sort order</label>
           <Input
             type="number"
             value={String(form.sortOrder)}
@@ -119,7 +119,7 @@ export const StreamSlotEditor = ({
         </div>
       </div>
 
-      <p className="mt-3 text-[10px] text-[var(--color-text-muted)]">
+      <p className="mt-3 text-[0.625rem] text-[var(--color-text-muted)]">
         Saving with <strong>Featured</strong> on will automatically unfeature any other slot — only one main event at a time.
       </p>
 

@@ -161,14 +161,14 @@ export const BugReportButton = () => {
         }`}
       >
         {!isCollapsed && (
-          <div className="pointer-events-none absolute bottom-full right-0 mb-3 translate-y-1 whitespace-nowrap rounded-full border border-white/10 bg-[#0a0a0a]/95 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-white opacity-0 shadow-[0_12px_28px_rgba(0,0,0,0.35)] backdrop-blur transition group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100">
+          <div className="pointer-events-none absolute bottom-full right-0 mb-3 translate-y-1 whitespace-nowrap rounded-full border border-white/10 bg-[#0a0a0a]/95 px-3 py-1.5 text-[0.625rem] font-black uppercase tracking-[0.18em] text-white opacity-0 shadow-[0_12px_28px_rgba(0,0,0,0.35)] backdrop-blur transition group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100">
             Report a bug
             <span className="absolute right-5 top-full h-2 w-2 -translate-y-1 rotate-45 border-b border-r border-white/10 bg-[#0a0a0a]/95" />
           </div>
         )}
 
         {isCollapsed && (
-          <div className="pointer-events-none absolute right-full mr-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100 bg-[#0a0a0a]/95 border border-white/10 text-white text-[9px] font-black uppercase tracking-wider px-2 py-1.5 rounded-lg shadow-lg whitespace-nowrap hidden lg:block z-50">
+          <div className="pointer-events-none absolute right-full mr-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100 bg-[#0a0a0a]/95 border border-white/10 text-white text-[0.5625rem] font-black uppercase tracking-wider px-2 py-1.5 rounded-lg shadow-lg whitespace-nowrap hidden lg:block z-50">
             Expand Bug Tracker
             <div className="absolute left-full top-1/2 -translate-y-1/2 border-4 border-transparent border-l-[#0a0a0a]" />
           </div>
@@ -200,7 +200,7 @@ export const BugReportButton = () => {
             aria-label="Hide bug button"
           >
             <ChevronRight size={10} />
-            <span className="pointer-events-none absolute left-full ml-2 scale-90 opacity-0 transition-all group-hover/collapse:scale-100 group-hover/collapse:opacity-100 bg-[#0a0a0a] border border-white/10 text-white text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded shadow-lg whitespace-nowrap hidden lg:block">
+            <span className="pointer-events-none absolute left-full ml-2 scale-90 opacity-0 transition-all group-hover/collapse:scale-100 group-hover/collapse:opacity-100 bg-[#0a0a0a] border border-white/10 text-white text-[0.5625rem] font-black uppercase tracking-wider px-2 py-1 rounded shadow-lg whitespace-nowrap hidden lg:block">
               Collapse Bug Tracker
             </span>
           </button>
@@ -220,7 +220,7 @@ export const BugReportButton = () => {
             </button>
 
             <div className="mb-5 pr-12">
-              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#ff0033]/35 bg-[#ff0033]/12 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-[#ff4b5f]">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#ff0033]/35 bg-[#ff0033]/12 px-3 py-1 text-[0.625rem] font-black uppercase tracking-[0.22em] text-[#ff4b5f]">
                 <Bug size={13} /> Bug Report
               </div>
               <h2 className="font-display text-xl font-black uppercase text-white sm:text-2xl">
@@ -265,7 +265,7 @@ export const BugReportButton = () => {
                 placeholder="Tell us what you clicked, what you expected, and what went wrong."
                 value={details}
                 onChange={(e) => setDetails(e.target.value)}
-                className="min-h-[150px]"
+                className="min-h-[9.375rem]"
               />
 
               {error && (

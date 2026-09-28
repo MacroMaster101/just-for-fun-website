@@ -65,7 +65,7 @@ export const MerchEditor: React.FC<Props> = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <label className="grid gap-1.5 md:col-span-2">
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
+          <span className="text-[0.625rem] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
             Name
           </span>
           <Input
@@ -77,7 +77,7 @@ export const MerchEditor: React.FC<Props> = ({
         </label>
 
         <label className="grid gap-1.5 md:col-span-2">
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
+          <span className="text-[0.625rem] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
             Description
           </span>
           <textarea
@@ -91,7 +91,7 @@ export const MerchEditor: React.FC<Props> = ({
         </label>
 
         <label className="grid gap-1.5">
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
+          <span className="text-[0.625rem] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
             Price (USD)
           </span>
           <Input
@@ -104,7 +104,7 @@ export const MerchEditor: React.FC<Props> = ({
         </label>
 
         <label className="grid gap-1.5">
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
+          <span className="text-[0.625rem] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
             Grade
           </span>
           <select
@@ -121,7 +121,7 @@ export const MerchEditor: React.FC<Props> = ({
         </label>
 
         <label className="grid gap-1.5">
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
+          <span className="text-[0.625rem] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
             Emoji (fallback when no image)
           </span>
           <Input
@@ -133,7 +133,7 @@ export const MerchEditor: React.FC<Props> = ({
         </label>
 
         <label className="grid gap-1.5">
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
+          <span className="text-[0.625rem] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
             Sort order (lower = earlier)
           </span>
           <Input
@@ -144,7 +144,7 @@ export const MerchEditor: React.FC<Props> = ({
         </label>
 
         <label className="grid gap-1.5 md:col-span-2">
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
+          <span className="text-[0.625rem] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
             Image URL
           </span>
           <Input
