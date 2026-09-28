@@ -23,6 +23,7 @@ import { AuthModal } from "@/components/auth/AuthModal";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { NotificationBell } from "@/components/auth/NotificationBell";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 
 const navLinks = [
   { name: "Home", href: "#hero", icon: Home },
@@ -166,16 +167,30 @@ export const Header = () => {
   return (
     <>
       <header
-        className={`fixed inset-x-0 top-0 z-40 transition-all duration-300 ${
-          scrolled
-            ? "border-b border-[var(--color-border)] bg-[var(--color-bg)]/90 py-2.5 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.5)]"
-            : "border-b border-transparent bg-[var(--color-bg)]/40 py-3.5 backdrop-blur"
+        className={`fixed inset-x-0 top-0 z-40 transition-[padding] duration-300 ${
+          scrolled ? "py-2.5" : "py-3.5"
         }`}
       >
+        {/* Blurred tint that fades out toward the bottom, so the nav melts
+            into the page instead of ending in a hard edge. Stronger once
+            the page is scrolled and content passes underneath. */}
+        <div
+          aria-hidden
+          className={`site-header-backdrop pointer-events-none absolute inset-x-0 top-0 -z-10 transition-opacity duration-300 ${
+            scrolled ? "" : "is-top"
+          }`}
+        />
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-5 sm:px-6 xl:gap-4">
           <a href={isAdminPage ? "/" : "#hero"} className="group flex items-center gap-3">
             <span className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#ff0033] to-[#b30024] text-white shadow-[0_0_24px_rgba(255,0,51,0.45)] transition-transform group-hover:scale-110">
-              <Youtube size={22} />
+              <Image
+                src="/logo-mark.png"
+                alt="J4FN"
+                width={26}
+                height={26}
+                priority
+                className="h-[1.625rem] w-[1.625rem] brightness-0 invert"
+              />
               <span className="absolute inset-0 rounded-xl border border-white/20" />
             </span>
             <span className="hidden flex-col leading-none sm:flex lg:hidden xl:flex">
