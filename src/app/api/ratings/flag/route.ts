@@ -26,22 +26,25 @@ export async function POST(request: Request) {
 
     const review = await prisma.pageRating.findUnique({
       where: { id: body.ratingId },
+      select: { id: true },
     });
 
     if (!review) {
       return NextResponse.json({ error: "Review not found" }, { status: 404 });
     }
 
-    // Update review's isFlagged status
-    const updatedReview = await prisma.pageRating.update({
+    await prisma.pageRating.update({
       where: { id: body.ratingId },
       data: { isFlagged: true },
+      select: { id: true },
     });
 
+    // Never echo the review row back: it contains the author's real userId,
+    // which would de-anonymize anonymous reviews (the same id is shown next
+    // to names on the public Crew Wall).
     return NextResponse.json({
       success: true,
       message: "Review flagged successfully",
-      review: updatedReview,
     });
   } catch (error) {
     console.error("POST Flag Rating Error:", error);
