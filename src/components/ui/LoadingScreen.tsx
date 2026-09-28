@@ -181,7 +181,7 @@ export const LoadingScreen = ({
               width={72}
               height={72}
               priority
-              className="h-[72px] w-[72px] rounded-2xl object-cover shadow-[0_0_24px_rgba(255,0,51,0.28)]"
+              className="h-[4.5rem] w-[4.5rem] rounded-2xl object-cover shadow-[0_0_24px_rgba(255,0,51,0.28)]"
             />
           </div>
 
@@ -203,13 +203,13 @@ export const LoadingScreen = ({
         <h1 className="font-display text-3xl font-black uppercase tracking-[0.18em] text-white sm:text-4xl">
           Just For <span className="text-[#ff0033]">Fun</span>
         </h1>
-        <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.4em] text-neutral-500">
+        <p className="mt-2 text-[0.625rem] font-bold uppercase tracking-[0.4em] text-neutral-500">
           Gaming · Live · Sri Lanka
         </p>
 
         {/* Progress bar */}
         <div className="mt-10 w-full">
-          <div className="relative h-[6px] w-full overflow-hidden rounded-full bg-white/[0.04] ring-1 ring-inset ring-white/5">
+          <div className="relative h-[0.375rem] w-full overflow-hidden rounded-full bg-white/[0.04] ring-1 ring-inset ring-white/5">
             <div
               ref={barRef}
               className="h-full rounded-full bg-[#ff0033]"
@@ -221,7 +221,7 @@ export const LoadingScreen = ({
           </div>
 
           {/* Status row */}
-          <div className="mt-4 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.3em]">
+          <div className="mt-4 flex items-center justify-between font-mono text-[0.625rem] uppercase tracking-[0.3em]">
             <span className="flex items-center gap-2 text-[#ff4b5f]">
               <span className="relative flex h-1.5 w-1.5">
                 <span className="absolute inset-0 animate-ping rounded-full bg-[#ff0033] opacity-75" />
@@ -237,7 +237,7 @@ export const LoadingScreen = ({
       </div>
 
       {/* Bottom signature */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 font-mono text-[10px] uppercase tracking-[0.5em] text-neutral-600">
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 font-mono text-[0.625rem] uppercase tracking-[0.5em] text-neutral-600">
         v4 · Crimson Build
       </div>
     </div>

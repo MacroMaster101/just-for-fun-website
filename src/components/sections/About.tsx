@@ -53,7 +53,7 @@ export const About = () => {
           {/* Left Column: Mission Description */}
           <div className="lg:col-span-5 space-y-6">
             <div className="inline-flex">
-              <span className="text-[10px] font-extrabold text-white bg-white/10 px-2.5 py-1 rounded-lg border border-white/20 flex items-center gap-1.5 uppercase tracking-wider">
+              <span className="text-[0.625rem] font-extrabold text-white bg-white/10 px-2.5 py-1 rounded-lg border border-white/20 flex items-center gap-1.5 uppercase tracking-wider">
                 <Sparkles size={10} /> Channel Story
               </span>
             </div>
@@ -72,7 +72,7 @@ export const About = () => {
             
             <div className="flex flex-wrap gap-3 border-t border-white/5 pt-4 sm:gap-4">
               {["FPS Highlights", "Co-op Survival", "Viewer Lobbies"].map((item) => (
-                <div key={item} className="flex items-center gap-2 text-[10px] uppercase font-extrabold tracking-wider text-neutral-300">
+                <div key={item} className="flex items-center gap-2 text-[0.625rem] uppercase font-extrabold tracking-wider text-neutral-300">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#ff0033] animate-ping" />
                   {item}
                 </div>

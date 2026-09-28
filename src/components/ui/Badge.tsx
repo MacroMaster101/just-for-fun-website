@@ -39,7 +39,7 @@ export const Badge: React.FC<BadgeProps> = ({
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest leading-none backdrop-blur-sm ${variants[variant]} ${className}`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.625rem] font-extrabold uppercase tracking-widest leading-none backdrop-blur-sm ${variants[variant]} ${className}`}
     >
       {pulse && (
         <span className="relative flex h-1.5 w-1.5">

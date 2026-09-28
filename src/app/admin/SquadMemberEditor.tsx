@@ -195,7 +195,7 @@ export const SquadMemberEditor = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Avatar */}
         <div className="md:col-span-2">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">
+          <label className="text-[0.625rem] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">
             Avatar
           </label>
           <div className="mt-2 flex items-center gap-4">
@@ -236,7 +236,7 @@ export const SquadMemberEditor = ({
                   </span>
                 </label>
                 {memberId && form.avatarUrl && (
-                  <span className="text-[10px] text-[var(--color-text-muted)] truncate">
+                  <span className="text-[0.625rem] text-[var(--color-text-muted)] truncate">
                     Saved to Supabase storage.
                   </span>
                 )}
@@ -246,12 +246,12 @@ export const SquadMemberEditor = ({
         </div>
 
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Name *</label>
+          <label className="text-[0.625rem] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Name *</label>
           <Input value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="Kavisha (GGEZ)" className="mt-2" />
         </div>
         <div>
           <div className="flex items-center justify-between">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Role *</label>
+            <label className="text-[0.625rem] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Role *</label>
             <div className="flex items-center gap-1 bg-[var(--color-surface-2)] p-0.5 rounded-md border border-[var(--color-border)] select-none shrink-0">
               <button
                 type="button"
@@ -259,7 +259,7 @@ export const SquadMemberEditor = ({
                   setUseCustomRole(false);
                   update("role", COMMON_ROLES[0]);
                 }}
-                className={`px-2 py-0.5 rounded text-[8px] uppercase font-extrabold transition-all duration-200 cursor-pointer ${
+                className={`px-2 py-0.5 rounded text-[0.5rem] uppercase font-extrabold transition-all duration-200 cursor-pointer ${
                   !useCustomRole
                     ? "bg-[#ff0033] text-white shadow-[0_0_8px_rgba(255,0,51,0.4)]"
                     : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
@@ -270,7 +270,7 @@ export const SquadMemberEditor = ({
               <button
                 type="button"
                 onClick={() => setUseCustomRole(true)}
-                className={`px-2 py-0.5 rounded text-[8px] uppercase font-extrabold transition-all duration-200 cursor-pointer ${
+                className={`px-2 py-0.5 rounded text-[0.5rem] uppercase font-extrabold transition-all duration-200 cursor-pointer ${
                   useCustomRole
                     ? "bg-[#ff0033] text-white shadow-[0_0_8px_rgba(255,0,51,0.4)]"
                     : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
@@ -304,8 +304,8 @@ export const SquadMemberEditor = ({
         </div>
 
         <div>
-          <div className="flex items-center justify-between min-h-[22px]">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Signature Agent</label>
+          <div className="flex items-center justify-between min-h-[1.375rem]">
+            <label className="text-[0.625rem] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Signature Agent</label>
             {activeGameKey ? (
               <div className="flex items-center gap-1 bg-[var(--color-surface-2)] p-0.5 rounded-md border border-[var(--color-border)] select-none shrink-0">
                 <button
@@ -314,7 +314,7 @@ export const SquadMemberEditor = ({
                     setUseCustomAgent(false);
                     update("signatureAgent", GAME_AGENTS[activeGameKey][0]);
                   }}
-                  className={`px-2 py-0.5 rounded text-[8px] uppercase font-extrabold transition-all duration-200 cursor-pointer ${
+                  className={`px-2 py-0.5 rounded text-[0.5rem] uppercase font-extrabold transition-all duration-200 cursor-pointer ${
                     !useCustomAgent
                       ? "bg-[#ff0033] text-white shadow-[0_0_8px_rgba(255,0,51,0.4)]"
                       : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
@@ -325,7 +325,7 @@ export const SquadMemberEditor = ({
                 <button
                   type="button"
                   onClick={() => setUseCustomAgent(true)}
-                  className={`px-2 py-0.5 rounded text-[8px] uppercase font-extrabold transition-all duration-200 cursor-pointer ${
+                  className={`px-2 py-0.5 rounded text-[0.5rem] uppercase font-extrabold transition-all duration-200 cursor-pointer ${
                     useCustomAgent
                       ? "bg-[#ff0033] text-white shadow-[0_0_8px_rgba(255,0,51,0.4)]"
                       : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
@@ -335,7 +335,7 @@ export const SquadMemberEditor = ({
                 </button>
               </div>
             ) : (
-              <span className="text-[8px] text-[var(--color-text-muted)] bg-[var(--color-surface-2)]/60 px-1.5 py-0.5 rounded border border-[var(--color-border)] uppercase font-extrabold tracking-wider shrink-0 select-none">
+              <span className="text-[0.5rem] text-[var(--color-text-muted)] bg-[var(--color-surface-2)]/60 px-1.5 py-0.5 rounded border border-[var(--color-border)] uppercase font-extrabold tracking-wider shrink-0 select-none">
                 🎮 Add game to unlock list
               </span>
             )}
@@ -365,7 +365,7 @@ export const SquadMemberEditor = ({
 
         <div>
           <div className="flex items-center justify-between">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Combat Style</label>
+            <label className="text-[0.625rem] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Combat Style</label>
             <div className="flex items-center gap-1 bg-[var(--color-surface-2)] p-0.5 rounded-md border border-[var(--color-border)] select-none shrink-0">
               <button
                 type="button"
@@ -373,7 +373,7 @@ export const SquadMemberEditor = ({
                   setUseCustomStyle(false);
                   update("combatStyle", COMMON_COMBAT_STYLES[0]);
                 }}
-                className={`px-2 py-0.5 rounded text-[8px] uppercase font-extrabold transition-all duration-200 cursor-pointer ${
+                className={`px-2 py-0.5 rounded text-[0.5rem] uppercase font-extrabold transition-all duration-200 cursor-pointer ${
                   !useCustomStyle
                     ? "bg-[#ff0033] text-white shadow-[0_0_8px_rgba(255,0,51,0.4)]"
                     : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
@@ -384,7 +384,7 @@ export const SquadMemberEditor = ({
               <button
                 type="button"
                 onClick={() => setUseCustomStyle(true)}
-                className={`px-2 py-0.5 rounded text-[8px] uppercase font-extrabold transition-all duration-200 cursor-pointer ${
+                className={`px-2 py-0.5 rounded text-[0.5rem] uppercase font-extrabold transition-all duration-200 cursor-pointer ${
                   useCustomStyle
                     ? "bg-[#ff0033] text-white shadow-[0_0_8px_rgba(255,0,51,0.4)]"
                     : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
@@ -417,9 +417,9 @@ export const SquadMemberEditor = ({
           )}
         </div>
         <div className="md:col-span-2 pt-4 border-t border-[var(--color-border)] relative">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-[#ff0033] flex items-center justify-between">
+          <label className="text-[0.625rem] font-bold uppercase tracking-widest text-[#ff0033] flex items-center justify-between">
             <span>⚔️ Squad Games & Logos</span>
-            <span className="text-[9px] text-[var(--color-text-muted)] normal-case font-medium">Search RAWG or add custom games & icons per member</span>
+            <span className="text-[0.5625rem] text-[var(--color-text-muted)] normal-case font-medium">Search RAWG or add custom games & icons per member</span>
           </label>
           
           {/* Autocomplete Search input */}
@@ -561,7 +561,7 @@ export const SquadMemberEditor = ({
           </div>
         </div>
         <div className="md:col-span-2">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Bio</label>
+          <label className="text-[0.625rem] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Bio</label>
           <textarea
             value={form.bio}
             onChange={(e) => update("bio", e.target.value)}
@@ -571,36 +571,36 @@ export const SquadMemberEditor = ({
           />
         </div>
         <div className="md:col-span-2">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Twitch URL (optional)</label>
+          <label className="text-[0.625rem] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Twitch URL (optional)</label>
           <Input value={form.twitchUrl ?? ""} onChange={(e) => update("twitchUrl", e.target.value || null)} placeholder="https://www.twitch.tv/..." className="mt-2" />
         </div>
 
         {/* Specs */}
         <div className="md:col-span-2 pt-2 border-t border-[var(--color-border)]">
-          <h5 className="text-[10px] font-bold uppercase tracking-widest text-[#ff0033] mb-3">Hardware Specs</h5>
+          <h5 className="text-[0.625rem] font-bold uppercase tracking-widest text-[#ff0033] mb-3">Hardware Specs</h5>
         </div>
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">CPU</label>
+          <label className="text-[0.625rem] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">CPU</label>
           <Input value={form.cpu} onChange={(e) => update("cpu", e.target.value)} className="mt-2" />
         </div>
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">GPU</label>
+          <label className="text-[0.625rem] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">GPU</label>
           <Input value={form.gpu} onChange={(e) => update("gpu", e.target.value)} className="mt-2" />
         </div>
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">RAM</label>
+          <label className="text-[0.625rem] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">RAM</label>
           <Input value={form.ram} onChange={(e) => update("ram", e.target.value)} className="mt-2" />
         </div>
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Monitor</label>
+          <label className="text-[0.625rem] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Monitor</label>
           <Input value={form.monitor} onChange={(e) => update("monitor", e.target.value)} className="mt-2" />
         </div>
         <div className="md:col-span-2">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Mouse</label>
+          <label className="text-[0.625rem] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Mouse</label>
           <Input value={form.mouse} onChange={(e) => update("mouse", e.target.value)} className="mt-2" />
         </div>
         <div>
-          <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Sort Order</label>
+          <label className="text-[0.625rem] font-bold uppercase tracking-widest text-[var(--color-text-muted)]">Sort Order</label>
           <Input
             type="number"
             value={String(form.sortOrder)}

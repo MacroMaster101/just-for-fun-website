@@ -173,7 +173,7 @@ export const NotificationBell = ({ variant = "desktop" }: NotificationBellProps)
     return (
       <div className="max-h-80 overflow-y-auto">
         {notifications === null ? (
-          <p className="px-2 py-6 text-center text-[11px] text-[var(--color-text-muted)]">
+          <p className="px-2 py-6 text-center text-[0.6875rem] text-[var(--color-text-muted)]">
             Loading…
           </p>
         ) : notifications.length === 0 ? (
@@ -182,7 +182,7 @@ export const NotificationBell = ({ variant = "desktop" }: NotificationBellProps)
             <p className="text-xs font-bold text-white">
               No notifications yet.
             </p>
-            <p className="mt-1 text-[10px] text-[var(--color-text-muted)]/70">
+            <p className="mt-1 text-[0.625rem] text-[var(--color-text-muted)]/70">
               Replies from the team show up here.
             </p>
           </div>
@@ -210,7 +210,7 @@ export const NotificationBell = ({ variant = "desktop" }: NotificationBellProps)
                       >
                         {n.title}
                       </p>
-                      <span className="shrink-0 text-[9px] text-[var(--color-text-muted)]/70">
+                      <span className="shrink-0 text-[0.5625rem] text-[var(--color-text-muted)]/70">
                         {new Date(n.createdAt).toLocaleDateString(undefined, {
                           month: "short",
                           day: "numeric",
@@ -218,7 +218,7 @@ export const NotificationBell = ({ variant = "desktop" }: NotificationBellProps)
                       </span>
                     </div>
                     <p
-                      className={`mt-1 line-clamp-4 whitespace-pre-wrap text-[11px] leading-snug ${
+                      className={`mt-1 line-clamp-4 whitespace-pre-wrap text-[0.6875rem] leading-snug ${
                         isUnread
                           ? "text-[var(--color-text)]/85"
                           : "text-[var(--color-text-muted)]"
@@ -259,7 +259,7 @@ export const NotificationBell = ({ variant = "desktop" }: NotificationBellProps)
         )}
         {unreadCount > 0 && (
           <span
-            className={`flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#ff0033] px-1 text-[9px] font-black text-white ring-2 ring-[var(--color-bg)] ${
+            className={`flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-[#ff0033] px-1 text-[0.5625rem] font-black text-white ring-2 ring-[var(--color-bg)] ${
               variant === "desktop" ? "absolute -top-1 -right-1" : "ml-auto"
             }`}
             aria-hidden
@@ -276,13 +276,13 @@ export const NotificationBell = ({ variant = "desktop" }: NotificationBellProps)
           className="auth-surface absolute right-0 top-full z-50 mt-2 w-80 origin-top-right rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-soft)] p-2 shadow-[0_20px_50px_rgba(0,0,0,0.25)] animate-fade-in-up"
         >
           <div className="mb-2 flex items-center justify-between px-2 pt-1 border-b border-white/5 pb-2">
-            <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">
+            <span className="text-[0.625rem] font-black uppercase tracking-widest text-[var(--color-text-muted)]">
               Notifications
             </span>
             {unreadCount > 0 && (
               <button
                 onClick={markAllRead}
-                className="text-[10px] font-bold uppercase tracking-wider text-[#ff4b5f] transition hover:text-[#ff0033]"
+                className="text-[0.625rem] font-bold uppercase tracking-wider text-[#ff4b5f] transition hover:text-[#ff0033]"
               >
                 Mark all read
               </button>
@@ -296,13 +296,13 @@ export const NotificationBell = ({ variant = "desktop" }: NotificationBellProps)
       {open && variant === "mobile" && (
         <div className="auth-surface relative z-10 mt-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-soft)] p-2">
           <div className="mb-2 flex items-center justify-between px-2 pt-1">
-            <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">
+            <span className="text-[0.625rem] font-black uppercase tracking-widest text-[var(--color-text-muted)]">
               Notifications
             </span>
             {unreadCount > 0 && (
               <button
                 onClick={markAllRead}
-                className="text-[10px] font-bold uppercase tracking-wider text-[#ff4b5f] transition hover:text-[#ff0033]"
+                className="text-[0.625rem] font-bold uppercase tracking-wider text-[#ff4b5f] transition hover:text-[#ff0033]"
               >
                 Mark all read
               </button>
@@ -327,14 +327,14 @@ export const NotificationBell = ({ variant = "desktop" }: NotificationBellProps)
             className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[9999] mx-auto my-auto max-w-sm w-[calc(100vw-32px)] bg-[#0c0c0d]/95 backdrop-blur-2xl border border-white/10 p-4 rounded-2xl shadow-[0_24px_70px_rgba(0,0,0,0.95)] animate-fade-in"
           >
             <div className="mb-3 flex items-center justify-between border-b border-white/5 pb-2 relative">
-              <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">
+              <span className="text-[0.625rem] font-black uppercase tracking-widest text-[var(--color-text-muted)]">
                 Notifications
               </span>
               <div className="flex items-center gap-3">
                 {unreadCount > 0 && (
                   <button
                     onClick={markAllRead}
-                    className="text-[10px] font-bold uppercase tracking-wider text-[#ff4b5f] transition hover:text-[#ff0033] mr-6"
+                    className="text-[0.625rem] font-bold uppercase tracking-wider text-[#ff4b5f] transition hover:text-[#ff0033] mr-6"
                   >
                     Mark all read
                   </button>

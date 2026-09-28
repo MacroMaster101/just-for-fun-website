@@ -139,7 +139,7 @@ export const CustomCursor = () => {
       <div
         ref={glowRef}
         aria-hidden
-        className="pointer-events-none fixed left-0 top-0 z-[9998] h-[320px] w-[320px] rounded-full"
+        className="pointer-events-none fixed left-0 top-0 z-[9998] h-[20rem] w-[20rem] rounded-full"
         style={{
           background: isLight
             ? "none"

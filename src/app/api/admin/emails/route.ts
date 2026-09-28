@@ -1,33 +1,7 @@
 import { NextResponse } from "next/server";
+import { verifyAdmin } from "@/lib/auth/admin";
+import { isValidEmail } from "@/lib/isValidEmail";
 import { prisma } from "@/lib/prisma";
-import { supabaseServer } from "@/lib/supabase/server";
-
-// Helper helper function to verify administrator permission
-async function verifyAdmin() {
-  const supabase = await supabaseServer();
-  const { data } = await supabase.auth.getUser();
-  if (!data.user || !data.user.email) return null;
-
-  const email = data.user.email.toLowerCase().trim();
-  const rootAdminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase().trim();
-
-  if (rootAdminEmail && email === rootAdminEmail) {
-    // Proactively ensure they exist in the DB
-    try {
-      await prisma.adminEmail.upsert({
-        where: { email },
-        update: {},
-        create: { email },
-      });
-    } catch (e) {
-      console.error("Failed to seed root admin on check:", e);
-    }
-    return email;
-  }
-
-  const match = await prisma.adminEmail.findUnique({ where: { email } });
-  return match ? email : null;
-}
 
 export async function GET() {
   try {
@@ -62,8 +36,7 @@ export async function POST(request: Request) {
     const targetEmail = email.toLowerCase().trim();
 
     // Basic format validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(targetEmail)) {
+    if (!isValidEmail(targetEmail)) {
       return NextResponse.json({ error: "Invalid email format." }, { status: 400 });
     }
 

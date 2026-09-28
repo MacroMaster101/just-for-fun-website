@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { hostMatches } from "@/lib/hostMatches";
 import { Volume1, Volume2, VolumeX, ChevronLeft } from "lucide-react";
 
 type PlayerCommandArg = string | number | boolean;
@@ -362,7 +363,7 @@ export const AmbientPlayer = () => {
   // and on every src change).
   useEffect(() => {
     const onMessage = (ev: MessageEvent) => {
-      if (!ev.origin.includes("youtube.com")) return;
+      if (!hostMatches(ev.origin, "youtube.com")) return;
       let data: unknown;
       try {
         data = typeof ev.data === "string" ? JSON.parse(ev.data) : ev.data;
@@ -761,7 +762,7 @@ export const AmbientPlayer = () => {
         {/* Tooltip — hover + first-visit auto-show for 10s. */}
         {!isCollapsed && (
           <div
-            className={`absolute bottom-full left-0 mb-4 px-3 py-1.5 bg-[#0c0c0c]/95 border border-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-lg shadow-2xl pointer-events-none transition-all duration-300 whitespace-nowrap z-50 group-hover:opacity-100 group-hover:translate-y-0 ${
+            className={`absolute bottom-full left-0 mb-4 px-3 py-1.5 bg-[#0c0c0c]/95 border border-white/10 text-white text-[0.625rem] font-black uppercase tracking-widest rounded-lg shadow-2xl pointer-events-none transition-all duration-300 whitespace-nowrap z-50 group-hover:opacity-100 group-hover:translate-y-0 ${
               showFirstVisitTooltip
                 ? "opacity-100 translate-y-0"
                 : "opacity-0 translate-y-1"
@@ -777,7 +778,7 @@ export const AmbientPlayer = () => {
         )}
 
         {isCollapsed && (
-          <div className="pointer-events-none absolute left-full ml-3 translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100 bg-[#0a0a0a]/95 border border-white/10 text-white text-[9px] font-black uppercase tracking-wider px-2 py-1.5 rounded-lg shadow-lg whitespace-nowrap hidden lg:block z-50">
+          <div className="pointer-events-none absolute left-full ml-3 translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100 bg-[#0a0a0a]/95 border border-white/10 text-white text-[0.5625rem] font-black uppercase tracking-wider px-2 py-1.5 rounded-lg shadow-lg whitespace-nowrap hidden lg:block z-50">
             Expand Music Player
             <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-[#0a0a0a]" />
           </div>
@@ -879,7 +880,7 @@ export const AmbientPlayer = () => {
               />
 
               {/* Volume Percent Text */}
-              <span className="font-mono text-[9px] font-black text-[var(--color-text)] tracking-wider min-w-[24px] text-right">
+              <span className="font-mono text-[0.5625rem] font-black text-[var(--color-text)] tracking-wider min-w-[1.5rem] text-right">
                 {isMuted ? 0 : ambientVolume}%
               </span>
             </div>
@@ -901,7 +902,7 @@ export const AmbientPlayer = () => {
             aria-label="Hide music player"
           >
             <ChevronLeft size={10} />
-            <span className="pointer-events-none absolute right-full mr-2 scale-90 opacity-0 transition-all group-hover/collapse:scale-100 group-hover/collapse:opacity-100 bg-[#0a0a0a] border border-white/10 text-white text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded shadow-lg whitespace-nowrap hidden lg:block">
+            <span className="pointer-events-none absolute right-full mr-2 scale-90 opacity-0 transition-all group-hover/collapse:scale-100 group-hover/collapse:opacity-100 bg-[#0a0a0a] border border-white/10 text-white text-[0.5625rem] font-black uppercase tracking-wider px-2 py-1 rounded shadow-lg whitespace-nowrap hidden lg:block">
               Collapse Player
             </span>
           </button>
@@ -989,12 +990,12 @@ export const AmbientPlayer = () => {
               <h1 className="font-display font-black text-xl uppercase tracking-widest text-white drop-shadow-[0_0_12px_rgba(255,255,255,0.1)]">
                 JUST FOR FUN
               </h1>
-              <p className="text-[9px] uppercase font-black tracking-[0.25em] text-[#ff2d55] animate-pulse">
+              <p className="text-[0.5625rem] uppercase font-black tracking-[0.25em] text-[#ff2d55] animate-pulse">
                 Immersive Music Experience
               </p>
             </div>
 
-            <p className="relative z-10 text-[11px] text-neutral-400 font-medium leading-relaxed max-w-xs text-center">
+            <p className="relative z-10 text-[0.6875rem] text-neutral-400 font-medium leading-relaxed max-w-xs text-center">
               Welcome to the Arena. We play hand-selected Synthwave beats to elevate your stay. Click below to tune in.
             </p>
 
@@ -1007,7 +1008,7 @@ export const AmbientPlayer = () => {
                 setAmbientPlaying(true);
                 setBootAutoplay(false);
               }}
-              className="relative z-10 mt-1 px-7 py-3 bg-gradient-to-r from-[#ff0033] to-[#ff2d55] text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-[0_0_20px_rgba(255,0,51,0.4)] hover:shadow-[0_0_30px_rgba(255,0,51,0.6)] hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer flex items-center gap-2 border border-white/20"
+              className="relative z-10 mt-1 px-7 py-3 bg-gradient-to-r from-[#ff0033] to-[#ff2d55] text-white text-[0.625rem] font-black uppercase tracking-widest rounded-full shadow-[0_0_20px_rgba(255,0,51,0.4)] hover:shadow-[0_0_30px_rgba(255,0,51,0.6)] hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer flex items-center gap-2 border border-white/20"
             >
               <span>📻 Tune In & Enter</span>
             </button>

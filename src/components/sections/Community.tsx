@@ -257,7 +257,7 @@ export const Community = () => {
           `}} />
 
           {/* Futuristic Cyber Charging Progress Bar */}
-          <div className="w-56 h-[14px] bg-white/15 rounded-full mt-4 overflow-hidden border border-white/20 shadow-[0_0_12px_rgba(0,0,0,0.6)] relative flex items-center">
+          <div className="w-56 h-[0.875rem] bg-white/15 rounded-full mt-4 overflow-hidden border border-white/20 shadow-[0_0_12px_rgba(0,0,0,0.6)] relative flex items-center">
             <div
               className={`h-full bg-gradient-to-r from-[#ff0033] to-[#ff3b58] shadow-[0_0_8px_rgba(255,0,51,0.85)] transition-all ease-linear rounded-full ${
                 isTyping || rotationMode === "manual"
@@ -270,7 +270,7 @@ export const Community = () => {
               }}
             />
             {(isTyping || rotationMode === "manual") && (
-              <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black uppercase tracking-[0.3em] text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)] select-none leading-none">
+              <span className="absolute inset-0 flex items-center justify-center text-[0.5625rem] font-black uppercase tracking-[0.3em] text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)] select-none leading-none">
                 {isTyping ? "TYPING..." : "MANUAL"}
               </span>
             )}
@@ -278,12 +278,12 @@ export const Community = () => {
         </div>
 
         {/* Tab Contents View */}
-        <div className="transition-all duration-500 min-h-[300px]">
+        <div className="transition-all duration-500 min-h-[18.75rem]">
           
           {/* TAB 1: DISCORD WIDGET */}
           {activeTab === "discord" && (
             <div className="grid items-center justify-center gap-8 lg:grid-cols-[1fr_auto] animate-fade-in-up">
-              <div className="relative mx-auto w-full max-w-[350px]">
+              <div className="relative mx-auto w-full max-w-[21.875rem]">
                 <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-[#5865F2]/40 via-[#ff0033]/20 to-[#5865F2]/40 blur-xl opacity-60" />
                 <div className="relative rounded-2xl border border-white/10 bg-[#181818]/70 backdrop-blur-xl overflow-hidden shadow-[0_0_30px_rgba(88,101,242,0.25)]">
                   <iframe
@@ -292,7 +292,7 @@ export const Community = () => {
                     height="500"
                     sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
                     title="Just For Fun Discord Server"
-                    className="block h-[460px] w-full max-w-full border-0 sm:h-[500px]"
+                    className="block h-[28.75rem] w-full max-w-full border-0 sm:h-[31.25rem]"
                   />
                 </div>
                 <a

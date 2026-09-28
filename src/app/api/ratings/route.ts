@@ -34,15 +34,28 @@ export async function GET() {
 
     const averageRating = totalCount > 0 ? parseFloat((sum / totalCount).toFixed(2)) : 0;
 
+    // Best-effort viewer lookup so an anonymous author still recognises
+    // their own review. Everyone else must never see the real user id —
+    // it is the same id the public Crew Wall shows next to a name.
+    let viewerId: string | null = null;
+    try {
+      const supabase = await supabaseServer();
+      const { data } = await supabase.auth.getUser();
+      viewerId = data.user?.id ?? null;
+    } catch {
+      // Anonymous viewers are fine.
+    }
+
     const enrichedRatings = ratings.map((r) => {
       if (r.isAnonymous) {
-        const seed = r.userId.slice(0, 8);
+        const anonId = r.userId === viewerId ? r.userId : `anon-${r.id}`;
         return {
           ...r,
+          userId: anonId,
           profile: {
-            id: r.userId,
+            id: anonId,
             name: "Anonymous Operator",
-            avatarUrl: `https://api.dicebear.com/7.x/pixel-art/svg?seed=${seed}`,
+            avatarUrl: `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(r.id.slice(0, 8))}`,
           },
         };
       }

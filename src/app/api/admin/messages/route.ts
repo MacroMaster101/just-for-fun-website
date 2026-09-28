@@ -1,40 +1,10 @@
 import { NextResponse } from "next/server";
+import { verifyAdmin } from "@/lib/auth/admin";
 import nodemailer from "nodemailer";
+import { escapeHtml } from "@/lib/escapeHtml";
 import { prisma } from "@/lib/prisma";
-import { supabaseServer } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
-
-/**
- * Verifies the caller is an administrator and returns their email if so.
- * Returns null when the caller is not authenticated or not on the
- * admin allowlist.
- */
-async function verifyAdmin(): Promise<string | null> {
-  const supabase = await supabaseServer();
-  const { data } = await supabase.auth.getUser();
-  if (!data.user || !data.user.email) return null;
-
-  const email = data.user.email.toLowerCase().trim();
-  const rootAdminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase().trim();
-
-  if (rootAdminEmail && email === rootAdminEmail) {
-    // Proactively ensure they exist in the DB
-    try {
-      await prisma.adminEmail.upsert({
-        where: { email },
-        update: {},
-        create: { email },
-      });
-    } catch (e) {
-      console.error("Failed to seed root admin on check:", e);
-    }
-    return email;
-  }
-
-  const match = await prisma.adminEmail.findUnique({ where: { email } });
-  return match ? email : null;
-}
 
 export async function GET() {
   try {
@@ -163,8 +133,8 @@ export async function POST(request: Request) {
             html: `
               <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-top: 4px solid #ff0033; padding: 24px; border-radius: 8px;">
                 <h2 style="color: #111; margin-top: 0; font-weight: 800;">Reply from Just For Fun</h2>
-                <p style="color: #555;">Hi ${original.name},</p>
-                <div style="background-color: #f5f5f5; padding: 16px; border-radius: 6px; color: #222; white-space: pre-wrap; border-left: 3px solid #ff2d55; margin: 16px 0;">${cleanReply}</div>
+                <p style="color: #555;">Hi ${escapeHtml(original.name)},</p>
+                <div style="background-color: #f5f5f5; padding: 16px; border-radius: 6px; color: #222; white-space: pre-wrap; border-left: 3px solid #ff2d55; margin: 16px 0;">${escapeHtml(cleanReply)}</div>
                 <p style="color: #999; font-size: 12px;">— Just For Fun team</p>
               </div>
             `,

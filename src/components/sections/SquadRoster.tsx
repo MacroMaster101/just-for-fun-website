@@ -163,8 +163,8 @@ export const SquadRoster = () => {
   return (
     <section id="squad" className="relative overflow-hidden bg-[#060606] py-20 sm:py-24">
       {/* HUD Background Assets */}
-      <div className="absolute top-1/3 left-1/4 -translate-x-1/2 w-[600px] h-[600px] bg-[#ff0033]/5 blur-[120px] pointer-events-none rounded-full animate-float" />
-      <div className="absolute bottom-1/3 right-1/4 translate-x-1/2 w-[600px] h-[600px] bg-[#ffffff]/5 blur-[120px] pointer-events-none rounded-full animate-float [animation-delay:3s]" />
+      <div className="absolute top-1/3 left-1/4 -translate-x-1/2 w-[37.5rem] h-[37.5rem] bg-[#ff0033]/5 blur-[120px] pointer-events-none rounded-full animate-float" />
+      <div className="absolute bottom-1/3 right-1/4 translate-x-1/2 w-[37.5rem] h-[37.5rem] bg-[#ffffff]/5 blur-[120px] pointer-events-none rounded-full animate-float [animation-delay:3s]" />
       <div className="absolute inset-0 bg-cyber-matrix opacity-[0.12] pointer-events-none" />
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6">
@@ -234,7 +234,7 @@ export const SquadRoster = () => {
                     </div>
 
                     {/* Signature Badge */}
-                    <Badge variant={isSelected ? "primary" : "secondary"} className="shrink-0 text-[9px]">
+                    <Badge variant={isSelected ? "primary" : "secondary"} className="shrink-0 text-[0.5625rem]">
                       {member.signatureAgent.split(" / ")[0]}
                     </Badge>
                   </button>
@@ -301,7 +301,7 @@ export const SquadRoster = () => {
                   {/* Left Specs Grid: Core Bio and Combat stats */}
                   <div className="space-y-4 text-left">
                     <div>
-                      <div className="text-[10px] uppercase font-bold tracking-widest text-neutral-500 mb-1.5">
+                      <div className="text-[0.625rem] uppercase font-bold tracking-widest text-neutral-500 mb-1.5">
                         Biography
                       </div>
                       <p className="text-neutral-300 text-xs sm:text-sm leading-relaxed font-medium">
@@ -311,7 +311,7 @@ export const SquadRoster = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <div className="text-[10px] uppercase font-bold tracking-widest text-neutral-500 mb-1.5 flex items-center gap-1">
+                        <div className="text-[0.625rem] uppercase font-bold tracking-widest text-neutral-500 mb-1.5 flex items-center gap-1">
                           <Zap size={10} className="text-[#ff0033]" /> Play Style
                         </div>
                         <span className="text-white font-bold text-xs bg-[#ff0033]/10 px-2.5 py-1 rounded-lg border border-[#ff0033]/20 block text-center truncate">
@@ -319,7 +319,7 @@ export const SquadRoster = () => {
                         </span>
                       </div>
                       <div>
-                        <div className="text-[10px] uppercase font-bold tracking-widest text-neutral-500 mb-1.5 flex items-center gap-1">
+                        <div className="text-[0.625rem] uppercase font-bold tracking-widest text-neutral-500 mb-1.5 flex items-center gap-1">
                           <Shield size={10} className="text-[#ffffff]" /> Agent Pick
                         </div>
                         <span className="text-white font-bold text-xs bg-[#ffffff]/10 px-2.5 py-1 rounded-lg border border-[#ffffff]/20 block text-center truncate">
@@ -329,7 +329,7 @@ export const SquadRoster = () => {
                     </div>
 
                     <div>
-                      <div className="text-[10px] uppercase font-bold tracking-widest text-neutral-500 mb-1.5 flex items-center gap-1">
+                      <div className="text-[0.625rem] uppercase font-bold tracking-widest text-neutral-500 mb-1.5 flex items-center gap-1">
                         <Gamepad2 size={12} className="text-[#ff0033]" /> Primary Games
                       </div>
                       <div className="flex flex-wrap gap-2">
@@ -371,41 +371,41 @@ export const SquadRoster = () => {
 
                   {/* Right Specs Grid: Hardware Specifications */}
                   <div className="bg-[#0f0f0f]/80 border border-white/5 rounded-xl p-5 space-y-4 text-left">
-                    <div className="text-[10px] uppercase font-bold tracking-widest text-[#ffffff] pb-2 border-b border-white/5 flex items-center gap-1.5">
+                    <div className="text-[0.625rem] uppercase font-bold tracking-widest text-[#ffffff] pb-2 border-b border-white/5 flex items-center gap-1.5">
                       <Monitor size={12} className="text-[#ffffff]" /> Hardware Arsenal
                     </div>
 
                     <div className="space-y-3 font-semibold">
                       <div>
-                        <div className="text-[9px] uppercase tracking-wider text-neutral-500 font-extrabold flex items-center gap-1">
+                        <div className="text-[0.5625rem] uppercase tracking-wider text-neutral-500 font-extrabold flex items-center gap-1">
                           <Cpu size={10} className="text-[#ff0033]" /> Central Unit (CPU)
                         </div>
                         <p className="text-neutral-200 text-xs font-bold">{selectedMember.specs.cpu}</p>
                       </div>
 
                       <div>
-                        <div className="text-[9px] uppercase tracking-wider text-neutral-500 font-extrabold flex items-center gap-1">
+                        <div className="text-[0.5625rem] uppercase tracking-wider text-neutral-500 font-extrabold flex items-center gap-1">
                           <Zap size={10} className="text-[#ff4b5f]" /> Graphics Engine (GPU)
                         </div>
                         <p className="text-neutral-200 text-xs font-bold">{selectedMember.specs.gpu}</p>
                       </div>
 
                       <div>
-                        <div className="text-[9px] uppercase tracking-wider text-neutral-500 font-extrabold flex items-center gap-1">
+                        <div className="text-[0.5625rem] uppercase tracking-wider text-neutral-500 font-extrabold flex items-center gap-1">
                           <Shield size={10} className="text-[#ffffff]" /> System Memory (RAM)
                         </div>
                         <p className="text-neutral-200 text-xs font-bold">{selectedMember.specs.ram}</p>
                       </div>
 
                       <div>
-                        <div className="text-[9px] uppercase tracking-wider text-neutral-500 font-extrabold flex items-center gap-1">
+                        <div className="text-[0.5625rem] uppercase tracking-wider text-neutral-500 font-extrabold flex items-center gap-1">
                           <Monitor size={10} className="text-[#ff0033]" /> Gaming Display
                         </div>
                         <p className="text-neutral-200 text-xs font-bold">{selectedMember.specs.monitor}</p>
                       </div>
 
                       <div>
-                        <div className="text-[9px] uppercase tracking-wider text-neutral-500 font-extrabold flex items-center gap-1">
+                        <div className="text-[0.5625rem] uppercase tracking-wider text-neutral-500 font-extrabold flex items-center gap-1">
                           <Gamepad2 size={10} className="text-[#ffffff]" /> Mouse Peripheral
                         </div>
                         <p className="text-neutral-200 text-xs font-bold">{selectedMember.specs.mouse}</p>

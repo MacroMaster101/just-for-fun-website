@@ -132,7 +132,7 @@ export const ThemeToggle = ({ showHint = false }: ThemeToggleProps = {}) => {
             <span
               role="tooltip"
               suppressHydrationWarning
-              className={`pointer-events-none absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2 whitespace-nowrap rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[var(--color-text)] shadow-lg transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100 ${
+              className={`pointer-events-none absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2 whitespace-nowrap rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-1 text-[0.625rem] font-bold uppercase tracking-wider text-[var(--color-text)] shadow-lg transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100 ${
                 showHint && active
                   ? "translate-y-0 opacity-100"
                   : "translate-y-1 opacity-0"
