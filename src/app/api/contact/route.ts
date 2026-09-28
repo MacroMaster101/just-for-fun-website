@@ -3,11 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { supabaseServer } from "@/lib/supabase/server";
 import nodemailer from "nodemailer";
 import { escapeHtml } from "@/lib/escapeHtml";
+import { isValidEmail } from "@/lib/isValidEmail";
 
 const MAX_NAME_LENGTH = 100;
 const MAX_EMAIL_LENGTH = 254;
 const MAX_MESSAGE_LENGTH = 5000;
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Collapse CR/LF so the name can't break out of the email subject line.
 const singleLine = (value: string) => value.replace(/[\r\n]+/g, " ");
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    if (!EMAIL_PATTERN.test(email)) {
+    if (!isValidEmail(email)) {
       return NextResponse.json({ error: "Please enter a valid email address." }, { status: 400 });
     }
 

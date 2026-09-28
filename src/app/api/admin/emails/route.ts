@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { verifyAdmin } from "@/lib/auth/admin";
+import { isValidEmail } from "@/lib/isValidEmail";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -35,8 +36,7 @@ export async function POST(request: Request) {
     const targetEmail = email.toLowerCase().trim();
 
     // Basic format validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(targetEmail)) {
+    if (!isValidEmail(targetEmail)) {
       return NextResponse.json({ error: "Invalid email format." }, { status: 400 });
     }
 

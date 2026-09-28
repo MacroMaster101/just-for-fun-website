@@ -580,7 +580,9 @@ function formatHandle(customUrl: string) {
 }
 
 function stripHtml(value: string) {
-  return value.replace(/<[^>]*>/g, "").trim();
+  // Removing tags in a single pass can leave new ones behind
+  // (e.g. "<scr<script>ipt>"), so also drop any stray angle brackets.
+  return value.replace(/<[^>]*>/g, "").replace(/[<>]/g, "").trim();
 }
 
 async function getRssFallbackVideos(): Promise<ApiVideo[]> {
@@ -641,14 +643,19 @@ function extractAttribute(entry: string, tag: string, attribute: string) {
   return match?.[1] || "";
 }
 
+const XML_ENTITIES: Record<string, string> = {
+  "&amp;": "&",
+  "&quot;": '"',
+  "&#39;": "'",
+  "&lt;": "<",
+  "&gt;": ">",
+};
+
 function decodeXml(value: string) {
+  // Decode all entities in one pass so "&amp;lt;" becomes "&lt;", not "<".
   return value
     .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
+    .replace(/&(?:amp|quot|#39|lt|gt);/g, (entity) => XML_ENTITIES[entity])
     .trim();
 }
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { hostMatches } from "@/lib/hostMatches";
 
 export const dynamic = "force-dynamic";
 
@@ -22,11 +23,11 @@ function extractYouTubeId(input: string): string | null {
   if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) return trimmed;
   try {
     const url = new URL(trimmed);
-    if (url.hostname.includes("youtu.be")) {
+    if (hostMatches(trimmed, "youtu.be")) {
       const id = url.pathname.slice(1).split("/")[0];
       return /^[a-zA-Z0-9_-]{11}$/.test(id) ? id : null;
     }
-    if (url.hostname.includes("youtube.com")) {
+    if (hostMatches(trimmed, "youtube.com")) {
       const v = url.searchParams.get("v");
       if (v && /^[a-zA-Z0-9_-]{11}$/.test(v)) return v;
       const parts = url.pathname.split("/").filter(Boolean);
