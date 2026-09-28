@@ -52,7 +52,7 @@ export const Footer = () => {
               <p className="font-display text-base font-black uppercase tracking-wider text-white">
                 Just For Fun
               </p>
-              <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-[#ff2d55]">
+              <p className="text-[0.625rem] font-bold uppercase tracking-[0.28em] text-[#ff2d55]">
                 @JustForFun-BoYs
               </p>
             </div>
@@ -112,7 +112,7 @@ export const Footer = () => {
         </div>
       </div>
 
-      <div className="relative z-10 mx-auto flex max-w-7xl flex-col items-center text-center gap-3 border-t border-white/10 px-5 pt-6 pb-44 text-[11px] font-bold uppercase tracking-[0.22em] text-neutral-500 sm:px-6 md:flex-row md:pb-6 md:items-center md:justify-between md:text-left">
+      <div className="relative z-10 mx-auto flex max-w-7xl flex-col items-center text-center gap-3 border-t border-white/10 px-5 pt-6 pb-44 text-[0.6875rem] font-bold uppercase tracking-[0.22em] text-neutral-500 sm:px-6 md:flex-row md:pb-6 md:items-center md:justify-between md:text-left">
         <span className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
           <span>&copy; {year} Just For Fun</span>
           <a href="/privacy" className="transition hover:text-white">

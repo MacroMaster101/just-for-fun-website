@@ -65,7 +65,7 @@ export default function ResetPasswordPage() {
             <h1 className="font-display text-xl font-black uppercase tracking-wide text-white">
               Reset Password
             </h1>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#ff2d55]">
+            <p className="text-[0.625rem] font-bold uppercase tracking-[0.2em] text-[#ff2d55]">
               Set a new password
             </p>
           </div>
@@ -87,7 +87,7 @@ export default function ResetPasswordPage() {
         ) : (
           <form onSubmit={handleSubmit} className="grid gap-3">
             <label className="grid gap-1.5">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500">
+              <span className="text-[0.625rem] font-black uppercase tracking-[0.2em] text-neutral-500">
                 New Password
               </span>
               <div className="relative">
@@ -111,7 +111,7 @@ export default function ResetPasswordPage() {
               </div>
             </label>
             <label className="grid gap-1.5">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500">
+              <span className="text-[0.625rem] font-black uppercase tracking-[0.2em] text-neutral-500">
                 Confirm Password
               </span>
               <div className="relative">

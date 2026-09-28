@@ -18,9 +18,9 @@ type Provider = "google" | "facebook" | "discord";
 type AuthMode = "login" | "signup";
 
 const RequirementRow = ({ met, text }: { met: boolean; text: string }) => (
-  <div className="flex items-center gap-2 text-[11px] leading-tight">
+  <div className="flex items-center gap-2 text-[0.6875rem] leading-tight">
     <span
-      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[9px] font-black transition-all ${
+      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[0.5625rem] font-black transition-all ${
         met
           ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
           : "bg-neutral-800 text-neutral-500 border border-neutral-700"
@@ -319,7 +319,7 @@ export const AuthModal = ({
               </button>
             </div>
 
-            <div className="my-5 flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.3em] text-neutral-600">
+            <div className="my-5 flex items-center gap-3 text-[0.625rem] font-bold uppercase tracking-[0.3em] text-neutral-600">
               <div className="h-px flex-1 bg-white/10" />
               or
               <div className="h-px flex-1 bg-white/10" />
@@ -328,7 +328,7 @@ export const AuthModal = ({
             <form onSubmit={handleEmailSubmit} className="grid gap-3">
               {mode === "signup" && (
                 <label className="grid gap-1.5">
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500">
+                  <span className="text-[0.625rem] font-black uppercase tracking-[0.2em] text-neutral-500">
                     Display Name
                   </span>
                   <input
@@ -341,7 +341,7 @@ export const AuthModal = ({
                 </label>
               )}
               <label className="grid gap-1.5">
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500">
+                <span className="text-[0.625rem] font-black uppercase tracking-[0.2em] text-neutral-500">
                   Email
                 </span>
                 <input
@@ -354,7 +354,7 @@ export const AuthModal = ({
                 />
               </label>
               <label className="grid gap-1.5">
-                <span className="flex items-center justify-between text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500">
+                <span className="flex items-center justify-between text-[0.625rem] font-black uppercase tracking-[0.2em] text-neutral-500">
                   <span>Password</span>
                   {mode === "login" && (
                     <span className="flex items-center gap-3">
@@ -413,7 +413,7 @@ export const AuthModal = ({
             {/* Password Validation Checklist */}
             {mode === "signup" && password.length > 0 && (
               <div className="mt-1 rounded-lg border border-white/5 bg-white/[0.02] p-3 text-xs">
-                <p className="mb-2 font-black uppercase tracking-wider text-neutral-400 text-[9px]">
+                <p className="mb-2 font-black uppercase tracking-wider text-neutral-400 text-[0.5625rem]">
                   Password Requirements
                 </p>
                 <div className="grid grid-cols-1 gap-2">

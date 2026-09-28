@@ -172,31 +172,31 @@ export const Header = () => {
             : "border-b border-transparent bg-[var(--color-bg)]/40 py-3.5 backdrop-blur"
         }`}
       >
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 sm:px-6">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-5 sm:px-6 xl:gap-4">
           <a href={isAdminPage ? "/" : "#hero"} className="group flex items-center gap-3">
             <span className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#ff0033] to-[#b30024] text-white shadow-[0_0_24px_rgba(255,0,51,0.45)] transition-transform group-hover:scale-110">
               <Youtube size={22} />
               <span className="absolute inset-0 rounded-xl border border-white/20" />
             </span>
-            <span className="hidden flex-col leading-none sm:flex">
+            <span className="hidden flex-col leading-none sm:flex lg:hidden xl:flex">
               <span className="font-display text-sm font-black uppercase tracking-wider text-white">
                 Just For Fun
               </span>
-              <span className="mt-1 text-[10px] font-bold uppercase tracking-[0.28em] text-[#ff2d55]">
+              <span className="mt-1 text-[0.625rem] font-bold uppercase tracking-[0.28em] text-[#ff2d55]">
                 Gaming Channel
               </span>
             </span>
           </a>
 
           {!isAdminPage && (
-            <nav className="hidden items-center gap-1 rounded-full border border-white/10 bg-[#0c0c0c]/80 p-1 backdrop-blur lg:flex">
+            <nav className="hidden items-center gap-0.5 rounded-full xl:gap-1 border border-white/10 bg-[#0c0c0c]/80 p-1 backdrop-blur lg:flex">
               {navLinks.map((link) => {
                 const active = activeNavSection === link.href.slice(1);
                 return (
                   <a
                     key={link.href}
                     href={link.href}
-                    className={`relative rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition ${
+                    className={`relative rounded-full px-2 py-1.5 text-[0.625rem] font-bold uppercase tracking-wide transition xl:px-3 xl:text-[0.6875rem] xl:tracking-wider ${
                       active
                         ? "bg-[#ff0033] text-white shadow-[0_0_18px_rgba(255,0,51,0.5)]"
                         : "text-neutral-400 hover:text-white"
@@ -219,13 +219,13 @@ export const Header = () => {
               <div className="flex items-center gap-1 sm:gap-1.5">
                 <button
                   onClick={() => openAuth("login")}
-                  className="rounded-full px-2.5 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs font-bold text-neutral-300 transition hover:bg-white/10 hover:text-white whitespace-nowrap"
+                  className="rounded-full px-2.5 py-1 sm:px-3 sm:py-1.5 text-[0.625rem] sm:text-xs font-bold text-neutral-300 transition hover:bg-white/10 hover:text-white whitespace-nowrap"
                 >
                   Log In
                 </button>
                 <button
                   onClick={() => openAuth("signup")}
-                  className="rounded-full bg-gradient-to-r from-[#ff0033] to-[#ff2d55] px-2.5 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs font-black text-white shadow-[0_0_16px_rgba(255,0,51,0.4)] transition hover:shadow-[0_0_24px_rgba(255,0,51,0.6)] whitespace-nowrap"
+                  className="rounded-full bg-gradient-to-r from-[#ff0033] to-[#ff2d55] px-2.5 py-1 sm:px-3 sm:py-1.5 text-[0.625rem] sm:text-xs font-black text-white shadow-[0_0_16px_rgba(255,0,51,0.4)] transition hover:shadow-[0_0_24px_rgba(255,0,51,0.6)] whitespace-nowrap"
                 >
                   Sign Up
                 </button>
@@ -259,11 +259,11 @@ export const Header = () => {
                 <h3 className="font-display text-xs font-black uppercase tracking-wider text-white">
                   Navigation Hub
                 </h3>
-                <p className="text-[9px] font-semibold text-neutral-400 uppercase tracking-widest mt-0.5">
+                <p className="text-[0.5625rem] font-semibold text-neutral-400 uppercase tracking-widest mt-0.5">
                   Explore Channel Sections
                 </p>
               </div>
-              <span className="text-[9px] font-black uppercase tracking-widest text-[#ff2d55] bg-[#ff2d55]/10 px-2.5 py-1 rounded-full border border-[#ff2d55]/20">
+              <span className="text-[0.5625rem] font-black uppercase tracking-widest text-[#ff2d55] bg-[#ff2d55]/10 px-2.5 py-1 rounded-full border border-[#ff2d55]/20">
                 J4FN Gaming
               </span>
             </div>
@@ -294,7 +294,7 @@ export const Header = () => {
                       <LinkIcon size={16} className="transition-transform duration-300 group-hover:scale-110" />
                     </span>
                     <span
-                      className={`text-[9px] font-display font-bold uppercase tracking-wider mt-2 text-center leading-none ${
+                      className={`text-[0.5625rem] font-display font-bold uppercase tracking-wider mt-2 text-center leading-none ${
                         active ? "text-white font-black" : "text-neutral-400 group-hover:text-white"
                       }`}
                     >
@@ -314,7 +314,7 @@ export const Header = () => {
                 <span className="p-2 rounded-xl bg-[#ff0000] text-white shadow-[0_0_10px_rgba(255,0,0,0.5)]">
                   <Youtube size={16} className="transition-transform duration-300 group-hover:scale-110" />
                 </span>
-                <span className="text-[9px] font-display font-black uppercase tracking-wider mt-2 text-white text-center leading-none">
+                <span className="text-[0.5625rem] font-display font-black uppercase tracking-wider mt-2 text-white text-center leading-none">
                   YouTube
                 </span>
               </a>
@@ -322,7 +322,7 @@ export const Header = () => {
           </div>
 
           {/* Floating Glassmorphic Pill Dock */}
-          <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-[360px] rounded-full border border-white/10 bg-[#07070a]/65 px-4 py-2 backdrop-blur-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.75)] lg:hidden transition-all duration-300">
+          <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-[22.5rem] rounded-full border border-white/10 bg-[#07070a]/65 px-4 py-2 backdrop-blur-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.75)] lg:hidden transition-all duration-300">
             <div className="flex items-center justify-between gap-1">
               {/* Home */}
               <a

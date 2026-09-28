@@ -321,7 +321,7 @@ export const PageRating = () => {
     <div className="relative z-10 mx-auto max-w-7xl">
       {/* Header */}
       <div className="mb-12 border-b border-white/5 pb-6">
-        <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.4em] text-[#ff4b5f] flex items-center gap-2 mb-2">
+        <p className="text-[0.625rem] sm:text-xs font-black uppercase tracking-[0.4em] text-[#ff4b5f] flex items-center gap-2 mb-2">
           <span className="relative flex h-2 w-2">
             <span className="absolute inset-0 animate-ping rounded-full bg-[#ff0033] opacity-75" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-[#ff0033]" />
@@ -364,7 +364,7 @@ export const PageRating = () => {
                     />
                   ))}
                 </div>
-                <span className="block text-[10px] uppercase tracking-widest text-neutral-500 font-bold mt-1.5">
+                <span className="block text-[0.625rem] uppercase tracking-widest text-neutral-500 font-bold mt-1.5">
                   {stats.total} Reviews
                 </span>
               </div>
@@ -383,7 +383,7 @@ export const PageRating = () => {
                           style={{ width: `${percent}%` }}
                         />
                       </div>
-                      <span className="font-mono text-neutral-500 text-[10px] w-8 text-right font-bold">
+                      <span className="font-mono text-neutral-500 text-[0.625rem] w-8 text-right font-bold">
                         {percent}%
                       </span>
                     </div>
@@ -429,7 +429,7 @@ export const PageRating = () => {
                     <Sparkles size={14} className="text-[#ff4b5f]" />
                     {userReview ? "Modify Your Review" : "Rate the HQ"}
                   </h3>
-                  <p className="text-[10px] text-neutral-400 mt-1">
+                  <p className="text-[0.625rem] text-neutral-400 mt-1">
                     {userReview
                       ? "Update your stars or review text below."
                       : "Select star count and write an optional review."}
@@ -438,7 +438,7 @@ export const PageRating = () => {
 
                 {/* Rating Selector */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[9px] font-black uppercase tracking-wider text-neutral-400">
+                  <label className="text-[0.5625rem] font-black uppercase tracking-wider text-neutral-400">
                     Star Score
                   </label>
                   <div className="flex items-center gap-2 py-1">
@@ -476,10 +476,10 @@ export const PageRating = () => {
                 {/* Comment Input */}
                 <div className="space-y-1.5">
                   <div className="flex justify-between items-baseline">
-                    <label className="text-[9px] font-black uppercase tracking-wider text-neutral-400">
+                    <label className="text-[0.5625rem] font-black uppercase tracking-wider text-neutral-400">
                       Review Comment
                     </label>
-                    <span className="font-mono text-[9px] text-neutral-500">
+                    <span className="font-mono text-[0.5625rem] text-neutral-500">
                       {commentInput.length} / 500
                     </span>
                   </div>
@@ -496,10 +496,10 @@ export const PageRating = () => {
                 {/* Anonymous Toggle */}
                 <div className="flex items-center justify-between p-3 rounded-xl border border-white/5 bg-[#0c0c0c]/40 backdrop-blur-md relative overflow-hidden group select-none">
                   <div className="flex flex-col gap-0.5">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-white flex items-center gap-1.5">
+                    <span className="text-[0.625rem] font-black uppercase tracking-wider text-white flex items-center gap-1.5">
                       🕵️ Anonymous Review
                     </span>
-                    <span className="text-[8px] text-neutral-500 font-semibold normal-case">
+                    <span className="text-[0.5rem] text-neutral-500 font-semibold normal-case">
                       Mask your profile details and generate a random J4FN DiceBear avatar.
                     </span>
                   </div>
@@ -572,7 +572,7 @@ export const PageRating = () => {
               variant="outline"
               size="sm"
               onClick={() => fetchRatings(true)}
-              className="text-[10px] py-1 px-2.5 gap-1.5 border-[#ff0033]/30 hover:border-[#ff0033] text-[#ff0033] hover:bg-[#ff0033]/10 dark:border-[#ff0033]/30 dark:hover:border-[#ff0033] dark:text-[#ff4b5f] dark:hover:bg-[#ff0033]/20 shadow-[0_0_12px_rgba(255,0,51,0.05)] transition-all duration-300 flex items-center"
+              className="text-[0.625rem] py-1 px-2.5 gap-1.5 border-[#ff0033]/30 hover:border-[#ff0033] text-[#ff0033] hover:bg-[#ff0033]/10 dark:border-[#ff0033]/30 dark:hover:border-[#ff0033] dark:text-[#ff4b5f] dark:hover:bg-[#ff0033]/20 shadow-[0_0_12px_rgba(255,0,51,0.05)] transition-all duration-300 flex items-center"
             >
               <RefreshCw size={11} className={loading ? "animate-spin" : ""} />
               Refresh Wall
@@ -644,7 +644,7 @@ export const PageRating = () => {
                           <span className="text-xs font-bold text-white truncate flex items-center gap-1.5">
                             {review.profile?.name || "Enlisted Operator"}
                             {isOwn && (
-                              <span className="text-[9px] font-black uppercase bg-[#ff0033]/15 text-[#ff4b5f] border border-[#ff0033]/30 px-1.5 py-0.5 rounded-full tracking-wider">
+                              <span className="text-[0.5625rem] font-black uppercase bg-[#ff0033]/15 text-[#ff4b5f] border border-[#ff0033]/30 px-1.5 py-0.5 rounded-full tracking-wider">
                                 You
                               </span>
                             )}
@@ -662,14 +662,14 @@ export const PageRating = () => {
                               ))}
                             </div>
                             <span
-                              className="font-mono text-[9px] text-neutral-500 font-semibold uppercase"
+                              className="font-mono text-[0.5625rem] text-neutral-500 font-semibold uppercase"
                               title={`Rated ${formatFullTimestamp(review.createdAt)}`}
                             >
                               {formatRelativeTime(review.createdAt)}
                             </span>
                             {wasEdited(review.createdAt, review.updatedAt) && (
                               <span
-                                className="font-mono text-[9px] text-neutral-600 font-semibold lowercase italic"
+                                className="font-mono text-[0.5625rem] text-neutral-600 font-semibold lowercase italic"
                                 title={`Edited ${formatFullTimestamp(review.updatedAt)}`}
                               >
                                 · edited {formatRelativeTime(review.updatedAt)}
@@ -683,7 +683,7 @@ export const PageRating = () => {
                           <div className="shrink-0 flex items-center">
                             {review.isFlagged ? (
                               <span
-                                className="text-[9px] font-black uppercase text-rose-400 bg-rose-950/20 border border-rose-500/10 px-2 py-0.5 rounded-md flex items-center gap-1"
+                                className="text-[0.5625rem] font-black uppercase text-rose-400 bg-rose-950/20 border border-rose-500/10 px-2 py-0.5 rounded-md flex items-center gap-1"
                                 title="Review is under moderation"
                               >
                                 <Flag size={8} className="fill-rose-400" /> Flagged
@@ -711,7 +711,7 @@ export const PageRating = () => {
                           {review.comment}
                         </p>
                       ) : (
-                        <p className="mt-3 text-[10px] leading-relaxed text-neutral-600 font-mono italic">
+                        <p className="mt-3 text-[0.625rem] leading-relaxed text-neutral-600 font-mono italic">
                           No comment provided.
                         </p>
                       )}
@@ -720,7 +720,7 @@ export const PageRating = () => {
                         {isOwn ? (
                           // Own review: show the heart count read-only — you can't heart yourself.
                           <span
-                            className="flex items-center gap-1.5 px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-wider select-none bg-neutral-900/40 border-white/5 text-neutral-500"
+                            className="flex items-center gap-1.5 px-3 py-1 rounded-full border text-[0.5625rem] font-black uppercase tracking-wider select-none bg-neutral-900/40 border-white/5 text-neutral-500"
                             title="You can't heart your own review"
                           >
                             <Heart size={10} className="text-neutral-500" />
@@ -729,7 +729,7 @@ export const PageRating = () => {
                         ) : (
                           <button
                             onClick={() => handleToggleLike(review.id)}
-                            className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-wider transition-all duration-300 cursor-pointer select-none active:scale-95 ${
+                            className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[0.5625rem] font-black uppercase tracking-wider transition-all duration-300 cursor-pointer select-none active:scale-95 ${
                               user && (review.likedBy || []).includes(user.id)
                                 ? "bg-[#ff0033]/15 border-[#ff0033] text-[#ff4b5f] shadow-[0_0_12px_rgba(255,0,51,0.15)]"
                                 : "bg-neutral-900/40 border-white/5 text-neutral-500 hover:border-white/10 hover:text-neutral-300"
@@ -749,7 +749,7 @@ export const PageRating = () => {
                         )}
 
                         {review.isHearted && (
-                          <div className="flex items-center gap-1.5 rounded-full bg-[#ff0033]/15 border border-[#ff0033]/30 px-2.5 py-1 text-[9px] font-black uppercase text-[#ff4b5f] tracking-widest shadow-[0_0_12px_rgba(255,0,51,0.15)] select-none">
+                          <div className="flex items-center gap-1.5 rounded-full bg-[#ff0033]/15 border border-[#ff0033]/30 px-2.5 py-1 text-[0.5625rem] font-black uppercase text-[#ff4b5f] tracking-widest shadow-[0_0_12px_rgba(255,0,51,0.15)] select-none">
                             <Heart size={10} className="fill-[#ff0033] text-[#ff0033] animate-pulse" />
                             <span>Hearted by Creator</span>
                           </div>
@@ -767,7 +767,7 @@ export const PageRating = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => setVisibleCount((prev) => prev + 6)}
-                    className="gap-2 text-[11px] px-5 py-2"
+                    className="gap-2 text-[0.6875rem] px-5 py-2"
                   >
                     <ChevronDown size={14} /> Show More Reviews
                   </Button>

@@ -87,7 +87,7 @@ export const CrewWall = () => {
       {/* Header */}
       <div className="mb-10 flex flex-col justify-between gap-6 border-b border-white/5 pb-6 md:flex-row md:items-end">
         <div className="space-y-3">
-          <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.4em] text-[#38d56f] sm:text-xs">
+          <p className="flex items-center gap-2 text-[0.625rem] font-black uppercase tracking-[0.4em] text-[#38d56f] sm:text-xs">
             <span className="relative flex h-2 w-2">
               <span className="absolute inset-0 animate-ping rounded-full bg-[#22c55e] opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-[#22c55e]" />
@@ -214,10 +214,10 @@ const MemberTile = ({
         <span className="pointer-events-none absolute -bottom-1 -right-1 h-3 w-3 border-r border-b border-[#ff0033] opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
 
-      <p className="mt-2.5 font-display text-[10px] sm:text-xs font-black uppercase tracking-wide text-white truncate w-full px-1">
+      <p className="mt-2.5 font-display text-[0.625rem] sm:text-xs font-black uppercase tracking-wide text-white truncate w-full px-1">
         {member.name}
       </p>
-      <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.18em] text-neutral-500 truncate w-full">
+      <p className="mt-0.5 text-[0.5625rem] font-bold uppercase tracking-[0.18em] text-neutral-500 truncate w-full">
         {formatJoined(member.joinedAt)}
       </p>
     </div>

@@ -374,7 +374,7 @@ export const Soundboard = () => {
                     <span className="block font-display font-bold text-xs text-white uppercase tracking-wider">
                       {sound.name}
                     </span>
-                    <span className="block text-[9px] text-neutral-500 line-clamp-1">
+                    <span className="block text-[0.5625rem] text-neutral-500 line-clamp-1">
                       {sound.description}
                     </span>
                   </div>
@@ -384,7 +384,7 @@ export const Soundboard = () => {
 
             <div className="bg-[#181818]/60 border border-white/10 rounded-lg p-4 flex items-center gap-3">
               <ShieldAlert className="text-[#ff0033] shrink-0" size={18} />
-              <p className="text-[10px] text-neutral-400 leading-normal">
+              <p className="text-[0.625rem] text-neutral-400 leading-normal">
                 These soundboards generate sounds on-the-fly inside your browser. Try clicking multiple keys rapidly to create intense, glitchy stream build-ups!
               </p>
             </div>
@@ -411,7 +411,7 @@ export const Soundboard = () => {
               </Button>
             </div>
 
-            <div className="space-y-4 max-h-[640px] overflow-y-auto pr-2 highlights-scroll">
+            <div className="space-y-4 max-h-[40rem] overflow-y-auto pr-2 highlights-scroll">
               {highlightsLoading ? (
                 <Card className="p-8 border border-white/10 bg-[#181818]/70 text-center text-xs text-neutral-500">
                   Loading highlights…
@@ -471,7 +471,7 @@ export const Soundboard = () => {
                           <Play size={16} className="text-white fill-white" />
                         </a>
                         {clip.duration && (
-                          <span className="absolute bottom-1 right-1 bg-black/85 text-[8px] font-bold text-[#ffffff] px-1.5 py-0.5 rounded image-overlay-badge">
+                          <span className="absolute bottom-1 right-1 bg-black/85 text-[0.5rem] font-bold text-[#ffffff] px-1.5 py-0.5 rounded image-overlay-badge">
                             {clip.duration}
                           </span>
                         )}
@@ -480,14 +480,14 @@ export const Soundboard = () => {
                       <div className="flex-grow space-y-2 min-w-0">
                         <div>
                           {clip.game && (
-                            <span className="text-[9px] uppercase font-bold text-white bg-white/10 px-2 py-0.5 rounded border border-white/20">
+                            <span className="text-[0.5625rem] uppercase font-bold text-white bg-white/10 px-2 py-0.5 rounded border border-white/20">
                               {clip.game}
                             </span>
                           )}
                           <h4 className="font-semibold text-xs sm:text-sm text-white line-clamp-1 leading-snug mt-1.5">
                             {clip.title}
                           </h4>
-                          <p className="text-[10px] text-neutral-500 mt-1 flex items-center gap-1.5 truncate">
+                          <p className="text-[0.625rem] text-neutral-500 mt-1 flex items-center gap-1.5 truncate">
                             {clip.submittedByAvatar && (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
@@ -500,7 +500,7 @@ export const Soundboard = () => {
                           </p>
                         </div>
 
-                        <div className="flex items-center gap-4 text-[10px] text-neutral-500">
+                        <div className="flex items-center gap-4 text-[0.625rem] text-neutral-500">
                           <button
                             onClick={() => handleLoveClip(clip.id, 0)}
                             className={`flex items-center gap-1.5 font-bold transition-all cursor-pointer ${
@@ -551,7 +551,7 @@ export const Soundboard = () => {
                 <h3 className="font-display font-extrabold text-xl text-white tracking-wide flex items-center gap-2">
                   <Sparkles size={18} className="text-[#ff4b5f]" /> Submit a Highlight
                 </h3>
-                <p className="text-[11px] text-neutral-500 mt-1">
+                <p className="text-[0.6875rem] text-neutral-500 mt-1">
                   YouTube link or a short video file (mp4/webm/mov, max 50&nbsp;MB). An admin will review before it goes live.
                 </p>
               </div>
@@ -629,7 +629,7 @@ export const Soundboard = () => {
                   />
                 ) : (
                   <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1.5">
+                    <label className="block text-[0.625rem] font-bold uppercase tracking-wider text-neutral-400 mb-1.5">
                       Video file (mp4 / webm / mov, max 50MB)
                     </label>
                     <input
@@ -639,7 +639,7 @@ export const Soundboard = () => {
                       className="block w-full text-xs text-neutral-400 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border file:border-white/10 file:bg-white/5 file:text-white file:font-bold file:cursor-pointer hover:file:bg-white/10"
                     />
                     {formFile && (
-                      <p className="mt-1.5 text-[10px] text-neutral-500 font-mono">
+                      <p className="mt-1.5 text-[0.625rem] text-neutral-500 font-mono">
                         {formFile.name} · {(formFile.size / 1024 / 1024).toFixed(1)} MB
                       </p>
                     )}
@@ -647,7 +647,7 @@ export const Soundboard = () => {
                 )}
 
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1.5">
+                  <label className="block text-[0.625rem] font-bold uppercase tracking-wider text-neutral-400 mb-1.5">
                     Notes (optional)
                   </label>
                   <textarea

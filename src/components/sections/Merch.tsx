@@ -187,7 +187,7 @@ export const Merch = () => {
           <ShoppingCart size={15} />
           View Arsenal Cart
           {cart.length > 0 && (
-            <span className="absolute -top-2 -right-2 bg-gradient-to-r from-[#ff0033] via-white to-[#ff4b5f] bg-[length:200%_auto] animate-aurora-shift text-white rounded-full w-5 h-5 text-[9px] font-black flex items-center justify-center border border-white/20 animate-bounce">
+            <span className="absolute -top-2 -right-2 bg-gradient-to-r from-[#ff0033] via-white to-[#ff4b5f] bg-[length:200%_auto] animate-aurora-shift text-white rounded-full w-5 h-5 text-[0.5625rem] font-black flex items-center justify-center border border-white/20 animate-bounce">
               {cart.reduce((a, b) => a + b.quantity, 0)}
             </span>
           )}
@@ -235,7 +235,7 @@ export const Merch = () => {
                   )}
 
                   <span
-                    className={`absolute top-3 left-3 text-[8px] font-black px-2 py-0.5 rounded border ${GRADE_BADGE[item.grade]}`}
+                    className={`absolute top-3 left-3 text-[0.5rem] font-black px-2 py-0.5 rounded border ${GRADE_BADGE[item.grade]}`}
                   >
                     {item.grade}
                   </span>
@@ -250,7 +250,7 @@ export const Merch = () => {
                     <h4 className="font-display font-black text-xs sm:text-sm text-white tracking-wide uppercase line-clamp-1 group-hover:text-[#ff4b5f] transition-colors">
                       {item.name}
                     </h4>
-                    <p className="text-[11px] text-neutral-400 leading-normal line-clamp-2">
+                    <p className="text-[0.6875rem] text-neutral-400 leading-normal line-clamp-2">
                       {item.description}
                     </p>
                   </div>
@@ -262,7 +262,7 @@ export const Merch = () => {
                       variant="aurora"
                       fullWidth
                       size="sm"
-                      className="gap-1.5 cursor-pointer uppercase text-[10px] tracking-widest font-black"
+                      className="gap-1.5 cursor-pointer uppercase text-[0.625rem] tracking-widest font-black"
                     >
                       <Plus size={12} /> Add to Arsenal
                     </Button>
@@ -316,12 +316,12 @@ export const Merch = () => {
                   <h4 className="text-xs font-black uppercase flex items-center gap-1.5">
                     <Sparkles size={12} /> Purchase Complete!
                   </h4>
-                  <p className="text-[10px] leading-relaxed">
+                  <p className="text-[0.625rem] leading-relaxed">
                     Holographic transmission success. Merch order simulated and sent to the J4FN Loot division. Thank you for supporting!
                   </p>
                   <button
                     onClick={() => setCheckoutSuccess(false)}
-                    className="text-[9px] font-black uppercase border border-white/30 px-2 py-0.5 rounded hover:bg-white hover:text-black transition-all cursor-pointer block mt-1"
+                    className="text-[0.5625rem] font-black uppercase border border-white/30 px-2 py-0.5 rounded hover:bg-white hover:text-black transition-all cursor-pointer block mt-1"
                   >
                     Acknowledge
                   </button>
@@ -346,16 +346,16 @@ export const Merch = () => {
                         ) : (
                           <span>{item.emoji}</span>
                         )}
-                        <span className="absolute bottom-0.5 right-0.5 bg-black/85 text-[8px] font-black text-[#ffffff] px-1 py-0.2 rounded image-overlay-badge">
+                        <span className="absolute bottom-0.5 right-0.5 bg-black/85 text-[0.5rem] font-black text-[#ffffff] px-1 py-0.2 rounded image-overlay-badge">
                           x{item.quantity}
                         </span>
                       </div>
 
                       <div className="flex-grow">
-                        <h4 className="font-display font-extrabold text-[11px] text-white uppercase tracking-wide truncate">
+                        <h4 className="font-display font-extrabold text-[0.6875rem] text-white uppercase tracking-wide truncate">
                           {item.name}
                         </h4>
-                        <p className="text-[10px] text-neutral-400 mt-0.5">
+                        <p className="text-[0.625rem] text-neutral-400 mt-0.5">
                           ${(item.price * item.quantity).toFixed(2)}
                         </p>
                       </div>
@@ -376,11 +376,11 @@ export const Merch = () => {
               <div className="space-y-2 text-xs">
                 <div className="flex justify-between text-neutral-500">
                   <span>Shipment & Cargo</span>
-                  <span className="text-emerald-400 font-bold uppercase text-[9px]">GGEZ FREE</span>
+                  <span className="text-emerald-400 font-bold uppercase text-[0.5625rem]">GGEZ FREE</span>
                 </div>
                 <div className="flex justify-between text-neutral-500">
                   <span>Import Taxes</span>
-                  <span className="text-[9px] uppercase font-bold text-neutral-400">Calculated on sync</span>
+                  <span className="text-[0.5625rem] uppercase font-bold text-neutral-400">Calculated on sync</span>
                 </div>
                 <div className="flex justify-between text-white font-extrabold text-sm border-t border-white/5 pt-2 font-display">
                   <span>TOTAL ESTIMATED</span>
@@ -440,7 +440,7 @@ const ComingSoonPanel = ({ loading }: { loading: boolean }) => (
         </div>
 
         <div className="space-y-2">
-          <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.4em] text-[#ff4b5f]">
+          <p className="text-[0.625rem] sm:text-xs font-black uppercase tracking-[0.4em] text-[#ff4b5f]">
             ●  Loot Vault Sealed
           </p>
           <h3 className="font-display font-black text-3xl sm:text-4xl text-white tracking-tight">

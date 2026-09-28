@@ -78,7 +78,7 @@ export const Socials = () => {
                   <p className="text-neutral-400 text-xs leading-relaxed group-hover:text-neutral-300 transition-colors">
                     {platform.tagline}
                   </p>
-                  <span className="inline-block text-[10px] uppercase font-bold tracking-widest text-[#ff4b5f] group-hover:text-white group-hover:translate-x-1 transition-all mt-2">
+                  <span className="inline-block text-[0.625rem] uppercase font-bold tracking-widest text-[#ff4b5f] group-hover:text-white group-hover:translate-x-1 transition-all mt-2">
                     Visit &rarr;
                   </span>
                 </div>

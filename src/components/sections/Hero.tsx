@@ -198,7 +198,7 @@ export const Hero = () => {
               <p className="text-xs font-black uppercase tracking-[0.32em] text-[#ff2d55]">
                 {stats.customUrl}
               </p>
-              <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.24em] text-neutral-500">
+              <p className="mt-1 text-[0.625rem] font-bold uppercase tracking-[0.24em] text-neutral-500">
                 Gaming · Variety · Sri Lanka
               </p>
             </div>
@@ -211,7 +211,7 @@ export const Hero = () => {
 
           {/* Mobile Spline Robot Sandwich */}
           {isMobile && (
-            <div className="lg:hidden relative mx-auto aspect-square w-full max-w-[280px] my-6 animate-fade-in">
+            <div className="lg:hidden relative mx-auto aspect-square w-full max-w-[17.5rem] my-6 animate-fade-in">
               {/* Glow rings behind robot */}
               <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(255,0,51,0.35)_0%,transparent_55%)] animate-glow-pulse" />
               <div className="absolute inset-8 rounded-full border border-[#ff0033]/20 animate-spin-slow" />
@@ -338,7 +338,7 @@ export const Hero = () => {
                         item.value
                       )}
                     </div>
-                    <p className="mt-1 text-[8px] font-black uppercase tracking-[0.14em] text-neutral-500 sm:text-[10px] sm:tracking-[0.22em]">
+                    <p className="mt-1 text-[0.5rem] font-black uppercase tracking-[0.14em] text-neutral-500 sm:text-[0.625rem] sm:tracking-[0.22em]">
                       {item.label}
                     </p>
                   </div>
@@ -351,7 +351,7 @@ export const Hero = () => {
         {/* RIGHT: Spline 3D Robot */}
         {!isMobile && (
           <div className="relative hidden lg:block lg:col-span-5">
-            <div className="relative mx-auto aspect-square w-full max-w-[300px] sm:max-w-[460px] lg:max-w-[560px]">
+            <div className="relative mx-auto aspect-square w-full max-w-[18.75rem] sm:max-w-[28.75rem] lg:max-w-[35rem]">
               {/* Glow rings behind robot */}
               <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(255,0,51,0.35)_0%,transparent_55%)] animate-glow-pulse" />
               <div className="absolute inset-8 rounded-full border border-[#ff0033]/20 animate-spin-slow" />
@@ -396,7 +396,7 @@ export const Hero = () => {
               <div className="w-5 h-8 border border-neutral-400 rounded-full flex justify-center p-1.5 group-hover:border-[#ff0033] group-hover:shadow-[0_0_10px_rgba(255,0,51,0.25)] transition-all duration-300">
                 <div className="w-1 h-2 bg-[#ff0033] rounded-full animate-scroll-dot-move shadow-[0_0_8px_rgba(255,0,51,0.8)]" />
               </div>
-              <span className="text-[9px] font-black uppercase tracking-[0.24em] text-neutral-400 group-hover:text-glow-red group-hover:text-white transition-all duration-300 whitespace-nowrap">
+              <span className="text-[0.5625rem] font-black uppercase tracking-[0.24em] text-neutral-400 group-hover:text-glow-red group-hover:text-white transition-all duration-300 whitespace-nowrap">
                 Scroll to Deploy
               </span>
             </div>

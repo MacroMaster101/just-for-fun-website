@@ -109,7 +109,7 @@ export const Contact = () => {
               </div>
             </div>
             
-            <p className="text-[10px] text-neutral-500 tracking-wider font-semibold uppercase mt-8 border-t border-white/5 pt-4">
+            <p className="text-[0.625rem] text-neutral-500 tracking-wider font-semibold uppercase mt-8 border-t border-white/5 pt-4">
               Average response time: 24-48 hours
             </p>
           </div>
