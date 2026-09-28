@@ -921,7 +921,9 @@ export const AmbientPlayer = () => {
           id="html5-ambient-player"
           src={activeYoutubeId}
           loop
-          preload="auto"
+          // "metadata" fetches just the header (enough to seek/resume); the
+          // multi-MB track streams only once playback actually starts.
+          preload="metadata"
           className="hidden"
           onPlay={() => {
             setAmbientPlaying(true);

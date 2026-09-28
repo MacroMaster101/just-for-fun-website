@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { Heart } from "lucide-react";
 import { Youtube, Discord, Twitch, Facebook } from "@/components/ui/Icons";
 
@@ -46,7 +47,13 @@ export const Footer = () => {
         <div className="md:col-span-5">
           <a href="#hero" className="flex items-center gap-3">
             <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#ff0033] to-[#b30024] text-white shadow-[0_0_24px_rgba(255,0,51,0.45)]">
-              <Youtube size={22} />
+              <Image
+                src="/logo-mark.png"
+                alt="J4FN"
+                width={28}
+                height={28}
+                className="h-7 w-7 brightness-0 invert"
+              />
             </span>
             <div>
               <p className="font-display text-base font-black uppercase tracking-wider text-white">
