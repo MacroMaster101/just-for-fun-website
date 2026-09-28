@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [dev, main]
+  push:
+    branches: [dev, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Branch flow: feature/* -> dev -> main. Only `dev` may be merged into main.
+  branch-flow:
+    name: Branch flow
+    runs-on: ubuntu-latest
+    steps:
+      - name: Only dev can open a PR into main
+        if: github.event_name == 'pull_request' && github.base_ref == 'main'
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+        run: |
+          if [ "$HEAD_REF" != "dev" ] || [ "$HEAD_REPO" != "$GITHUB_REPOSITORY" ]; then
+            echo "::error::PRs into main must come from the dev branch (got '$HEAD_REPO:$HEAD_REF'). Open your PR against dev instead."
+            exit 1
+          fi
+      - run: echo "Branch flow OK"
+
+  build:
+    name: Lint, typecheck & build
+    runs-on: ubuntu-latest
+    env:
+      # Placeholders so the build runs without real secrets. Nothing here
+      # connects anywhere; runtime values live in Vercel.
+      DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder
+      NEXT_TELEMETRY_DISABLED: 1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - run: npm run lint
+      - run: npx tsc --noEmit
+      - run: npm run build
