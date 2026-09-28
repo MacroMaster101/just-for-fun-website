@@ -581,8 +581,15 @@ function formatHandle(customUrl: string) {
 
 function stripHtml(value: string) {
   // Removing tags in a single pass can leave new ones behind
-  // (e.g. "<scr<script>ipt>"), so also drop any stray angle brackets.
-  return value.replace(/<[^>]*>/g, "").replace(/[<>]/g, "").trim();
+  // (e.g. "<scr<script>ipt>"), so repeat until nothing changes, then
+  // drop any stray angle brackets.
+  let text = value;
+  let previous: string;
+  do {
+    previous = text;
+    text = text.replace(/<[^>]*>/g, "");
+  } while (text !== previous);
+  return text.replace(/[<>]/g, "").trim();
 }
 
 async function getRssFallbackVideos(): Promise<ApiVideo[]> {
