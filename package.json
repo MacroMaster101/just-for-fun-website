@@ -12,7 +12,6 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
-    "@splinetool/react-spline": "^4.1.0",
     "@splinetool/runtime": "^2.0.58",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.2",
