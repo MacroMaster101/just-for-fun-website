@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { gameImageUrl } from "@/lib/gameImage";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -136,6 +137,24 @@ export const FloatingGameLogos: React.FC<FloatingGameLogosProps> = ({
   const [items, setItems] = useState<FloatingItem[]>([]);
   const [isMobile, setIsMobile] = useState(false);
   const [active, setActive] = useState(true);
+  // Container size, cached via ResizeObserver so the animation loop never
+  // has to read layout (getBoundingClientRect) — reading it right after the
+  // per-frame style writes forced a synchronous reflow every frame.
+  const sizeRef = useRef({ w: 0, h: 0 });
+  const canvasDirtyRef = useRef(false);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(([entry]) => {
+      sizeRef.current = {
+        w: entry.contentRect.width,
+        h: entry.contentRect.height,
+      };
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   // Custom settings loaded dynamically from public API
   const [customFloatingGames, setCustomFloatingGames] = useState<Game[]>([]);
@@ -397,9 +416,18 @@ export const FloatingGameLogos: React.FC<FloatingGameLogosProps> = ({
 
         const el = domRefs.current[logo.id];
         if (el) {
-          el.style.left = `${logo.x}%`;
-          el.style.top = `${logo.y}%`;
-          el.style.transform = `translate(-50%, -50%) rotate(${logo.rotation}deg) scale(${scale})`;
+          const { w, h } = sizeRef.current;
+          if (w && h) {
+            // Move with a composited transform instead of left/top so the
+            // browser doesn't re-run layout every frame.
+            el.style.left = "0px";
+            el.style.top = "0px";
+            el.style.transform = `translate3d(${(logo.x / 100) * w}px, ${(logo.y / 100) * h}px, 0) translate(-50%, -50%) rotate(${logo.rotation}deg) scale(${scale})`;
+          } else {
+            el.style.left = `${logo.x}%`;
+            el.style.top = `${logo.y}%`;
+            el.style.transform = `translate(-50%, -50%) rotate(${logo.rotation}deg) scale(${scale})`;
+          }
           el.style.opacity = opacity.toString();
           el.style.pointerEvents = pointerEvents;
         }
@@ -418,12 +446,15 @@ export const FloatingGameLogos: React.FC<FloatingGameLogosProps> = ({
         .filter((p) => p.life > 0);
 
       // 3. Render Particles on high-fidelity `<canvas>` with device pixel scaling
+      // Skipped entirely when there's nothing to draw and the last frame
+      // was already cleared — that's almost every frame.
       const canvas = canvasRef.current;
-      if (canvas && containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
+      const hasParticles = particlesRef.current.length > 0;
+      if (canvas && (hasParticles || canvasDirtyRef.current)) {
+        canvasDirtyRef.current = hasParticles;
         const dpr = window.devicePixelRatio || 1;
-        const w = Math.floor(rect.width);
-        const h = Math.floor(rect.height);
+        const w = Math.floor(sizeRef.current.w);
+        const h = Math.floor(sizeRef.current.h);
 
         if (canvas.width !== w * dpr || canvas.height !== h * dpr) {
           canvas.width = w * dpr;
@@ -688,7 +719,8 @@ export const FloatingGameLogos: React.FC<FloatingGameLogosProps> = ({
                 {/* Logo image centered inside the ball */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={logo.game?.logoUrl}
+                  src={gameImageUrl(logo.game?.logoUrl, 160)}
+                  decoding="async"
                   alt={logo.game?.name}
                   className="absolute rounded-full object-cover"
                   style={{
