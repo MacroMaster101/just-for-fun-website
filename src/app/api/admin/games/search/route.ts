@@ -1,19 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { supabaseServer } from "@/lib/supabase/server";
+import { verifyAdmin } from "@/lib/auth/admin";
 
 export const dynamic = "force-dynamic";
-
-async function verifyAdmin(): Promise<string | null> {
-  const supabase = await supabaseServer();
-  const { data } = await supabase.auth.getUser();
-  if (!data.user || !data.user.email) return null;
-  const email = data.user.email.toLowerCase().trim();
-  const rootAdmin = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase().trim();
-  if (rootAdmin && email === rootAdmin) return email;
-  const match = await prisma.adminEmail.findUnique({ where: { email } });
-  return match ? email : null;
-}
 
 export async function GET(request: Request) {
   if (!(await verifyAdmin())) {

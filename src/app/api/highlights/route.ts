@@ -171,6 +171,15 @@ export async function POST(request: Request) {
   if (!file) {
     return NextResponse.json({ error: "No file uploaded." }, { status: 400 });
   }
+  // Uploaded files land in a public bucket via the service-role client and
+  // are reachable before an admin reviews them, so anonymous uploads would
+  // turn the site into free public file hosting. Require an account.
+  if (!user) {
+    return NextResponse.json(
+      { error: "Sign in to upload a video file, or submit a YouTube link instead." },
+      { status: 401 }
+    );
+  }
   if (file.size > MAX_VIDEO_BYTES) {
     return NextResponse.json(
       { error: `Video too large (max ${MAX_VIDEO_BYTES / 1024 / 1024} MB).` },
@@ -188,13 +197,13 @@ export async function POST(request: Request) {
   try {
     admin = supabaseAdmin();
   } catch (err) {
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 });
+    console.error("Service role client unavailable:", err);
+    return NextResponse.json({ error: "Uploads are unavailable right now." }, { status: 500 });
   }
 
   const ext =
     file.type === "video/webm" ? "webm" : file.type === "video/quicktime" ? "mov" : "mp4";
-  const ownerSegment = user?.id ?? "anon";
-  const path = `${ownerSegment}/${Date.now()}.${ext}`;
+  const path = `${user.id}/${Date.now()}.${ext}`;
   const arrayBuffer = await file.arrayBuffer();
 
   const { error: uploadErr } = await admin.storage
@@ -206,7 +215,7 @@ export async function POST(request: Request) {
     });
   if (uploadErr) {
     console.error("Highlight upload failed:", uploadErr.message);
-    return NextResponse.json({ error: uploadErr.message }, { status: 500 });
+    return NextResponse.json({ error: "Video upload failed. Please try again." }, { status: 500 });
   }
   const { data: pub } = admin.storage.from(BUCKET).getPublicUrl(path);
 
