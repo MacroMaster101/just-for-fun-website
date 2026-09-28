@@ -93,6 +93,8 @@ npx prisma db push --url "$DIRECT_URL"
 
 Use the direct (session) connection for schema changes, since the transaction pooler can't run them.
 
+Then lock the tables away from Supabase's public Data API. Run [`prisma/security/lock-down-data-api.sql`](prisma/security/lock-down-data-api.sql) in the Supabase SQL Editor, and re-run it whenever `db push` adds new tables. The app only accesses these tables through Prisma, so this changes nothing for the site.
+
 ### 4. Create storage buckets
 
 Create these **public** buckets in Supabase Storage: `avatars`, `squad-avatars`, `game-logos`, `highlights`, and `sound-clips` (auto-created on the first admin audio upload if missing).
@@ -147,6 +149,7 @@ feature/*  ──PR──▶  dev  ──PR──▶  main  ──▶  j4fn.site
 
 - Admin routes require a signed-in user with a **verified** email on the admin allowlist.
 - The Supabase service-role key is only used server-side, after authorization.
+- App tables have row level security enabled and no Data API grants, so the public anon key can't read or write them directly.
 - Uploads are limited by size and file type; public inputs are validated and escaped.
 - A strict Content Security Policy and security headers are enforced in production.
 - Dependabot and CodeQL watch every change.
