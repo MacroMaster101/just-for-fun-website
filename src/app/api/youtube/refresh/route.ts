@@ -1,7 +1,8 @@
+import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { refreshYouTubeCache } from "@/lib/youtubeCache";
 import { prisma } from "@/lib/prisma";
-import { supabaseServer } from "@/lib/supabase/server";
+import { verifyAdmin } from "@/lib/auth/admin";
 
 // Don't cache the refresh endpoint itself — it must always run.
 export const dynamic = "force-dynamic";
@@ -10,6 +11,13 @@ const CRON_SECRET = process.env.CRON_SECRET?.trim();
 // Minimum gap between refreshes that actually hit YouTube. Anything more
 // frequent returns the existing cached payload without spending quota.
 const MIN_REFRESH_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
+
+/** Constant-time comparison so the secret can't be recovered via timing. */
+function secretEquals(candidate: string, secret: string): boolean {
+  const a = Buffer.from(candidate);
+  const b = Buffer.from(secret);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
 
 function isCronSecretMatch(req: NextRequest): boolean {
   if (!CRON_SECRET) {
@@ -23,13 +31,13 @@ function isCronSecretMatch(req: NextRequest): boolean {
   const auth = (req.headers.get("authorization") || "").trim();
   if (auth) {
     const match = /^bearer\s+(.+)$/i.exec(auth);
-    if (match && stripQuotes(match[1]) === CRON_SECRET) return true;
+    if (match && secretEquals(stripQuotes(match[1]), CRON_SECRET)) return true;
     // Some cron services send the raw secret without "Bearer ".
-    if (stripQuotes(auth) === CRON_SECRET) return true;
+    if (secretEquals(stripQuotes(auth), CRON_SECRET)) return true;
   }
   // Manual trigger: /api/youtube/refresh?key=<CRON_SECRET>
   const key = req.nextUrl.searchParams.get("key");
-  if (key && stripQuotes(key) === CRON_SECRET) return true;
+  if (key && secretEquals(stripQuotes(key), CRON_SECRET)) return true;
   return false;
 }
 
@@ -40,14 +48,7 @@ function isCronSecretMatch(req: NextRequest): boolean {
  */
 async function isAuthorizedAdmin(): Promise<boolean> {
   try {
-    const supabase = await supabaseServer();
-    const { data } = await supabase.auth.getUser();
-    if (!data.user?.email) return false;
-    const email = data.user.email.toLowerCase().trim();
-    const root = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase().trim();
-    if (root && email === root) return true;
-    const match = await prisma.adminEmail.findUnique({ where: { email } });
-    return !!match;
+    return !!(await verifyAdmin());
   } catch {
     return false;
   }

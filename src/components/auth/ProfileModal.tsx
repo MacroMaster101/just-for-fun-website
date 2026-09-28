@@ -19,6 +19,7 @@ import {
 import { useAuth } from "@/components/auth/AuthProvider";
 import { supabase } from "@/lib/supabase/client";
 import { diceBearAvatar, resolveAvatarUrl } from "@/lib/avatar";
+import { hostMatches } from "@/lib/hostMatches";
 
 interface ProfileData {
   id: string;
@@ -320,7 +321,7 @@ export const ProfileModal = ({
       const url =
         (data?.avatar_url as string | undefined) ||
         (data?.picture as string | undefined);
-      if (url && !url.includes("api.dicebear.com")) return url;
+      if (url && !hostMatches(url, "api.dicebear.com")) return url;
     }
     return null;
   })();
@@ -330,7 +331,7 @@ export const ProfileModal = ({
     null;
   const oauthAvatarUrl =
     identityPhoto ||
-    (metadataPhoto && !metadataPhoto.includes("api.dicebear.com")
+    (metadataPhoto && !hostMatches(metadataPhoto, "api.dicebear.com")
       ? metadataPhoto
       : null);
 

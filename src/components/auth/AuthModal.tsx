@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Eye, EyeOff, Loader2, Mail, X } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { isValidEmail } from "@/lib/isValidEmail";
 import { useAuth } from "@/components/auth/AuthProvider";
 
 interface AuthModalProps {
@@ -93,9 +94,7 @@ export const AuthModal = ({
   if (!isOpen) return null;
   if (typeof document === "undefined") return null;
 
-  const isEmailValid = (emailStr: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailStr);
-  };
+  const isEmailValid = isValidEmail;
 
   const getPasswordStrength = (pass: string) => {
     return {
