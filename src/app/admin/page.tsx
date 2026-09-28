@@ -1756,7 +1756,7 @@ export default function AdminPage() {
                       <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#ff0033]/5 to-transparent rounded-full -mr-8 -mt-8" />
                       <div className="space-y-3">
                         <div className="flex justify-between items-center">
-                          <span className="text-[var(--color-text-subtle)] font-mono text-[10px] uppercase tracking-widest">Database messages</span>
+                          <span className="text-[var(--color-text-subtle)] font-mono text-[0.625rem] uppercase tracking-widest">Database messages</span>
                           <MessageSquare size={18} className="text-[#ff2d55]" />
                         </div>
                         <div className="flex items-baseline gap-2">
@@ -1774,7 +1774,7 @@ export default function AdminPage() {
                       <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#ff0033]/5 to-transparent rounded-full -mr-8 -mt-8" />
                       <div className="space-y-3">
                         <div className="flex justify-between items-center">
-                          <span className="text-[var(--color-text-subtle)] font-mono text-[10px] uppercase tracking-widest">Admin security</span>
+                          <span className="text-[var(--color-text-subtle)] font-mono text-[0.625rem] uppercase tracking-widest">Admin security</span>
                           <Users size={18} className="text-[#ff2d55]" />
                         </div>
                         <div className="flex items-baseline gap-2">
@@ -1792,7 +1792,7 @@ export default function AdminPage() {
                       <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#ff0033]/5 to-transparent rounded-full -mr-8 -mt-8" />
                       <div className="space-y-3">
                         <div className="flex justify-between items-center">
-                          <span className="text-[var(--color-text-subtle)] font-mono text-[10px] uppercase tracking-widest">API Sync Status</span>
+                          <span className="text-[var(--color-text-subtle)] font-mono text-[0.625rem] uppercase tracking-widest">API Sync Status</span>
                           <Clock size={18} className="text-[#ff2d55]" />
                         </div>
                         <div className="flex items-baseline gap-2">
@@ -1811,7 +1811,7 @@ export default function AdminPage() {
                     <div className="relative space-y-5">
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#5865F2]/25 bg-[#5865F2]/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-[#5865F2]">
+                          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#5865F2]/25 bg-[#5865F2]/10 px-3 py-1 text-[0.625rem] font-black uppercase tracking-[0.22em] text-[#5865F2]">
                             <Bot size={13} /> Discord Tools
                           </div>
                           <h3 className="font-display text-xl font-black uppercase text-[var(--color-text)]">
@@ -1830,7 +1830,7 @@ export default function AdminPage() {
                             href={link.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="group flex min-h-[130px] flex-col justify-between rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)] p-4 transition hover:border-[#5865F2]/60 hover:bg-[#5865F2]/10 hover:shadow-[0_0_24px_rgba(88,101,242,0.14)]"
+                            className="group flex min-h-[8.125rem] flex-col justify-between rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)] p-4 transition hover:border-[#5865F2]/60 hover:bg-[#5865F2]/10 hover:shadow-[0_0_24px_rgba(88,101,242,0.14)]"
                           >
                             <div className="space-y-2">
                               <div className="flex items-start justify-between gap-3">
@@ -1846,7 +1846,7 @@ export default function AdminPage() {
                                 {link.description}
                               </p>
                             </div>
-                            <span className="mt-4 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#5865F2]">
+                            <span className="mt-4 inline-flex items-center gap-2 text-[0.625rem] font-black uppercase tracking-[0.18em] text-[#5865F2]">
                               Open dashboard
                               <ExternalLink size={12} />
                             </span>
@@ -1903,7 +1903,7 @@ export default function AdminPage() {
                     <div className="overflow-x-auto">
                       <table className="w-full text-left border-collapse">
                         <thead>
-                          <tr className="border-b border-[var(--color-border)] font-mono text-[9px] uppercase tracking-widest text-[var(--color-text-muted)] bg-[var(--color-surface-2)]/60">
+                          <tr className="border-b border-[var(--color-border)] font-mono text-[0.5625rem] uppercase tracking-widest text-[var(--color-text-muted)] bg-[var(--color-surface-2)]/60">
                             <th className="p-4">Sender</th>
                             <th className="p-4">Message Snippet</th>
                             <th className="p-4">Submitted At</th>
@@ -1925,13 +1925,13 @@ export default function AdminPage() {
                                 onClick={() => setSelectedMessage(msg)}
                               >
                                 <td className="p-4">
-                                  <div className="font-semibold text-xs text-[var(--color-text)] truncate max-w-[150px]">{msg.name}</div>
-                                  <div className="text-[10px] text-[var(--color-text-muted)] truncate max-w-[150px]">{msg.email}</div>
+                                  <div className="font-semibold text-xs text-[var(--color-text)] truncate max-w-[9.375rem]">{msg.name}</div>
+                                  <div className="text-[0.625rem] text-[var(--color-text-muted)] truncate max-w-[9.375rem]">{msg.email}</div>
                                 </td>
-                                <td className="p-4 max-w-[280px]">
+                                <td className="p-4 max-w-[17.5rem]">
                                   <p className="text-xs text-[var(--color-text-muted)] truncate">{msg.message}</p>
                                 </td>
-                                <td className="p-4 text-[10px] text-[var(--color-text-muted)] font-semibold uppercase tracking-wider">
+                                <td className="p-4 text-[0.625rem] text-[var(--color-text-muted)] font-semibold uppercase tracking-wider">
                                   {new Date(msg.createdAt).toLocaleDateString(undefined, {
                                     month: "short",
                                     day: "numeric",
@@ -1995,7 +1995,7 @@ export default function AdminPage() {
                                     {admin.email}
                                     {isSelf && <Badge variant="success">You</Badge>}
                                   </p>
-                                  <p className="text-[10px] text-[var(--color-text-muted)] pt-0.5">
+                                  <p className="text-[0.625rem] text-[var(--color-text-muted)] pt-0.5">
                                     Registered: {new Date(admin.createdAt).toLocaleDateString()}
                                   </p>
                                 </div>
@@ -2083,7 +2083,7 @@ export default function AdminPage() {
                                   🎵 {track.title}
                                   {track.isActive && <Badge variant="success" className="ml-1" pulse>Active</Badge>}
                                 </p>
-                                <p className="text-[10px] text-[var(--color-text-muted)] font-mono pt-0.5">
+                                <p className="text-[0.625rem] text-[var(--color-text-muted)] font-mono pt-0.5">
                                   {track.youtubeId && track.youtubeId.startsWith("http") ? "🖳 Self-Hosted Audio" : `Video ID: ${track.youtubeId}`} · Added: {new Date(track.createdAt).toLocaleDateString()}
                                 </p>
                               </div>
@@ -2094,7 +2094,7 @@ export default function AdminPage() {
                                     variant="outline"
                                     size="sm"
                                     onClick={() => handleActivateTrack(track.id)}
-                                    className="px-3.5 py-1 text-[10px]"
+                                    className="px-3.5 py-1 text-[0.625rem]"
                                   >
                                     Activate
                                   </Button>
@@ -2127,7 +2127,7 @@ export default function AdminPage() {
                             <p className="text-xs font-black uppercase tracking-wider text-[var(--color-text)]">
                               Ambient music level
                             </p>
-                            <p className="text-[10px] text-[var(--color-text-muted)] mt-1">
+                            <p className="text-[0.625rem] text-[var(--color-text-muted)] mt-1">
                               Applies to the floating music player across the site.
                             </p>
                           </div>
@@ -2153,7 +2153,7 @@ export default function AdminPage() {
                               key={preset}
                               type="button"
                               onClick={() => setMusicVolume(preset)}
-                              className={`rounded-lg border px-3 py-2 text-[10px] font-black uppercase tracking-wider transition ${
+                              className={`rounded-lg border px-3 py-2 text-[0.625rem] font-black uppercase tracking-wider transition ${
                                 musicVolume === preset
                                   ? "border-[#ff0033] bg-[#ff0033]/15 text-white"
                                   : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-[#ff0033]/60 hover:text-[var(--color-text)]"
@@ -2242,7 +2242,7 @@ export default function AdminPage() {
                           />
                         ) : (
                           <div className="space-y-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-wider text-[var(--color-text)] block">
+                            <label className="text-[0.625rem] font-black uppercase tracking-wider text-[var(--color-text)] block">
                               Audio File (.mp3, .wav, .ogg, .webm)
                             </label>
                             <input
@@ -2251,7 +2251,7 @@ export default function AdminPage() {
                               accept="audio/*"
                               required
                               onChange={(e) => setMusicFile(e.target.files?.[0] || null)}
-                              className="w-full text-xs text-[var(--color-text-muted)] bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-xl px-3 py-2.5 outline-none file:mr-4 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[10px] file:font-black file:uppercase file:tracking-wider file:bg-[#ff0033]/15 file:text-[#ff2d55] hover:file:bg-[#ff0033]/35 transition cursor-pointer"
+                              className="w-full text-xs text-[var(--color-text-muted)] bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-xl px-3 py-2.5 outline-none file:mr-4 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[0.625rem] file:font-black file:uppercase file:tracking-wider file:bg-[#ff0033]/15 file:text-[#ff2d55] hover:file:bg-[#ff0033]/35 transition cursor-pointer"
                             />
                           </div>
                         )}
@@ -2264,9 +2264,9 @@ export default function AdminPage() {
 
                     {/* Tips box */}
                     <Card className="p-4 border-[var(--color-border)] bg-[var(--color-surface-2)]/30 text-xs text-[var(--color-text-muted)] space-y-2">
-                      <p className="font-black uppercase tracking-wider text-[9px] text-[#ff0033]">💡 How to find the YouTube Video ID?</p>
+                      <p className="font-black uppercase tracking-wider text-[0.5625rem] text-[#ff0033]">💡 How to find the YouTube Video ID?</p>
                       <p className="leading-relaxed">Copy the 11-character code at the end of the YouTube video URL.</p>
-                      <p className="font-mono text-[10px] text-[var(--color-text)] bg-[var(--color-surface-2)] p-2 rounded border border-[var(--color-border)]">https://youtube.com/watch?v=<span className="text-[#ff0033] font-bold">h7MYJghRWt0</span></p>
+                      <p className="font-mono text-[0.625rem] text-[var(--color-text)] bg-[var(--color-surface-2)] p-2 rounded border border-[var(--color-border)]">https://youtube.com/watch?v=<span className="text-[#ff0033] font-bold">h7MYJghRWt0</span></p>
                     </Card>
                   </div>
                 </div>
@@ -2282,7 +2282,7 @@ export default function AdminPage() {
                           ⚔️ Squad Roster
                         </h3>
                         <p className="text-xs text-[var(--color-text-muted)] mt-1">
-                          Edit the operators shown on the homepage <code className="bg-[var(--color-surface-2)] px-1.5 py-0.5 rounded text-[10px]">Meet the Squad</code> section.
+                          Edit the operators shown on the homepage <code className="bg-[var(--color-surface-2)] px-1.5 py-0.5 rounded text-[0.625rem]">Meet the Squad</code> section.
                         </p>
                       </div>
                       <Button
@@ -2349,7 +2349,7 @@ export default function AdminPage() {
                                   }
                                 } catch {}
                                 return (
-                                  <Badge key={g} variant="secondary" className="text-[9px] flex items-center gap-1">
+                                  <Badge key={g} variant="secondary" className="text-[0.5625rem] flex items-center gap-1">
                                     {logoUrl && (
                                       // eslint-disable-next-line @next/next/no-img-element
                                       <img src={logoUrl} alt="" className="w-3 h-3 rounded shrink-0 object-contain" />
@@ -2431,7 +2431,7 @@ export default function AdminPage() {
                         </p>
                       </div>
                       {youtubeCachedAt && (
-                        <span className="text-[10px] text-[var(--color-text-muted)] font-mono whitespace-nowrap">
+                        <span className="text-[0.625rem] text-[var(--color-text-muted)] font-mono whitespace-nowrap">
                           Cache: {new Date(youtubeCachedAt).toLocaleString()}
                         </span>
                       )}
@@ -2463,7 +2463,7 @@ export default function AdminPage() {
                               <p className="font-bold text-sm text-[var(--color-text)] truncate group-hover:text-[#ff4b5f] transition">
                                 {s.title}
                               </p>
-                              <p className="text-[10px] text-[var(--color-text-muted)] font-mono">
+                              <p className="text-[0.625rem] text-[var(--color-text-muted)] font-mono">
                                 {new Date(s.scheduledStartTime).toLocaleString()}
                               </p>
                             </div>
@@ -2528,7 +2528,7 @@ export default function AdminPage() {
                                   <span>{s.icon}</span>
                                   <span className="truncate">{s.title}</span>
                                   {s.featured && (
-                                    <Badge variant="primary" className="text-[9px]">Featured</Badge>
+                                    <Badge variant="primary" className="text-[0.5625rem]">Featured</Badge>
                                   )}
                                 </p>
                                 <p className="text-xs text-[var(--color-text-muted)] truncate">
@@ -2591,12 +2591,12 @@ export default function AdminPage() {
                           Soundboard
                         </h3>
                         <p className="text-xs text-[var(--color-text-muted)] mt-1">
-                          Synth buttons shown on the homepage <code className="bg-[var(--color-surface-2)] px-1.5 py-0.5 rounded text-[10px]">Highlights &amp; Sound Arena</code>. Empty list falls back to the built-in defaults.
+                          Synth buttons shown on the homepage <code className="bg-[var(--color-surface-2)] px-1.5 py-0.5 rounded text-[0.625rem]">Highlights &amp; Sound Arena</code>. Empty list falls back to the built-in defaults.
                         </p>
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
                         <span
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[11px] font-bold font-mono tracking-wider ${Math.min(sounds.length, PUBLIC_SOUND_LIMIT) === PUBLIC_SOUND_LIMIT
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[0.6875rem] font-bold font-mono tracking-wider ${Math.min(sounds.length, PUBLIC_SOUND_LIMIT) === PUBLIC_SOUND_LIMIT
                               ? "border-[#ff0033]/40 bg-[#ff0033]/10 text-[#ff4b5f]"
                               : "border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text-muted)]"
                             }`}
@@ -2653,7 +2653,7 @@ export default function AdminPage() {
                       </div>
                     ) : (
                       <div className="space-y-2">
-                        <p className="text-[11px] text-[var(--color-text-muted)] mb-1">
+                        <p className="text-[0.6875rem] text-[var(--color-text-muted)] mb-1">
                           The homepage shows the first <strong>{PUBLIC_SOUND_LIMIT}</strong> rows (by sort order). Anything beyond that lives in the DB but stays hidden from visitors.
                         </p>
                         {sounds.map((s, i) => {
@@ -2672,14 +2672,14 @@ export default function AdminPage() {
                                   <p className="font-bold text-sm text-[var(--color-text)] truncate flex items-center gap-2">
                                     <span className="truncate">{s.name}</span>
                                     {!isPublic && (
-                                      <Badge variant="secondary" className="text-[9px] shrink-0">Hidden</Badge>
+                                      <Badge variant="secondary" className="text-[0.5625rem] shrink-0">Hidden</Badge>
                                     )}
                                     {s.source === "upload" && (
-                                      <Badge variant="primary" className="text-[9px] shrink-0">Audio</Badge>
+                                      <Badge variant="primary" className="text-[0.5625rem] shrink-0">Audio</Badge>
                                     )}
                                   </p>
                                   <p className="text-xs text-[var(--color-text-muted)] truncate">
-                                    <span className="uppercase font-mono text-[10px] mr-2">{s.type}</span>
+                                    <span className="uppercase font-mono text-[0.625rem] mr-2">{s.type}</span>
                                     {s.description}
                                   </p>
                                 </div>
@@ -2745,7 +2745,7 @@ export default function AdminPage() {
 
                             {/* Source toggle — synth vs uploaded audio file */}
                             <div>
-                              <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)] mb-1.5">
+                              <label className="block text-[0.625rem] font-bold uppercase tracking-wider text-[var(--color-text-muted)] mb-1.5">
                                 Sound source
                               </label>
                               <div className="flex gap-2">
@@ -2775,7 +2775,7 @@ export default function AdminPage() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               {draft.source === "synth" ? (
                                 <div>
-                                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)] mb-1.5">
+                                  <label className="block text-[0.625rem] font-bold uppercase tracking-wider text-[var(--color-text-muted)] mb-1.5">
                                     Synth waveform
                                   </label>
                                   <select
@@ -2792,7 +2792,7 @@ export default function AdminPage() {
                                 </div>
                               ) : (
                                 <div>
-                                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)] mb-1.5">
+                                  <label className="block text-[0.625rem] font-bold uppercase tracking-wider text-[var(--color-text-muted)] mb-1.5">
                                     Audio file (mp3 / wav / ogg, max 3MB)
                                   </label>
                                   {editingSound ? (
@@ -2812,11 +2812,11 @@ export default function AdminPage() {
                                         <audio controls src={draft.audioUrl} className="w-full h-8" />
                                       )}
                                       {audioUploading && (
-                                        <p className="text-[10px] text-[var(--color-text-muted)]">Uploading…</p>
+                                        <p className="text-[0.625rem] text-[var(--color-text-muted)]">Uploading…</p>
                                       )}
                                     </div>
                                   ) : (
-                                    <p className="text-[11px] text-[var(--color-text-muted)] leading-relaxed p-2 rounded-lg border border-dashed border-[var(--color-border)]">
+                                    <p className="text-[0.6875rem] text-[var(--color-text-muted)] leading-relaxed p-2 rounded-lg border border-dashed border-[var(--color-border)]">
                                       Save the sound first, then re-open it to upload an audio file.
                                     </p>
                                   )}
@@ -2880,7 +2880,7 @@ export default function AdminPage() {
                           <button
                             key={f}
                             onClick={() => setHighlightFilter(f)}
-                            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider border transition ${highlightFilter === f
+                            className={`px-3 py-1.5 rounded-lg text-[0.6875rem] font-bold uppercase tracking-wider border transition ${highlightFilter === f
                                 ? "border-[#ff0033] bg-[#ff0033]/10 text-[#ff4b5f]"
                                 : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
                               }`}
@@ -2933,13 +2933,13 @@ export default function AdminPage() {
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex flex-wrap items-center gap-2 mb-1">
-                                  <Badge variant={h.status === "approved" ? "success" : h.status === "rejected" ? "danger" : "primary"} className="text-[9px]">
+                                  <Badge variant={h.status === "approved" ? "success" : h.status === "rejected" ? "danger" : "primary"} className="text-[0.5625rem]">
                                     {h.status}
                                   </Badge>
                                   {h.game && (
-                                    <Badge variant="secondary" className="text-[9px]">{h.game}</Badge>
+                                    <Badge variant="secondary" className="text-[0.5625rem]">{h.game}</Badge>
                                   )}
-                                  <span className="text-[10px] text-[var(--color-text-muted)] font-mono">
+                                  <span className="text-[0.625rem] text-[var(--color-text-muted)] font-mono">
                                     {h.source === "youtube" ? "YouTube" : "Uploaded"}
                                   </span>
                                 </div>
@@ -2957,7 +2957,7 @@ export default function AdminPage() {
                                     href={watchUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-[11px] font-bold text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:border-[#ff0033]/40 transition"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-[0.6875rem] font-bold text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:border-[#ff0033]/40 transition"
                                   >
                                     <Play size={12} /> Watch
                                   </a>
@@ -2966,7 +2966,7 @@ export default function AdminPage() {
                                   <button
                                     disabled={isBusy}
                                     onClick={() => handleReviewHighlight(h.id, "approved")}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-[11px] font-bold text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 transition cursor-pointer"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-[0.6875rem] font-bold text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 transition cursor-pointer"
                                   >
                                     <Check size={12} /> Approve
                                   </button>
@@ -2975,7 +2975,7 @@ export default function AdminPage() {
                                   <button
                                     disabled={isBusy}
                                     onClick={() => handleReviewHighlight(h.id, "rejected")}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-[11px] font-bold text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:border-[#ff4b5f]/40 disabled:opacity-50 transition cursor-pointer"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-[0.6875rem] font-bold text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:border-[#ff4b5f]/40 disabled:opacity-50 transition cursor-pointer"
                                   >
                                     <XCircle size={12} /> Reject
                                   </button>
@@ -3239,7 +3239,7 @@ export default function AdminPage() {
                                   className="hidden"
                                 />
                                 <span
-                                  className={`inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-2.5 py-1.5 text-[11px] font-bold transition ${floatingGameUploadingFor === String(idx)
+                                  className={`inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-2.5 py-1.5 text-[0.6875rem] font-bold transition ${floatingGameUploadingFor === String(idx)
                                       ? "opacity-50 cursor-not-allowed"
                                       : "text-[var(--color-text-muted)] hover:border-[#ff0033]/40 hover:text-[var(--color-text)]"
                                     }`}
@@ -3337,7 +3337,7 @@ export default function AdminPage() {
                             maxLength={16}
                           />
                           <div className="flex flex-col gap-1">
-                            <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Style Option</label>
+                            <label className="text-[0.625rem] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Style Option</label>
                             <div className="flex gap-2">
                               <button
                                 type="button"
@@ -3363,7 +3363,7 @@ export default function AdminPage() {
                           </div>
                           {newWordStyle === "glassy" && (
                             <div className="flex flex-col gap-1">
-                              <label className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Status Dot Color</label>
+                              <label className="text-[0.625rem] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Status Dot Color</label>
                               <div className="flex flex-wrap items-center gap-1.5 mt-1">
                                 {["#ff0033", "#ffffff", "#ffd700", "#00ff66", "#00e5ff"].map((c) => (
                                   <button
@@ -3434,7 +3434,7 @@ export default function AdminPage() {
                                 <X size={12} />
                               </button>
                               <div className="flex flex-col gap-1.5">
-                                <label className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Capsule Text</label>
+                                <label className="text-[0.5625rem] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Capsule Text</label>
                                 <input
                                   type="text"
                                   value={w.text}
@@ -3451,12 +3451,12 @@ export default function AdminPage() {
                                 />
                               </div>
                               <div className="flex items-center justify-between border-t border-[var(--color-border)] pt-2 mt-1">
-                                <span className="text-[9px] font-mono uppercase tracking-wider text-[var(--color-text-muted)]">
+                                <span className="text-[0.5625rem] font-mono uppercase tracking-wider text-[var(--color-text-muted)]">
                                   Style: {w.style === "glassy" ? "Glassy" : "Outline"}
                                 </span>
                                 {w.style === "glassy" && (
                                   <div className="flex items-center gap-1.5">
-                                    <span className="text-[9px] font-mono uppercase tracking-wider text-[var(--color-text-muted)]">Dot:</span>
+                                    <span className="text-[0.5625rem] font-mono uppercase tracking-wider text-[var(--color-text-muted)]">Dot:</span>
                                     <span
                                       className="w-2.5 h-2.5 rounded-full border border-black/20"
                                       style={{ backgroundColor: w.dot || "#ff0033" }}
@@ -3688,7 +3688,7 @@ export default function AdminPage() {
                                     className="hidden"
                                   />
                                   <span
-                                    className={`inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-2.5 py-1.5 text-[11px] font-bold transition ${gameUploadingFor === g.id
+                                    className={`inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-2.5 py-1.5 text-[0.6875rem] font-bold transition ${gameUploadingFor === g.id
                                         ? "opacity-50 cursor-not-allowed"
                                         : "text-[var(--color-text-muted)] hover:border-[#ff0033]/40 hover:text-[var(--color-text)]"
                                       }`}
@@ -3844,7 +3844,7 @@ export default function AdminPage() {
                                     <p className="font-display font-extrabold text-sm text-[var(--color-text)] truncate">
                                       {item.name}
                                     </p>
-                                    <p className="text-[11px] text-[var(--color-text-muted)] line-clamp-2 mt-0.5">
+                                    <p className="text-[0.6875rem] text-[var(--color-text-muted)] line-clamp-2 mt-0.5">
                                       {item.description || "—"}
                                     </p>
                                   </div>
@@ -3969,7 +3969,7 @@ export default function AdminPage() {
                       <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#ff0033]/5 to-transparent rounded-full -mr-8 -mt-8" />
                       <div className="space-y-3">
                         <div className="flex justify-between items-center">
-                          <span className="text-[var(--color-text-subtle)] font-mono text-[10px] uppercase tracking-widest">Average Score</span>
+                          <span className="text-[var(--color-text-subtle)] font-mono text-[0.625rem] uppercase tracking-widest">Average Score</span>
                           <Star size={18} className="text-[#ff2d55]" />
                         </div>
                         <div className="flex items-baseline gap-2">
@@ -3998,7 +3998,7 @@ export default function AdminPage() {
                       <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#ff0033]/5 to-transparent rounded-full -mr-8 -mt-8" />
                       <div className="space-y-3">
                         <div className="flex justify-between items-center">
-                          <span className="text-[var(--color-text-subtle)] font-mono text-[10px] uppercase tracking-widest">Total Reviews</span>
+                          <span className="text-[var(--color-text-subtle)] font-mono text-[0.625rem] uppercase tracking-widest">Total Reviews</span>
                           <Users size={18} className="text-[#ff2d55]" />
                         </div>
                         <div className="flex items-baseline gap-2">
@@ -4024,7 +4024,7 @@ export default function AdminPage() {
                       <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#ff0033]/5 to-transparent rounded-full -mr-8 -mt-8" />
                       <div className="space-y-3">
                         <div className="flex justify-between items-center">
-                          <span className="text-[var(--color-text-subtle)] font-mono text-[10px] uppercase tracking-widest">Flagged Items</span>
+                          <span className="text-[var(--color-text-subtle)] font-mono text-[0.625rem] uppercase tracking-widest">Flagged Items</span>
                           <Flag size={18} className={ratingsStats.flaggedCount > 0 ? "text-rose-500 animate-pulse" : "text-[var(--color-text-muted)]"} />
                         </div>
                         <div className="flex items-baseline gap-2">
@@ -4091,7 +4091,7 @@ export default function AdminPage() {
                     <div className="overflow-x-auto">
                       <table className="w-full text-left border-collapse">
                         <thead>
-                          <tr className="border-b border-[var(--color-border)] font-mono text-[9px] uppercase tracking-widest text-[var(--color-text-muted)] bg-[var(--color-surface-2)]/60">
+                          <tr className="border-b border-[var(--color-border)] font-mono text-[0.5625rem] uppercase tracking-widest text-[var(--color-text-muted)] bg-[var(--color-surface-2)]/60">
                             <th className="p-4">Reviewer</th>
                             <th className="p-4">Rating</th>
                             <th className="p-4">Comment</th>
@@ -4166,15 +4166,15 @@ export default function AdminPage() {
                                         )}
                                       </div>
                                       <div className="min-w-0">
-                                        <div className="font-bold text-xs text-[var(--color-text)] truncate max-w-[140px] flex items-center gap-1.5">
+                                        <div className="font-bold text-xs text-[var(--color-text)] truncate max-w-[8.75rem] flex items-center gap-1.5">
                                           {r.profile?.name || "Enlisted Operator"}
                                           {r.isAnonymous && (
-                                            <span className="text-[8px] font-black uppercase bg-neutral-800 text-neutral-400 border border-neutral-700 px-1 rounded tracking-wide shrink-0">
+                                            <span className="text-[0.5rem] font-black uppercase bg-neutral-800 text-neutral-400 border border-neutral-700 px-1 rounded tracking-wide shrink-0">
                                               Anon
                                             </span>
                                           )}
                                         </div>
-                                        <div className="text-[10px] text-[var(--color-text-muted)] truncate max-w-[140px]">
+                                        <div className="text-[0.625rem] text-[var(--color-text-muted)] truncate max-w-[8.75rem]">
                                           {r.profile?.email || "No email"}
                                         </div>
                                       </div>
@@ -4194,27 +4194,27 @@ export default function AdminPage() {
                                         />
                                       ))}
                                     </div>
-                                    <span className="font-mono text-[9px] text-[#ff4b5f] font-semibold">
+                                    <span className="font-mono text-[0.5625rem] text-[#ff4b5f] font-semibold">
                                       {r.rating} Stars
                                     </span>
                                   </td>
 
                                   {/* Comment Text & Flag state */}
-                                  <td className="p-4 max-w-[300px]">
+                                  <td className="p-4 max-w-[18.75rem]">
                                     <div className="flex items-start gap-2">
                                       {r.isFlagged && (
-                                        <span className="shrink-0 inline-flex items-center gap-1 rounded bg-rose-500/10 border border-rose-500/20 px-1.5 py-0.5 text-[9px] font-black uppercase text-rose-500 tracking-wider">
+                                        <span className="shrink-0 inline-flex items-center gap-1 rounded bg-rose-500/10 border border-rose-500/20 px-1.5 py-0.5 text-[0.5625rem] font-black uppercase text-rose-500 tracking-wider">
                                           <Flag size={8} className="fill-rose-500" /> Flagged
                                         </span>
                                       )}
                                       <p className="text-xs text-[var(--color-text-muted)] break-words font-medium">
-                                        {r.comment || <span className="italic text-neutral-600 font-mono text-[10px]">No comment</span>}
+                                        {r.comment || <span className="italic text-neutral-600 font-mono text-[0.625rem]">No comment</span>}
                                       </p>
                                     </div>
                                   </td>
 
                                   {/* Submitted time */}
-                                  <td className="p-4 text-[10px] text-[var(--color-text-muted)] font-semibold uppercase tracking-wider">
+                                  <td className="p-4 text-[0.625rem] text-[var(--color-text-muted)] font-semibold uppercase tracking-wider">
                                     {new Date(r.createdAt).toLocaleDateString(undefined, {
                                       month: "short",
                                       day: "numeric",
@@ -4312,14 +4312,14 @@ export default function AdminPage() {
                     {selectedMessage.email}
                   </a>
                 </p>
-                <p className="text-[10px] text-[var(--color-text-muted)] pt-1 font-mono uppercase tracking-wider">
+                <p className="text-[0.625rem] text-[var(--color-text-muted)] pt-1 font-mono uppercase tracking-wider">
                   Submitted: {new Date(selectedMessage.createdAt).toLocaleString()}
                 </p>
               </div>
 
               <div className="space-y-2">
-                <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--color-text-muted)]">Message Content:</p>
-                <div className="p-5 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border)] text-sm text-[var(--color-text)] leading-relaxed max-h-[250px] overflow-y-auto whitespace-pre-wrap border-l-2 border-[#ff0033]">
+                <p className="text-[0.625rem] font-mono uppercase tracking-widest text-[var(--color-text-muted)]">Message Content:</p>
+                <div className="p-5 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border)] text-sm text-[var(--color-text)] leading-relaxed max-h-[15.625rem] overflow-y-auto whitespace-pre-wrap border-l-2 border-[#ff0033]">
                   {selectedMessage.message}
                 </div>
               </div>
@@ -4327,7 +4327,7 @@ export default function AdminPage() {
               {/* Existing reply (if admin already replied previously). */}
               {selectedMessage.replyText && (
                 <div className="space-y-2">
-                  <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--color-text-muted)]">
+                  <p className="text-[0.625rem] font-mono uppercase tracking-widest text-[var(--color-text-muted)]">
                     Sent Reply
                     {selectedMessage.repliedAt && (
                       <span className="ml-2 text-neutral-500 normal-case">
@@ -4335,7 +4335,7 @@ export default function AdminPage() {
                       </span>
                     )}
                   </p>
-                  <div className="p-4 rounded-xl bg-[#0c0c0c] border border-emerald-500/20 text-sm text-neutral-200 leading-relaxed max-h-[180px] overflow-y-auto whitespace-pre-wrap border-l-2 border-emerald-500">
+                  <div className="p-4 rounded-xl bg-[#0c0c0c] border border-emerald-500/20 text-sm text-neutral-200 leading-relaxed max-h-[11.25rem] overflow-y-auto whitespace-pre-wrap border-l-2 border-emerald-500">
                     {selectedMessage.replyText}
                   </div>
                 </div>
@@ -4343,7 +4343,7 @@ export default function AdminPage() {
 
               {/* Compose new reply. */}
               <div className="space-y-2">
-                <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--color-text-muted)]">
+                <p className="text-[0.625rem] font-mono uppercase tracking-widest text-[var(--color-text-muted)]">
                   {selectedMessage.replyText ? "Send another reply" : "Reply"}
                   <span className="ml-2 text-neutral-500 normal-case">
                     · {selectedMessage.userId ? "in-app notification" : "via email"}
@@ -4357,12 +4357,12 @@ export default function AdminPage() {
                   className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)] px-4 py-3 text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:border-[#ff0033] focus:outline-none focus:ring-1 focus:ring-[#ff0033]/30 resize-none"
                 />
                 {replyError && (
-                  <p className="text-[11px] font-bold text-red-500 flex items-center gap-1.5">
+                  <p className="text-[0.6875rem] font-bold text-red-500 flex items-center gap-1.5">
                     <AlertTriangle size={11} /> {replyError}
                   </p>
                 )}
                 {replySuccess && (
-                  <p className="text-[11px] font-bold text-emerald-500 flex items-center gap-1.5">
+                  <p className="text-[0.6875rem] font-bold text-emerald-500 flex items-center gap-1.5">
                     <CheckCircle2 size={11} /> {replySuccess}
                   </p>
                 )}
@@ -4421,17 +4421,17 @@ export default function AdminPage() {
                 <h3 className="font-display text-xs font-black uppercase tracking-wider text-white">
                   Console Command Hub
                 </h3>
-                <p className="text-[9px] font-semibold text-neutral-400 uppercase tracking-widest mt-0.5">
+                <p className="text-[0.5625rem] font-semibold text-neutral-400 uppercase tracking-widest mt-0.5">
                   Execute Platform Tasks
                 </p>
               </div>
-              <span className="text-[9px] font-black uppercase tracking-widest text-[#ff2d55] bg-[#ff2d55]/10 px-2.5 py-1 rounded-full border border-[#ff2d55]/20">
+              <span className="text-[0.5625rem] font-black uppercase tracking-widest text-[#ff2d55] bg-[#ff2d55]/10 px-2.5 py-1 rounded-full border border-[#ff2d55]/20">
                 Admin Mode
               </span>
             </div>
 
             {/* Grid of Links */}
-            <div className="grid grid-cols-3 gap-2 max-h-[320px] overflow-y-auto pr-1 scrollbar-none">
+            <div className="grid grid-cols-3 gap-2 max-h-[20rem] overflow-y-auto pr-1 scrollbar-none">
               {adminTabs.map((tab) => {
                 const active = activeTab === tab.id;
                 return (
@@ -4459,7 +4459,7 @@ export default function AdminPage() {
                       </div>
                     </span>
                     <span
-                      className={`text-[9px] font-display font-bold uppercase tracking-wider mt-2 text-center leading-tight whitespace-normal ${
+                      className={`text-[0.5625rem] font-display font-bold uppercase tracking-wider mt-2 text-center leading-tight whitespace-normal ${
                         active ? "text-white font-black" : "text-neutral-400 group-hover:text-white"
                       }`}
                     >
@@ -4480,7 +4480,7 @@ export default function AdminPage() {
                 <span className="p-2 rounded-xl bg-emerald-500 text-white shadow-[0_0_10px_rgba(16,185,129,0.5)]">
                   <ArrowLeft size={16} className="transition-transform duration-300 group-hover:scale-110" />
                 </span>
-                <span className="text-[9px] font-display font-black uppercase tracking-wider mt-2 text-white text-center leading-none">
+                <span className="text-[0.5625rem] font-display font-black uppercase tracking-wider mt-2 text-white text-center leading-none">
                   Website
                 </span>
               </button>
@@ -4496,7 +4496,7 @@ export default function AdminPage() {
                 <span className="p-2 rounded-xl bg-blue-500 text-white shadow-[0_0_10px_rgba(59,130,246,0.5)]">
                   <RefreshCw size={16} className="transition-transform duration-300 group-hover:scale-110" />
                 </span>
-                <span className="text-[9px] font-display font-black uppercase tracking-wider mt-2 text-white text-center leading-none">
+                <span className="text-[0.5625rem] font-display font-black uppercase tracking-wider mt-2 text-white text-center leading-none">
                   Reload
                 </span>
               </button>
@@ -4504,7 +4504,7 @@ export default function AdminPage() {
           </div>
 
           {/* Floating Glassmorphic Pill Dock */}
-          <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-[360px] rounded-full border border-white/10 bg-[#07070a]/65 px-4 py-2 backdrop-blur-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.75)] lg:hidden transition-all duration-300">
+          <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-[22.5rem] rounded-full border border-white/10 bg-[#07070a]/65 px-4 py-2 backdrop-blur-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.75)] lg:hidden transition-all duration-300">
             <div className="flex items-center justify-between gap-1">
               {/* Command Center */}
               <button

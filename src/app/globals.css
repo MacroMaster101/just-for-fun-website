@@ -99,6 +99,18 @@
 @layer base {
   html { scroll-behavior: smooth; }
 
+  /* Fluid scale: every rem-based size (containers, cards, text, spacing)
+     grows with the viewport on large screens so layouts fill the width
+     instead of leaving wide empty gutters, and eases down on small phones
+     so everything fits. 16px between 390px and 1440px wide. Tailwind
+     breakpoints are unaffected — media queries use the browser default. */
+  @media (max-width: 389.98px) {
+    html { font-size: clamp(87.5%, 4.1vw, 100%); }
+  }
+  @media (min-width: 1440px) {
+    html { font-size: clamp(100%, calc(100vw / 90), 150%); }
+  }
+
   /* Theme tokens — dark is default */
   :root,
   html.dark {
@@ -1055,7 +1067,7 @@ html.light .auth-surface .bg-white\/5 {
 }
 .auth-surface .menu-item .menu-item-trailing {
   color: #737373;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 700;
 }
 .auth-surface .menu-item:hover .menu-item-icon {
@@ -1342,7 +1354,7 @@ html.light button[aria-label="Remove from favorites"] svg {
     gap: 6px;
     padding: 4px 10px;
     border-radius: 9999px;
-    font-size: 10px;
+    font-size: 0.625rem;
     font-weight: 800;
     letter-spacing: 0.22em;
     text-transform: uppercase;

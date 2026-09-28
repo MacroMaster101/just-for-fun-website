@@ -156,10 +156,10 @@ export const Schedule = () => {
           <div className="mb-12 space-y-5">
             <div className="flex items-center gap-3">
               <Radio size={16} className="text-[#ff4b5f] animate-pulse" />
-              <span className="text-[10px] font-black uppercase tracking-[0.28em] text-[#ff4b5f]">
+              <span className="text-[0.625rem] font-black uppercase tracking-[0.28em] text-[#ff4b5f]">
                 Upcoming on YouTube
               </span>
-              <span className="text-[10px] font-bold text-neutral-500">
+              <span className="text-[0.625rem] font-bold text-neutral-500">
                 · auto-pulled from the channel
               </span>
             </div>
@@ -182,13 +182,13 @@ export const Schedule = () => {
                           className="object-cover transition duration-500 group-hover:scale-105"
                           sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         />
-                        <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-[#ff0033] px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white">
+                        <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-[#ff0033] px-2 py-0.5 text-[0.5625rem] font-black uppercase tracking-wider text-white">
                           <Radio size={10} /> Scheduled
                         </span>
                       </div>
                     )}
                     <div className="space-y-3 p-5">
-                      <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#ff4b5f]">
+                      <div className="flex items-center gap-2 text-[0.625rem] font-black uppercase tracking-widest text-[#ff4b5f]">
                         <Clock size={11} />
                         {formatUpcoming(stream.scheduledStartTime)}
                       </div>
@@ -200,7 +200,7 @@ export const Schedule = () => {
                           {stream.description}
                         </p>
                       )}
-                      <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-neutral-400 group-hover:text-white transition">
+                      <span className="inline-flex items-center gap-1.5 text-[0.625rem] font-bold uppercase tracking-wider text-neutral-400 group-hover:text-white transition">
                         Set reminder on YouTube <ExternalLink size={11} />
                       </span>
                     </div>
@@ -217,7 +217,7 @@ export const Schedule = () => {
             {upcoming.length > 0 && (
               <div className="mb-5 flex items-center gap-3">
                 <Calendar size={16} className="text-neutral-500" />
-                <span className="text-[10px] font-black uppercase tracking-[0.28em] text-neutral-500">
+                <span className="text-[0.625rem] font-black uppercase tracking-[0.28em] text-neutral-500">
                   Weekly rhythm
                 </span>
               </div>

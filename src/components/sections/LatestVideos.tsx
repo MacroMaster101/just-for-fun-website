@@ -216,7 +216,7 @@ export const LatestVideos = () => {
                   >
                     <span>{chip.label}</span>
                     <span
-                      className={`rounded-full px-1.5 py-0.5 text-[10px] font-black ${
+                      className={`rounded-full px-1.5 py-0.5 text-[0.625rem] font-black ${
                         active
                           ? "bg-[#ff0033]/25 text-[#ff4b5f]"
                           : "bg-white/5 text-neutral-500"
@@ -285,7 +285,7 @@ export const LatestVideos = () => {
                   <div className="absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 scale-90 items-center justify-center rounded-full bg-[#ff0033] text-white opacity-0 shadow-[0_0_26px_rgba(255,0,51,0.45)] transition group-hover:scale-100 group-hover:opacity-100">
                     <Play size={24} className="ml-1 fill-white" />
                   </div>
-                  <span className="absolute bottom-2 right-2 rounded bg-black/90 px-2 py-1 text-[11px] font-black text-[#ffffff] image-overlay-badge">
+                  <span className="absolute bottom-2 right-2 rounded bg-black/90 px-2 py-1 text-[0.6875rem] font-black text-[#ffffff] image-overlay-badge">
                     {video.isLive ? "LIVE" : video.duration}
                   </span>
                   {signedIn && (
@@ -323,7 +323,7 @@ export const LatestVideos = () => {
                     </p>
                   </div>
 
-                  <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-white/10 pt-3 text-[11px] font-bold uppercase tracking-wide text-neutral-500">
+                  <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-white/10 pt-3 text-[0.6875rem] font-bold uppercase tracking-wide text-neutral-500">
                     <span className="flex items-center gap-1.5">
                       <Eye size={13} /> {video.views}
                     </span>
@@ -369,7 +369,7 @@ export const LatestVideos = () => {
                 </Button>
               )}
             </div>
-            <span className="text-[11px] font-bold uppercase tracking-widest text-neutral-500">
+            <span className="text-[0.6875rem] font-bold uppercase tracking-widest text-neutral-500">
               Showing {visibleVideos.length} of {filteredVideos.length}
             </span>
           </div>
@@ -415,7 +415,7 @@ export const LatestVideos = () => {
             <aside className="min-h-0 overflow-y-auto border-t border-white/10 p-5 lg:border-l lg:border-t-0 lg:p-6">
               <div className="flex min-h-full flex-col">
                 <div className="pr-9 lg:pr-0">
-                  <span className="rounded-full bg-[#ff0033]/14 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-[#ff4b5f]">
+                  <span className="rounded-full bg-[#ff0033]/14 px-3 py-1 text-[0.625rem] font-black uppercase tracking-[0.22em] text-[#ff4b5f]">
                     Theater Mode
                   </span>
                   <h3 className="mt-4 text-xl font-black leading-tight text-white">
@@ -490,7 +490,7 @@ const StatPill = ({
   <div className="rounded-lg border border-white/10 bg-black/30 p-3">
     <div className="flex items-center gap-2 text-[#ff4b5f]">
       {icon}
-      <span className="text-[10px] font-black uppercase tracking-widest text-neutral-500">
+      <span className="text-[0.625rem] font-black uppercase tracking-widest text-neutral-500">
         {label}
       </span>
     </div>

@@ -38,7 +38,8 @@ const GAME_META: Record<string, { Icon: React.ComponentType<{ size?: number; cla
   "Viewer Special": { Icon: Flame, tint: "text-[#ff0033]", bg: "bg-[#ff0033]/10" },
 };
 
-const REEL_ITEM_HEIGHT = 88; // px
+// In rem so the reel scales with the fluid root font size (5.5rem = 88px at 16px).
+const REEL_ITEM_HEIGHT = 5.5;
 const REEL_REPEATS = 10;
 const REEL_DURATIONS = [2.6, 3.2, 3.8]; // seconds — each reel stops sequentially
 
@@ -152,7 +153,7 @@ const Reel: React.FC<ReelProps> = ({ items, targetIndex, spinning, duration, ren
   return (
     <div
       className="slot-reel relative overflow-hidden bg-gradient-to-b from-[#0a0a0a] to-[#1a1a1a] border border-white/10 rounded-xl shadow-[inset_0_2px_8px_rgba(0,0,0,0.8)] w-full min-w-0"
-      style={{ height: REEL_ITEM_HEIGHT * 3 }}
+      style={{ height: `${REEL_ITEM_HEIGHT * 3}rem` }}
     >
       {/* Subtle inner highlight on top half */}
       <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/[0.03] to-transparent pointer-events-none z-10" />
@@ -163,7 +164,7 @@ const Reel: React.FC<ReelProps> = ({ items, targetIndex, spinning, duration, ren
       {/* Strip */}
       <div
         style={{
-          transform: `translateY(-${offset}px)`,
+          transform: `translateY(-${offset}rem)`,
           transition: spinning ? `transform ${duration}s cubic-bezier(0.16, 0.84, 0.24, 1)` : "none",
         }}
         className="will-change-transform"
@@ -171,7 +172,7 @@ const Reel: React.FC<ReelProps> = ({ items, targetIndex, spinning, duration, ren
         {strip.map((item, idx) => (
           <div
             key={`${item.id}-${idx}`}
-            style={{ height: REEL_ITEM_HEIGHT }}
+            style={{ height: `${REEL_ITEM_HEIGHT}rem` }}
             className="flex items-center justify-center px-3 border-b border-white/[0.04]"
           >
             {renderCell(item)}
@@ -320,7 +321,7 @@ export const ChallengeWheel = () => {
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#ff0033]/45 to-transparent" />
 
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute left-1/2 top-1/3 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-[#ff0033]/8 blur-[120px]" />
+        <div className="absolute left-1/2 top-1/3 -translate-x-1/2 w-[37.5rem] h-[37.5rem] rounded-full bg-[#ff0033]/8 blur-[120px]" />
       </div>
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6">
@@ -339,7 +340,7 @@ export const ChallengeWheel = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-20 items-stretch max-w-6xl mx-auto">
           {/* Slot Machine Cabinet — nudged left on all viewports so the side lever fits perfectly */}
           <div className="lg:col-span-7 flex items-center justify-center lg:justify-start">
-            <div className="relative w-full max-w-[250px] xs:max-w-[290px] sm:max-w-[420px] md:max-w-[460px] lg:max-w-none mr-6 xs:mr-8 sm:mr-12 lg:mr-0">
+            <div className="relative w-full max-w-[15.625rem] xs:max-w-[18.125rem] sm:max-w-[26.25rem] md:max-w-[28.75rem] lg:max-w-none mr-6 xs:mr-8 sm:mr-12 lg:mr-0">
               {/* Cabinet outer frame — brushed metal look */}
               <div className="slot-cabinet relative rounded-[20px] border border-white/[0.08] p-3 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8),inset_0_2px_0_rgba(255,255,255,0.08)] sm:rounded-[28px] sm:p-7">
                 {/* Marquee lights — running around the cabinet edge */}
@@ -360,7 +361,7 @@ export const ChallengeWheel = () => {
                 {/* Marquee header */}
                 <div className="text-center mb-4 pt-3">
                   <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-[#ff0033]/20 via-[#ff4b5f]/30 to-[#ff0033]/20 border border-[#ff0033]/40">
-                    <span className="text-[10px] uppercase tracking-[0.3em] font-black text-white drop-shadow-[0_0_8px_rgba(255,0,51,0.8)]">
+                    <span className="text-[0.625rem] uppercase tracking-[0.3em] font-black text-white drop-shadow-[0_0_8px_rgba(255,0,51,0.8)]">
                       ★ Challenge Slot ★
                     </span>
                   </div>
@@ -372,20 +373,20 @@ export const ChallengeWheel = () => {
                   <div
                     className="absolute left-3 right-3 sm:left-4 sm:right-4 z-30 pointer-events-none border-y-2 border-[#ff0033]/70 bg-gradient-to-r from-[#ff0033]/[0.08] via-[#ff4b5f]/[0.05] to-[#ff0033]/[0.08] shadow-[0_0_30px_rgba(255,0,51,0.4),inset_0_0_20px_rgba(255,0,51,0.15)]"
                     style={{
-                      top: `calc(${REEL_ITEM_HEIGHT}px + 0.75rem)`,
-                      height: REEL_ITEM_HEIGHT,
+                      top: `calc(${REEL_ITEM_HEIGHT}rem + 0.75rem)`,
+                      height: `${REEL_ITEM_HEIGHT}rem`,
                     }}
                   />
                   {/* Selection indicator arrows */}
                   <div
                     className="absolute left-1 z-30 pointer-events-none"
-                    style={{ top: `calc(${REEL_ITEM_HEIGHT}px + ${REEL_ITEM_HEIGHT / 2}px + 0.75rem - 8px)` }}
+                    style={{ top: `calc(${REEL_ITEM_HEIGHT * 1.5}rem + 0.75rem - 0.5rem)` }}
                   >
                     <div className="w-0 h-0 border-y-[8px] border-y-transparent border-l-[10px] border-l-[#ff0033] drop-shadow-[0_0_6px_rgba(255,0,51,0.9)]" />
                   </div>
                   <div
                     className="absolute right-1 z-30 pointer-events-none"
-                    style={{ top: `calc(${REEL_ITEM_HEIGHT}px + ${REEL_ITEM_HEIGHT / 2}px + 0.75rem - 8px)` }}
+                    style={{ top: `calc(${REEL_ITEM_HEIGHT * 1.5}rem + 0.75rem - 0.5rem)` }}
                   >
                     <div className="w-0 h-0 border-y-[8px] border-y-transparent border-r-[10px] border-r-[#ff0033] drop-shadow-[0_0_6px_rgba(255,0,51,0.9)]" />
                   </div>
@@ -404,7 +405,7 @@ export const ChallengeWheel = () => {
                         return (
                           <div className={`w-full h-full flex flex-col items-center justify-center gap-1 rounded-lg ${meta.bg}`}>
                             <Icon size={28} className={meta.tint} />
-                            <span className={`text-[9px] font-black uppercase tracking-wider ${meta.tint} leading-tight text-center`}>
+                            <span className={`text-[0.5625rem] font-black uppercase tracking-wider ${meta.tint} leading-tight text-center`}>
                               {item.game}
                             </span>
                           </div>
@@ -420,10 +421,10 @@ export const ChallengeWheel = () => {
                       duration={REEL_DURATIONS[1]}
                       renderCell={(item) => (
                         <div className="w-full h-full flex flex-col items-center justify-center text-center px-2">
-                          <span className="text-[9px] font-black uppercase tracking-widest text-neutral-500 mb-1">
+                          <span className="text-[0.5625rem] font-black uppercase tracking-widest text-neutral-500 mb-1">
                             #{String(item.id).padStart(2, "0")}
                           </span>
-                          <span className="slot-reel-text font-display text-[11px] sm:text-xs font-bold text-white leading-tight line-clamp-2">
+                          <span className="slot-reel-text font-display text-[0.6875rem] sm:text-xs font-bold text-white leading-tight line-clamp-2">
                             {item.text}
                           </span>
                         </div>
@@ -439,7 +440,7 @@ export const ChallengeWheel = () => {
                       renderCell={(item) => (
                         <div className="w-full h-full flex items-center justify-center min-w-0">
                           <span
-                            className={`text-[8px] xs:text-[10px] font-black uppercase px-1.5 py-0.5 xs:px-2.5 xs:py-1 rounded-md border tracking-wider ${DIFFICULTY_STYLES[item.difficulty]}`}
+                            className={`text-[0.5rem] xs:text-[0.625rem] font-black uppercase px-1.5 py-0.5 xs:px-2.5 xs:py-1 rounded-md border tracking-wider ${DIFFICULTY_STYLES[item.difficulty]}`}
                           >
                             {item.difficulty}
                           </span>
@@ -455,7 +456,7 @@ export const ChallengeWheel = () => {
                     <button
                       onClick={() => setLocked((v) => !v)}
                       title={locked ? "Unlock the reel" : "Lock the reel"}
-                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[10px] uppercase font-bold tracking-widest transition-colors cursor-pointer ${
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[0.625rem] uppercase font-bold tracking-widest transition-colors cursor-pointer ${
                         locked
                           ? "border-[#ff0033]/40 bg-[#ff0033]/10 text-[#ff4b5f]"
                           : "border-white/10 bg-white/[0.02] text-neutral-400 hover:text-white hover:border-white/20"
@@ -466,8 +467,8 @@ export const ChallengeWheel = () => {
                     </button>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] uppercase tracking-widest font-bold text-neutral-500">Spins</span>
-                    <span className="font-mono text-xs font-black text-[#ff4b5f] px-2 py-0.5 rounded bg-black border border-[#ff0033]/30 shadow-[inset_0_0_8px_rgba(255,0,51,0.2)] min-w-[44px] text-center">
+                    <span className="text-[0.5625rem] uppercase tracking-widest font-bold text-neutral-500">Spins</span>
+                    <span className="font-mono text-xs font-black text-[#ff4b5f] px-2 py-0.5 rounded bg-black border border-[#ff0033]/30 shadow-[inset_0_0_8px_rgba(255,0,51,0.2)] min-w-[2.75rem] text-center">
                       {String(spinCount).padStart(4, "0")}
                     </span>
                   </div>
@@ -476,7 +477,7 @@ export const ChallengeWheel = () => {
 
               {/* Side lever — swings vertically (top → bottom) around a pivot at its base */}
               <div
-                className="absolute right-[-44px] sm:right-[-52px] top-1/2 -translate-y-1/2 w-[60px] h-[260px] origin-left scale-[0.75] xs:scale-[0.85] sm:scale-100"
+                className="absolute right-[-44px] sm:right-[-52px] top-1/2 -translate-y-1/2 w-[3.75rem] h-[16.25rem] origin-left scale-[0.75] xs:scale-[0.85] sm:scale-100"
               >
                 {/* Mounting plate — visually attaches the pivot base to the cabinet's right edge */}
                 <div className="absolute left-0 bottom-6 w-6 h-14 rounded-r-lg bg-gradient-to-r from-[#1a1a1a] to-[#333] border-y border-r border-black/60 shadow-[inset_-2px_0_4px_rgba(0,0,0,0.6),2px_0_6px_rgba(0,0,0,0.5)]" />
@@ -549,7 +550,7 @@ export const ChallengeWheel = () => {
 
                 {/* Status label — solid red pill, readable in both light and dark mode */}
                 <div
-                  className="slot-status-pill absolute left-1/2 -translate-x-1/2 z-30 px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-black whitespace-nowrap pointer-events-none"
+                  className="slot-status-pill absolute left-1/2 -translate-x-1/2 z-30 px-3 py-1 rounded-full text-[0.625rem] uppercase tracking-widest font-black whitespace-nowrap pointer-events-none"
                   style={{ bottom: -22 }}
                   data-state={isSpinning ? "spinning" : locked ? "locked" : "idle"}
                 >
@@ -569,7 +570,7 @@ export const ChallengeWheel = () => {
                   <h3 className="font-display font-extrabold text-xl text-white tracking-wide uppercase flex items-center gap-2">
                     <Sparkles className="text-[#ff0033]" /> Terminal Verdict
                   </h3>
-                  <p className="text-[11px] text-neutral-500 uppercase tracking-widest font-bold">
+                  <p className="text-[0.6875rem] text-neutral-500 uppercase tracking-widest font-bold">
                     System handicaps &amp; challenges
                   </p>
                 </div>
@@ -588,14 +589,14 @@ export const ChallengeWheel = () => {
                         {result.game}
                       </span>
                       <span
-                        className={`text-[10px] uppercase font-bold px-2.5 py-0.5 rounded border ${DIFFICULTY_STYLES[result.difficulty]}`}
+                        className={`text-[0.625rem] uppercase font-bold px-2.5 py-0.5 rounded border ${DIFFICULTY_STYLES[result.difficulty]}`}
                       >
                         {result.difficulty}
                       </span>
                     </div>
 
                     <div className="space-y-2">
-                      <div className="text-[10px] uppercase font-bold tracking-widest text-neutral-500">
+                      <div className="text-[0.625rem] uppercase font-bold tracking-widest text-neutral-500">
                         Assigned Penalty
                       </div>
                       <h4 className="font-display font-black text-xl sm:text-2xl text-white tracking-wide uppercase leading-tight drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">

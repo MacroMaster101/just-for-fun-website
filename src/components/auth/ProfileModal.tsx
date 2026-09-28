@@ -488,14 +488,14 @@ export const ProfileModal = ({
             </p>
             <p className="truncate text-xs text-neutral-500">{user.email}</p>
             {avatarError && (
-              <p className="mt-1 text-[11px] text-red-400">{avatarError}</p>
+              <p className="mt-1 text-[0.6875rem] text-red-400">{avatarError}</p>
             )}
             {/* Avatar quick-action buttons */}
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <button
                 onClick={handleUseDiceBear}
                 disabled={uploading}
-                className="flex items-center gap-1.5 rounded-full border border-[#ff0033]/30 bg-[#ff0033]/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-[#ff4b5f] transition-all duration-300 hover:bg-[#ff0033]/20 hover:border-[#ff0033] hover:text-white hover:shadow-[0_0_12px_rgba(255,0,51,0.2)] disabled:opacity-50 cursor-pointer"
+                className="flex items-center gap-1.5 rounded-full border border-[#ff0033]/30 bg-[#ff0033]/10 px-3 py-1.5 text-[0.625rem] font-black uppercase tracking-wider text-[#ff4b5f] transition-all duration-300 hover:bg-[#ff0033]/20 hover:border-[#ff0033] hover:text-white hover:shadow-[0_0_12px_rgba(255,0,51,0.2)] disabled:opacity-50 cursor-pointer"
               >
                 {uploading ? (
                   <Loader2 size={10} className="animate-spin" />
@@ -508,7 +508,7 @@ export const ProfileModal = ({
                 <button
                   onClick={handleUseEmailPhoto}
                   disabled={uploading}
-                  className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-neutral-400 transition-all duration-300 hover:bg-white/10 hover:border-white/20 hover:text-white disabled:opacity-50 cursor-pointer"
+                  className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[0.625rem] font-black uppercase tracking-wider text-neutral-400 transition-all duration-300 hover:bg-white/10 hover:border-white/20 hover:text-white disabled:opacity-50 cursor-pointer"
                 >
                   {uploading ? (
                     <Loader2 size={10} className="animate-spin" />
@@ -522,7 +522,7 @@ export const ProfileModal = ({
                 <button
                   onClick={handleAvatarRemove}
                   disabled={uploading}
-                  className="flex items-center gap-1 text-[10px] font-bold text-neutral-600 transition hover:text-[#ff2d55] disabled:opacity-50 cursor-pointer"
+                  className="flex items-center gap-1 text-[0.625rem] font-bold text-neutral-600 transition hover:text-[#ff2d55] disabled:opacity-50 cursor-pointer"
                 >
                   <Trash2 size={10} /> Remove
                 </button>
@@ -557,7 +557,7 @@ export const ProfileModal = ({
           ) : tab === "profile" ? (
             <form onSubmit={handleSave} className="grid gap-4">
               <label className="grid gap-1.5">
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500">
+                <span className="text-[0.625rem] font-black uppercase tracking-[0.2em] text-neutral-500">
                   Display Name
                 </span>
                 <input
@@ -569,7 +569,7 @@ export const ProfileModal = ({
                 />
               </label>
               <label className="grid gap-1.5">
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500">
+                <span className="text-[0.625rem] font-black uppercase tracking-[0.2em] text-neutral-500">
                   Bio
                 </span>
                 <textarea
@@ -580,7 +580,7 @@ export const ProfileModal = ({
                   className="resize-none rounded-lg border border-white/10 bg-[#0a0a0a] px-3 py-2.5 text-sm text-white placeholder:text-neutral-600 focus:border-[#ff0033] focus:outline-none"
                   placeholder="Tell the crew about yourself..."
                 />
-                <span className="text-right text-[10px] text-neutral-600">
+                <span className="text-right text-[0.625rem] text-neutral-600">
                   {bio.length}/500
                 </span>
               </label>
@@ -592,7 +592,7 @@ export const ProfileModal = ({
               )}
 
               {isDirty && !saving && (
-                <p className="flex items-center gap-1.5 text-[11px] font-bold text-amber-400">
+                <p className="flex items-center gap-1.5 text-[0.6875rem] font-bold text-amber-400">
                   <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
                   Unsaved changes — click Save Changes to keep them.
                 </p>
@@ -633,7 +633,7 @@ export const ProfileModal = ({
                     className="flex items-center gap-3 rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2.5"
                   >
                     <span
-                      className={`flex h-6 w-6 items-center justify-center rounded text-[9px] font-black uppercase ${
+                      className={`flex h-6 w-6 items-center justify-center rounded text-[0.5625rem] font-black uppercase ${
                         fav.kind === "video"
                           ? "bg-[#ff0033]/15 text-[#ff4b5f]"
                           : "bg-white/10 text-white"
@@ -663,7 +663,7 @@ export const ProfileModal = ({
                 <div className="absolute top-0 right-0 -mr-6 -mt-6 h-24 w-24 rounded-full bg-gradient-to-br from-[#ff0033]/10 to-transparent blur-xl pointer-events-none" />
                 <div className="mb-3 flex items-center gap-2">
                   <ShieldCheck size={16} className="text-[#ff2d55]" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-400">
+                  <span className="text-[0.625rem] font-black uppercase tracking-[0.2em] text-neutral-400">
                     Sign-in Method
                   </span>
                 </div>
@@ -697,7 +697,7 @@ export const ProfileModal = ({
                   </div>
                   
                   <label className="grid gap-1.5">
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-400">
+                    <span className="text-[0.625rem] font-black uppercase tracking-[0.2em] text-neutral-400">
                       New Password
                     </span>
                     <div className="relative">
@@ -722,7 +722,7 @@ export const ProfileModal = ({
                   </label>
                   
                   <label className="grid gap-1.5">
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-400">
+                    <span className="text-[0.625rem] font-black uppercase tracking-[0.2em] text-neutral-400">
                       Confirm Password
                     </span>
                     <div className="relative">
@@ -797,7 +797,7 @@ export const ProfileModal = ({
                 </p>
                 
                 <label className="mt-4 grid gap-1.5">
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500">
+                  <span className="text-[0.625rem] font-black uppercase tracking-[0.2em] text-neutral-500">
                     Type <span className="font-mono text-red-400 font-black">DELETE</span> to confirm
                   </span>
                   <input
@@ -855,7 +855,7 @@ const TabBtn = ({
 }) => (
   <button
     onClick={onClick}
-    className={`relative flex-1 px-2 py-3 sm:px-4 text-[10px] sm:text-xs font-black uppercase tracking-[0.1em] sm:tracking-[0.18em] transition ${
+    className={`relative flex-1 px-2 py-3 sm:px-4 text-[0.625rem] sm:text-xs font-black uppercase tracking-[0.1em] sm:tracking-[0.18em] transition ${
       active ? "text-white" : "text-neutral-500 hover:text-neutral-300"
     }`}
   >
