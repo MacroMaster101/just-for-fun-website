@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { verifyAdmin } from "@/lib/auth/admin";
-import nodemailer from "nodemailer";
+import { contactInbox, sendEmail } from "@/lib/email";
 import { escapeHtml } from "@/lib/escapeHtml";
 import { prisma } from "@/lib/prisma";
 
@@ -52,9 +52,8 @@ export async function DELETE(request: Request) {
  *   - If the original message was submitted by a logged-in user (userId is
  *     set), write a Notification row so the user sees it in their
  *     UserMenu dropdown next time they're on the site.
- *   - If it was a guest submission (no userId), dispatch an SMTP email
- *     to the sender's address via Gmail (same transporter the contact
- *     form already uses).
+ *   - If it was a guest submission (no userId), email the reply to the
+ *     sender's address via Resend (see src/lib/email.ts).
  *
  * Both paths also stamp ContactMessage.{replyText, repliedAt, repliedBy}
  * so the inbox can show "replied" state without a join.
@@ -112,38 +111,24 @@ export async function POST(request: Request) {
       return { updated, notification };
     });
 
-    // Guest sender → email. Outside the transaction so a slow/flaky SMTP
-    // never blocks the DB write.
+    // Guest sender → email. Outside the transaction so a slow/flaky send
+    // never blocks the DB write. Their reply goes to the site inbox.
     let emailed = false;
     if (!original.userId) {
-      const smtpUser = process.env.SMTP_USER;
-      const smtpPass = process.env.SMTP_PASS;
-      if (smtpUser && smtpPass) {
-        try {
-          const transporter = nodemailer.createTransport({
-            service: "gmail",
-            auth: { user: smtpUser, pass: smtpPass },
-          });
-          await transporter.sendMail({
-            from: `"Just For Fun" <${smtpUser}>`,
-            to: original.email,
-            replyTo: smtpUser,
-            subject: "Reply from Just For Fun",
-            text: `Hi ${original.name},\n\n${cleanReply}\n\n— Just For Fun team`,
-            html: `
-              <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-top: 4px solid #ff0033; padding: 24px; border-radius: 8px;">
-                <h2 style="color: #111; margin-top: 0; font-weight: 800;">Reply from Just For Fun</h2>
-                <p style="color: #555;">Hi ${escapeHtml(original.name)},</p>
-                <div style="background-color: #f5f5f5; padding: 16px; border-radius: 6px; color: #222; white-space: pre-wrap; border-left: 3px solid #ff2d55; margin: 16px 0;">${escapeHtml(cleanReply)}</div>
-                <p style="color: #999; font-size: 12px;">— Just For Fun team</p>
-              </div>
-            `,
-          });
-          emailed = true;
-        } catch (emailError) {
-          console.error("Failed to send reply email:", emailError);
-        }
-      }
+      emailed = await sendEmail({
+        to: original.email,
+        replyTo: contactInbox() ?? undefined,
+        subject: "Reply from Just For Fun",
+        text: `Hi ${original.name},\n\n${cleanReply}\n\n— Just For Fun team`,
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-top: 4px solid #ff0033; padding: 24px; border-radius: 8px;">
+            <h2 style="color: #111; margin-top: 0; font-weight: 800;">Reply from Just For Fun</h2>
+            <p style="color: #555;">Hi ${escapeHtml(original.name)},</p>
+            <div style="background-color: #f5f5f5; padding: 16px; border-radius: 6px; color: #222; white-space: pre-wrap; border-left: 3px solid #ff2d55; margin: 16px 0;">${escapeHtml(cleanReply)}</div>
+            <p style="color: #999; font-size: 12px;">— Just For Fun team</p>
+          </div>
+        `,
+      });
     }
 
     return NextResponse.json({

@@ -49,7 +49,7 @@ Behind the public page sits a full admin control room for managing everything wi
 | Auth & storage | Supabase Auth + Storage (`@supabase/ssr`) |
 | Database | PostgreSQL on Supabase |
 | ORM | Prisma 7 with `@prisma/adapter-pg` |
-| Email | Nodemailer (Gmail SMTP) |
+| Email | Resend (HTTP API, sending from `j4fn.site`) |
 | Hosting | Vercel, with a daily cron for the YouTube cache |
 | CI & security | GitHub Actions, CodeQL, Dependabot |
 
@@ -81,7 +81,8 @@ Copy `.env.example` to `.env` and fill in your values:
 | `YOUTUBE_API_KEY` / `YOUTUBE_CHANNEL_ID` / `YOUTUBE_CHANNEL_HANDLE` | YouTube Data API sync |
 | `ADMIN_EMAIL` | Root admin account (server-only) |
 | `CRON_SECRET` | Protects the daily `/api/youtube/refresh` cron |
-| `SMTP_USER` / `SMTP_PASS` | Contact form and reply emails |
+| `RESEND_API_KEY` / `EMAIL_FROM` | Contact alerts and reply emails via Resend |
+| `CONTACT_INBOX_EMAIL` | Where contact alerts go (defaults to `ADMIN_EMAIL`) |
 | `RAWG_API_KEY` | Game search in the admin panel |
 | `DISCORD_CHALLENGE_WEBHOOK_URL` | Challenge Slot → Discord posts |
 
