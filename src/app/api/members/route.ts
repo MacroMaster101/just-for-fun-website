@@ -1,16 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { listAuthUsers } from "@/lib/authUsers";
+import { safeAvatarUrl } from "@/lib/avatar";
 
-export const dynamic = "force-dynamic";
+// Public data only, so cache it: this keeps anonymous traffic from
+// hammering the service-role listUsers API on every request.
+export const revalidate = 300;
 
-type AuthProfile = {
-  email: string | null;
-  name: string | null;
-  avatarUrl: string | null;
-};
-
-type AuthMetadata = Record<string, unknown> | null | undefined;
+const MAX_NAME_LENGTH = 60;
 
 /**
  * Public Crew Wall feed. Returns recent non-admin profiles for the
@@ -18,10 +15,9 @@ type AuthMetadata = Record<string, unknown> | null | undefined;
  * email in the AdminEmail allowlist) are filtered out so the wall only
  * surfaces real community members.
  *
- * We also cross-check every Profile row against auth.users via the
- * service-role admin client and best-effort delete any orphans whose
- * auth entry has been removed outside our API (e.g. via Supabase
- * dashboard). That keeps stale rows from leaking onto the public wall.
+ * Profiles whose auth.users entry is gone are hidden here; deleting them
+ * happens in the daily cron (pruneOrphanProfiles), never on a public
+ * request.
  *
  * Response shape kept tiny on purpose — `id` is the auth.users.id, used
  * by the client to deterministically derive a DiceBear fallback avatar
@@ -29,7 +25,7 @@ type AuthMetadata = Record<string, unknown> | null | undefined;
  */
 export async function GET() {
   try {
-    const [adminRows, rootAdmin, rows, authUsers] = await Promise.all([
+    const [adminRows, rootAdmin, rows, authList] = await Promise.all([
       prisma.adminEmail.findMany({ select: { email: true } }),
       Promise.resolve(process.env.NEXT_PUBLIC_ADMIN_EMAIL),
       prisma.profile.findMany({
@@ -51,20 +47,11 @@ export async function GET() {
     );
     if (rootAdmin) adminEmails.add(rootAdmin.toLowerCase().trim());
 
-    // If we have a live auth.users id set, drop any profile that's
-    // orphaned. If the service-role call failed, fall back to trusting
-    // the Profile table (skip the cross-check) so the wall still renders.
-    const liveAuthIds = authUsers ? new Set(authUsers.keys()) : null;
-    const orphans = liveAuthIds
-      ? rows.filter((r) => !liveAuthIds.has(r.id)).map((r) => r.id)
-      : [];
-
-    if (orphans.length > 0) {
-      // Fire-and-forget cleanup so the response isn't blocked by it.
-      prisma.profile
-        .deleteMany({ where: { id: { in: orphans } } })
-        .catch((err) => console.error("Orphan profile cleanup failed:", err));
-    }
+    // Only hide profiles missing from auth.users when we have the full
+    // list; otherwise members past the listing cap would vanish too. If
+    // the service-role call failed, trust the Profile table.
+    const authUsers = authList?.users ?? null;
+    const liveAuthIds = authList?.complete ? authList.users : null;
 
     const members = rows
       .filter((r) => !liveAuthIds || liveAuthIds.has(r.id))
@@ -80,12 +67,14 @@ export async function GET() {
 
         return {
           id: r.id,
-          name:
+          name: (
             r.name?.trim() ||
             auth?.name ||
             deriveNameFromEmail(email) ||
-            "Anonymous",
-          avatarUrl: r.avatarUrl?.trim() || auth?.avatarUrl || "",
+            "Anonymous"
+          ).slice(0, MAX_NAME_LENGTH),
+          avatarUrl:
+            safeAvatarUrl(r.avatarUrl) || safeAvatarUrl(auth?.avatarUrl) || "",
           joinedAt: r.createdAt.toISOString(),
         };
       });
@@ -98,57 +87,6 @@ export async function GET() {
     console.error("GET /api/members failed:", error);
     return NextResponse.json({ members: [], total: 0 });
   }
-}
-
-/**
- * Pull live auth.users metadata from Supabase. Returns null if the
- * service-role client is unavailable so the caller can fall back to the
- * Profile table instead of returning an empty list.
- */
-async function listAuthUsers(): Promise<Map<string, AuthProfile> | null> {
-  let admin;
-  try {
-    admin = supabaseAdmin();
-  } catch {
-    return null;
-  }
-  const users = new Map<string, AuthProfile>();
-  let page = 1;
-  try {
-    // 1000 is the per-page cap. Loop until we exhaust the pages or hit a
-    // safety ceiling of 10k members.
-    while (page < 11) {
-      const { data, error } = await admin.auth.admin.listUsers({
-        page,
-        perPage: 1000,
-      });
-      if (error || !data?.users) {
-        console.error("listUsers failed:", error);
-        return null;
-      }
-      for (const u of data.users) {
-        const metadata = u.user_metadata as AuthMetadata;
-        users.set(u.id, {
-          email: u.email ?? null,
-          name: metadataText(metadata, "full_name") || metadataText(metadata, "name"),
-          avatarUrl:
-            metadataText(metadata, "avatar_url") ||
-            metadataText(metadata, "picture"),
-        });
-      }
-      if (data.users.length < 1000) break;
-      page += 1;
-    }
-  } catch (err) {
-    console.error("listAuthUsers exception:", err);
-    return null;
-  }
-  return users;
-}
-
-function metadataText(metadata: AuthMetadata, key: string): string | null {
-  const value = metadata?.[key];
-  return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
 function deriveNameFromEmail(email: string | null): string | null {

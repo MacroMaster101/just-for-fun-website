@@ -4,6 +4,7 @@ import { supabaseServer } from "@/lib/supabase/server";
 import nodemailer from "nodemailer";
 import { escapeHtml } from "@/lib/escapeHtml";
 import { isValidEmail } from "@/lib/isValidEmail";
+import { DAY, HOUR, ipSubject, rateLimit } from "@/lib/rateLimit";
 
 const MAX_NAME_LENGTH = 100;
 const MAX_EMAIL_LENGTH = 254;
@@ -39,6 +40,14 @@ export async function POST(request: Request) {
     if (!isValidEmail(email)) {
       return NextResponse.json({ error: "Please enter a valid email address." }, { status: 400 });
     }
+
+    // Every accepted message sends an SMTP email, so cap per sender and
+    // overall to stay well under Gmail's daily sending limit.
+    const limited = await rateLimit(
+      { bucket: "contact", subject: ipSubject(request), limit: 5, windowMs: HOUR },
+      { bucket: "contact", subject: "global", limit: 200, windowMs: DAY }
+    );
+    if (limited) return limited;
 
     // Attach the user id if the sender is logged in (best-effort).
     let userId: string | null = null;

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { verifyAdmin } from "@/lib/auth/admin";
 import { prisma } from "@/lib/prisma";
+import { safeAvatarUrl } from "@/lib/avatar";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,15 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json({ ratings }, { status: 200 });
+    // Avatars saved before the allowlist existed may point at any host.
+    const safeRatings = ratings.map((r) => ({
+      ...r,
+      profile: r.profile
+        ? { ...r.profile, avatarUrl: safeAvatarUrl(r.profile.avatarUrl) }
+        : r.profile,
+    }));
+
+    return NextResponse.json({ ratings: safeRatings }, { status: 200 });
   } catch (error) {
     console.error("GET Admin Ratings Error:", error);
     return NextResponse.json({ error: "Failed to fetch ratings" }, { status: 500 });

@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { hostMatches } from "@/lib/hostMatches";
+import { safeAvatarUrl } from "@/lib/avatar";
+import { HOUR, ipSubject, rateLimit } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -129,13 +131,21 @@ export async function POST(request: Request) {
     );
   }
 
+  // Keep the moderation queue (and the public bucket) from being flooded.
+  const limited = await rateLimit(
+    user
+      ? { bucket: "highlights", subject: user.id, limit: 10, windowMs: HOUR }
+      : { bucket: "highlights", subject: ipSubject(request), limit: 5, windowMs: HOUR }
+  );
+  if (limited) return limited;
+
   // Attribution defaults — logged-in user > submitted name > "Anonymous".
   let submittedByName = "Anonymous";
   let submittedByAvatar = "";
   if (user) {
     const profile = await prisma.profile.findUnique({ where: { id: user.id } });
     submittedByName = profile?.name?.trim() || user.email?.split("@")[0] || "Crew Member";
-    submittedByAvatar = profile?.avatarUrl ?? "";
+    submittedByAvatar = safeAvatarUrl(profile?.avatarUrl) ?? "";
   } else if (displayName) {
     submittedByName = displayName.slice(0, 60);
   }

@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { refreshYouTubeCache } from "@/lib/youtubeCache";
 import { prisma } from "@/lib/prisma";
 import { verifyAdmin } from "@/lib/auth/admin";
+import { pruneOrphanProfiles } from "@/lib/authUsers";
 
 // Don't cache the refresh endpoint itself — it must always run.
 export const dynamic = "force-dynamic";
@@ -24,21 +25,12 @@ function isCronSecretMatch(req: NextRequest): boolean {
     // If no secret is configured, refuse in production.
     return process.env.NODE_ENV !== "production";
   }
-  const stripQuotes = (s: string) => s.replace(/^["']|["']$/g, "").trim();
-
-  // Vercel Cron sends: Authorization: Bearer <CRON_SECRET>
-  // Be lenient: case-insensitive scheme, trimmed, strip accidental quotes.
+  // Vercel Cron sends: Authorization: Bearer <CRON_SECRET>. Only the
+  // header is accepted: secrets in the query string end up in access logs
+  // and browser history.
   const auth = (req.headers.get("authorization") || "").trim();
-  if (auth) {
-    const match = /^bearer\s+(.+)$/i.exec(auth);
-    if (match && secretEquals(stripQuotes(match[1]), CRON_SECRET)) return true;
-    // Some cron services send the raw secret without "Bearer ".
-    if (secretEquals(stripQuotes(auth), CRON_SECRET)) return true;
-  }
-  // Manual trigger: /api/youtube/refresh?key=<CRON_SECRET>
-  const key = req.nextUrl.searchParams.get("key");
-  if (key && secretEquals(stripQuotes(key), CRON_SECRET)) return true;
-  return false;
+  const match = /^bearer\s+(.+)$/i.exec(auth);
+  return !!match && secretEquals(match[1].trim(), CRON_SECRET);
 }
 
 /**
@@ -54,16 +46,8 @@ async function isAuthorizedAdmin(): Promise<boolean> {
   }
 }
 
-async function isAuthorized(req: NextRequest): Promise<boolean> {
-  if (isCronSecretMatch(req)) return true;
-  return await isAuthorizedAdmin();
-}
-
+/** Caller must already be authorized (see GET/POST below). */
 async function handle(req: NextRequest) {
-  if (!(await isAuthorized(req))) {
-    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
-  }
-
   // Rate limit: refuse to call YouTube more than once per MIN_REFRESH_INTERVAL_MS,
   // unless ?force=1 is passed. Protects quota even if the secret leaks or an
   // external cron is misconfigured.
@@ -104,10 +88,34 @@ async function handle(req: NextRequest) {
   });
 }
 
+const unauthorized = () =>
+  NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+
+/**
+ * GET is the Vercel Cron entry point and only accepts the cron secret, so
+ * a cross-site link can't ride an admin's session cookie into a refresh.
+ * The daily run also prunes orphaned profiles.
+ */
 export async function GET(req: NextRequest) {
+  if (!isCronSecretMatch(req)) return unauthorized();
+
+  try {
+    const result = await pruneOrphanProfiles();
+    if (result.skipped) console.warn("Orphan profile prune skipped:", result.skipped);
+  } catch (err) {
+    console.error("Orphan profile prune failed:", err);
+  }
+
   return handle(req);
 }
 
+/**
+ * POST is used by the admin dashboard's "sync" button. The Supabase
+ * session cookie is SameSite=Lax, so it isn't sent on cross-site POSTs.
+ */
 export async function POST(req: NextRequest) {
+  if (!isCronSecretMatch(req) && !(await isAuthorizedAdmin())) {
+    return unauthorized();
+  }
   return handle(req);
 }

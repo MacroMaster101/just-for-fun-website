@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { supabaseServer } from "@/lib/supabase/server";
+import { MINUTE, rateLimit } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,14 @@ export async function POST(request: Request) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const limited = await rateLimit({
+      bucket: "rating-like",
+      subject: user.id,
+      limit: 60,
+      windowMs: 10 * MINUTE,
+    });
+    if (limited) return limited;
 
     const body = (await request.json().catch(() => null)) as {
       ratingId?: string;
@@ -57,7 +66,15 @@ export async function POST(request: Request) {
       data: { likedBy: updatedLikedBy },
     });
 
-    return NextResponse.json({ success: true, likedBy: updated.likedBy }, { status: 200 });
+    // Only the count and the caller's own state — likedBy holds other users' ids.
+    return NextResponse.json(
+      {
+        success: true,
+        likeCount: updated.likedBy.length,
+        likedByMe: updated.likedBy.includes(user.id),
+      },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("POST Toggle Rating Like Error:", error);
     return NextResponse.json({ error: "Failed to update like status" }, { status: 500 });

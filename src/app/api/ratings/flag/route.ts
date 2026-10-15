@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { supabaseServer } from "@/lib/supabase/server";
+import { HOUR, rateLimit } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,14 @@ export async function POST(request: Request) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const limited = await rateLimit({
+      bucket: "rating-flag",
+      subject: user.id,
+      limit: 20,
+      windowMs: HOUR,
+    });
+    if (limited) return limited;
 
     const body = (await request.json().catch(() => null)) as {
       ratingId?: string;
