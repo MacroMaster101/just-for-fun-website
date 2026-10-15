@@ -14,10 +14,23 @@ export function verifiedEmail(user: User | null): string | null {
   return user.email.toLowerCase().trim();
 }
 
+/**
+ * The root admin's email, normalised, or null if unset. Server-only: it
+ * deliberately has no NEXT_PUBLIC_ prefix so it can never be bundled into
+ * client code. NEXT_PUBLIC_ADMIN_EMAIL is still read as a fallback until
+ * every environment has been switched over to ADMIN_EMAIL.
+ */
+export function rootAdminEmail(): string | null {
+  const value = (process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL || "")
+    .toLowerCase()
+    .trim();
+  return value || null;
+}
+
 /** True when `email` is the root admin or on the AdminEmail allowlist. */
 export async function isAdminEmail(email: string): Promise<boolean> {
-  const rootAdminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase().trim();
-  if (rootAdminEmail && email === rootAdminEmail) {
+  const rootAdmin = rootAdminEmail();
+  if (rootAdmin && email === rootAdmin) {
     // Proactively ensure the root admin exists in the DB roster.
     try {
       await prisma.adminEmail.upsert({

@@ -109,6 +109,10 @@ const sections = [
             <strong className="text-white">Vercel</strong> — website hosting
             and anonymized analytics.
           </li>
+          <li>
+            <strong className="text-white">Resend</strong> — delivers contact
+            form notifications and our email replies to you.
+          </li>
         </ul>
         <p>
           Embedded YouTube videos may set their own cookies, governed by

@@ -1314,7 +1314,7 @@ export default function AdminPage() {
           ? "Sent as in-app notification."
           : data.delivery === "email"
             ? "Sent via email."
-            : "Saved (email/notification skipped — check SMTP config).";
+            : "Saved, but the email wasn't sent — check RESEND_API_KEY and the server logs.";
       setReplySuccess(deliveryNote);
     } catch (err) {
       console.error("Failed to send reply:", err);
@@ -1878,7 +1878,7 @@ export default function AdminPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                         <div className="p-5 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border)] space-y-2">
                           <h4 className="text-xs font-black uppercase text-[var(--color-text)] tracking-widest">Inbox Control</h4>
-                          <p className="text-xs text-[var(--color-text-muted)] leading-relaxed">Read incoming feedback, respond directly using one-click SMTP email integration, and purge database logs once handled.</p>
+                          <p className="text-xs text-[var(--color-text-muted)] leading-relaxed">Read incoming feedback, respond directly by email or in-app notification, and purge database logs once handled.</p>
                         </div>
                         <div className="p-5 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border)] space-y-2">
                           <h4 className="text-xs font-black uppercase text-[var(--color-text)] tracking-widest">Admin Roster</h4>
