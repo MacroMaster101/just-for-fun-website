@@ -144,6 +144,16 @@ const getAdminTabFromHash = (): AdminTab => {
   return isAdminTab(hash) ? hash : "command";
 };
 
+// Contact-form fields are attacker-controlled: encode them so a name like
+// "Bob&bcc=attacker@evil.com" can't add recipients to the reply.
+const replyMailto = (email: string, name?: string): string => {
+  const to = encodeURIComponent(email.trim());
+  if (name === undefined) return `mailto:${to}`;
+  const subject = encodeURIComponent("Reply from J4FN Gaming Channel");
+  const body = encodeURIComponent(`Hi ${name},\r\n\r\n`);
+  return `mailto:${to}?subject=${subject}&body=${body}`;
+};
+
 const DISCORD_ADMIN_LINKS = [
   {
     title: "YouTube Status Bot",
@@ -1942,7 +1952,7 @@ export default function AdminPage() {
                                 <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
                                   <div className="flex items-center justify-end gap-2">
                                     <a
-                                      href={`mailto:${msg.email}?subject=Reply from J4FN Gaming Channel&body=Hi ${msg.name},%0D%0A%0D%0A`}
+                                      href={replyMailto(msg.email, msg.name)}
                                       className="p-2 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-[#ff0033]/50 hover:text-[var(--color-text)] transition"
                                       title="Reply via Email"
                                     >
@@ -4308,7 +4318,7 @@ export default function AdminPage() {
                   {selectedMessage.name}
                 </h3>
                 <p className="text-xs text-[#ff4b5f] font-semibold pt-1">
-                  <a href={`mailto:${selectedMessage.email}`} className="hover:underline">
+                  <a href={replyMailto(selectedMessage.email)} className="hover:underline">
                     {selectedMessage.email}
                   </a>
                 </p>

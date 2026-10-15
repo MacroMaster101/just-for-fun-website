@@ -64,7 +64,9 @@ const nextConfig: NextConfig = {
     root: __dirname,
   },
   compiler: {
-    removeConsole: isProduction,
+    // Keep error/warn so server logs still record failures; the browser
+    // console is silenced at runtime by ConsoleSilencer.
+    removeConsole: isProduction ? { exclude: ["error", "warn"] } : false,
   },
   async headers() {
     return [

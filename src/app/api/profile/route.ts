@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { prisma } from "@/lib/prisma";
+import { isAllowedAvatarUrl, safeAvatarUrl } from "@/lib/avatar";
 
 export const dynamic = "force-dynamic";
 
@@ -23,8 +24,10 @@ export async function GET() {
   const metadata = user.user_metadata as AuthMetadata;
   const metadataName =
     metadataText(metadata, "full_name") || metadataText(metadata, "name");
+  // user_metadata is writable by the user from the browser, so it has to
+  // pass the same host allowlist as a PATCH before we store it.
   const metadataAvatar =
-    metadataText(metadata, "avatar_url") || metadataText(metadata, "picture");
+    safeAvatarUrl(metadata?.avatar_url) || safeAvatarUrl(metadata?.picture);
 
   const existing = await prisma.profile.findUnique({ where: { id: user.id } });
   const profile = existing
@@ -33,7 +36,8 @@ export async function GET() {
         data: {
           email: user.email ?? null,
           name: existing.name?.trim() ? undefined : metadataName,
-          avatarUrl: existing.avatarUrl?.trim() ? undefined : metadataAvatar,
+          // Also replaces a stored avatar that no longer passes the allowlist.
+          avatarUrl: safeAvatarUrl(existing.avatarUrl) ? undefined : metadataAvatar,
         },
       })
     : await prisma.profile.create({
@@ -51,27 +55,6 @@ export async function GET() {
 function metadataText(metadata: AuthMetadata, key: string): string | null {
   const value = metadata?.[key];
   return typeof value === "string" && value.trim() ? value.trim() : null;
-}
-
-// Avatar hosts we render (mirrors the CSP img-src list in next.config.ts).
-// Anything else could be a tracking pixel or an arbitrary third-party URL
-// that we'd then show on the Crew Wall and forward to Discord.
-const AVATAR_HOSTS = ["api.dicebear.com", "cdn.discordapp.com"];
-const AVATAR_HOST_SUFFIXES = [".googleusercontent.com", ".supabase.co"];
-
-function isAllowedAvatarUrl(value: string): boolean {
-  const trimmed = value.trim();
-  if (trimmed === "") return true; // clearing the avatar
-  try {
-    const url = new URL(trimmed);
-    if (url.protocol !== "https:") return false;
-    return (
-      AVATAR_HOSTS.includes(url.hostname) ||
-      AVATAR_HOST_SUFFIXES.some((suffix) => url.hostname.endsWith(suffix))
-    );
-  } catch {
-    return false;
-  }
 }
 
 /** PATCH - update the current user's editable profile fields. */
@@ -92,7 +75,12 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "invalid body" }, { status: 400 });
   }
 
-  if (typeof body.avatarUrl === "string" && !isAllowedAvatarUrl(body.avatarUrl)) {
+  // An empty string clears the avatar; anything else must pass the allowlist.
+  if (
+    typeof body.avatarUrl === "string" &&
+    body.avatarUrl.trim() !== "" &&
+    !isAllowedAvatarUrl(body.avatarUrl)
+  ) {
     return NextResponse.json({ error: "invalid avatar url" }, { status: 400 });
   }
 

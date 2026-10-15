@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { HOUR, rateLimit } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,14 @@ export async function POST(request: Request) {
   if (!user) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
+
+  const limited = await rateLimit({
+    bucket: "avatar-upload",
+    subject: user.id,
+    limit: 10,
+    windowMs: HOUR,
+  });
+  if (limited) return limited;
 
   const formData = await request.formData().catch(() => null);
   const file = formData?.get("file");

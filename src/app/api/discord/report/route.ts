@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { resolveAvatarUrl } from "@/lib/avatar";
+import { resolveAvatarUrl, safeAvatarUrl } from "@/lib/avatar";
 import { CHALLENGES } from "@/lib/challenges";
 import { prisma } from "@/lib/prisma";
 import { supabaseServer } from "@/lib/supabase/server";
+import { HOUR, MINUTE, ipSubject, rateLimit } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -11,8 +12,15 @@ const ANONYMOUS_ACTOR = {
   avatarUrl: null as string | null,
 };
 
+const MAX_NAME_LENGTH = 60;
+
 const getDisplayName = (value: unknown) =>
   typeof value === "string" && value.trim() ? value.trim() : null;
+
+// Embed field values render markdown, so a name like
+// "[Free Nitro](https://evil.example)" would post a clickable link.
+const escapeDiscordMarkdown = (value: string) =>
+  value.replace(/[\\`*_~|[\]()<>#-]/g, "\\$&");
 
 const getChallengeActor = async () => {
   try {
@@ -35,13 +43,14 @@ const getChallengeActor = async () => {
       user.email?.split("@")[0] ||
       "Crew Member";
 
+    // Only forward avatars on our allowlisted hosts to Discord.
     const uploadedAvatar =
-      profile?.avatarUrl ||
-      getDisplayName(user.user_metadata?.avatar_url) ||
-      getDisplayName(user.user_metadata?.picture);
+      safeAvatarUrl(profile?.avatarUrl) ||
+      safeAvatarUrl(user.user_metadata?.avatar_url) ||
+      safeAvatarUrl(user.user_metadata?.picture);
 
     return {
-      name,
+      name: name.slice(0, MAX_NAME_LENGTH),
       avatarUrl: resolveAvatarUrl(uploadedAvatar, user.id),
     };
   } catch (error) {
@@ -74,6 +83,14 @@ export async function POST(request: Request) {
     }
     const { text, game, difficulty, id } = challenge;
 
+    // Keep the channel (and the webhook's own Discord rate limit) safe
+    // from someone looping this endpoint.
+    const limited = await rateLimit(
+      { bucket: "discord-report", subject: ipSubject(request), limit: 10, windowMs: 10 * MINUTE },
+      { bucket: "discord-report", subject: "global", limit: 120, windowMs: HOUR }
+    );
+    if (limited) return limited;
+
     const difficultyColor: Record<string, number> = {
       Easy: 0x22c55e,
       Medium: 0xeab308,
@@ -98,7 +115,7 @@ export async function POST(request: Request) {
             ...(actor.avatarUrl ? { icon_url: actor.avatarUrl } : {}),
           },
           fields: [
-            { name: "Pulled By", value: actor.name, inline: true },
+            { name: "Pulled By", value: escapeDiscordMarkdown(actor.name), inline: true },
             { name: "Game", value: game, inline: true },
             { name: "Difficulty", value: difficulty, inline: true },
             { name: "Challenge #", value: String(id).padStart(2, "0"), inline: true },

@@ -50,6 +50,19 @@ model YouTubeCache {
   updatedAt DateTime @updatedAt
 }
 
+/// Fixed-window request counters for abuse-prone endpoints (contact form,
+/// Discord reports, highlight submissions, ...). `key` is
+/// "<bucket>:<subject>:<windowStart>", where subject is a user id or a
+/// hashed client IP, so no raw IPs are stored. Expired rows are pruned
+/// opportunistically by src/lib/rateLimit.ts.
+model RateLimit {
+  key       String   @id
+  count     Int      @default(0)
+  expiresAt DateTime
+
+  @@index([expiresAt])
+}
+
 /// Generic key/value site config for fields that should be editable from
 /// the admin console without a redeploy. First user: `hero.splineScene`
 /// (the URL of the Spline 3D scene rendered in the Hero section). Add

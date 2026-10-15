@@ -28,7 +28,8 @@ interface Rating {
   isFlagged: boolean;
   isAnonymous: boolean;
   isHearted: boolean;
-  likedBy: string[];
+  likeCount: number;
+  likedByMe: boolean;
   createdAt: string;
   updatedAt: string;
   profile: {
@@ -267,14 +268,15 @@ export const PageRating = () => {
       return;
     }
 
-    const hasLiked = targetReview.likedBy?.includes(user.id) || false;
-    const nextLikedBy = hasLiked
-      ? targetReview.likedBy.filter((id) => id !== user.id)
-      : [...(targetReview.likedBy || []), user.id];
+    const hasLiked = targetReview.likedByMe;
+    const optimistic = {
+      likedByMe: !hasLiked,
+      likeCount: Math.max(0, targetReview.likeCount + (hasLiked ? -1 : 1)),
+    };
 
     // Optimistic state update
     setRatings((prev) =>
-      prev.map((r) => (r.id === reviewId ? { ...r, likedBy: nextLikedBy } : r))
+      prev.map((r) => (r.id === reviewId ? { ...r, ...optimistic } : r))
     );
 
     try {
@@ -289,12 +291,24 @@ export const PageRating = () => {
       }
       
       setRatings((prev) =>
-        prev.map((r) => (r.id === reviewId ? { ...r, likedBy: data.likedBy || nextLikedBy } : r))
+        prev.map((r) =>
+          r.id === reviewId
+            ? {
+                ...r,
+                likeCount: data.likeCount ?? optimistic.likeCount,
+                likedByMe: data.likedByMe ?? optimistic.likedByMe,
+              }
+            : r
+        )
       );
     } catch {
       // Revert optimistic update on failure
       setRatings((prev) =>
-        prev.map((r) => (r.id === reviewId ? { ...r, likedBy: targetReview.likedBy } : r))
+        prev.map((r) =>
+          r.id === reviewId
+            ? { ...r, likeCount: targetReview.likeCount, likedByMe: targetReview.likedByMe }
+            : r
+        )
       );
       showToast("Failed to update like status.", "error");
     }
@@ -725,27 +739,27 @@ export const PageRating = () => {
                             title="You can't heart your own review"
                           >
                             <Heart size={10} className="text-neutral-500" />
-                            <span>{(review.likedBy || []).length} Hearts</span>
+                            <span>{review.likeCount ?? 0} Hearts</span>
                           </span>
                         ) : (
                           <button
                             onClick={() => handleToggleLike(review.id)}
                             className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[0.5625rem] font-black uppercase tracking-wider transition-all duration-300 cursor-pointer select-none active:scale-95 ${
-                              user && (review.likedBy || []).includes(user.id)
+                              user && review.likedByMe
                                 ? "bg-[#ff0033]/15 border-[#ff0033] text-[#ff4b5f] shadow-[0_0_12px_rgba(255,0,51,0.15)]"
                                 : "bg-neutral-900/40 border-white/5 text-neutral-500 hover:border-white/10 hover:text-neutral-300"
                             }`}
-                            title={user && (review.likedBy || []).includes(user.id) ? "Unlike review" : "Like review"}
+                            title={user && review.likedByMe ? "Unlike review" : "Like review"}
                           >
                             <Heart
                               size={10}
                               className={`transition-transform duration-300 ${
-                                user && (review.likedBy || []).includes(user.id)
+                                user && review.likedByMe
                                   ? "fill-[#ff0033] text-[#ff0033] animate-pulse"
                                   : "text-neutral-500"
                               }`}
                             />
-                            <span>{(review.likedBy || []).length} Hearts</span>
+                            <span>{review.likeCount ?? 0} Hearts</span>
                           </button>
                         )}
 

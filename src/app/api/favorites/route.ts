@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { HOUR, rateLimit } from "@/lib/rateLimit";
 import type { User } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
 
 const KINDS = new Set(["video", "sound"]);
+const MAX_ITEM_ID_LENGTH = 200;
+const MAX_ITEM_TITLE_LENGTH = 200;
+const MAX_FAVORITES_PER_USER = 500;
 
 async function getFavoriteUser(): Promise<{
   user: User | null;
@@ -61,11 +65,35 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as
     | { kind?: string; itemId?: string; itemTitle?: string }
     | null;
-  if (!body || !body.kind || !body.itemId || !KINDS.has(body.kind)) {
+  if (
+    !body ||
+    typeof body.kind !== "string" ||
+    typeof body.itemId !== "string" ||
+    !body.itemId ||
+    body.itemId.length > MAX_ITEM_ID_LENGTH ||
+    !KINDS.has(body.kind)
+  ) {
     return NextResponse.json({ error: "invalid body" }, { status: 400 });
   }
+  const itemTitle =
+    typeof body.itemTitle === "string"
+      ? body.itemTitle.slice(0, MAX_ITEM_TITLE_LENGTH)
+      : null;
+
+  const limited = await rateLimit({
+    bucket: "favorites",
+    subject: user.id,
+    limit: 120,
+    windowMs: HOUR,
+  });
+  if (limited) return limited;
 
   try {
+    const existingCount = await prisma.favorite.count({ where: { userId: user.id } });
+    if (existingCount >= MAX_FAVORITES_PER_USER) {
+      return NextResponse.json({ error: "favorites limit reached" }, { status: 400 });
+    }
+
     // Ensure profile exists (first-favorite-before-profile-load case).
     await prisma.profile.upsert({
       where: { id: user.id },
@@ -85,10 +113,10 @@ export async function POST(request: Request) {
         userId: user.id,
         kind: body.kind as "video" | "sound",
         itemId: body.itemId,
-        itemTitle: body.itemTitle ?? null,
+        itemTitle,
       },
       update: {
-        itemTitle: body.itemTitle ?? null,
+        itemTitle,
       },
     });
 

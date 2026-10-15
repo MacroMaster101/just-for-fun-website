@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { supabaseServer } from "@/lib/supabase/server";
+import { safeAvatarUrl } from "@/lib/avatar";
 
 export const dynamic = "force-dynamic";
+
+const MAX_NAME_LENGTH = 60;
+
+const metadataName = (value: unknown): string | null =>
+  typeof value === "string" && value.trim()
+    ? value.trim().slice(0, MAX_NAME_LENGTH)
+    : null;
 
 /** GET — Retrieve all ratings with user profiles, and rating stats/aggregates. */
 export async function GET() {
@@ -46,11 +54,18 @@ export async function GET() {
       // Anonymous viewers are fine.
     }
 
-    const enrichedRatings = ratings.map((r) => {
+    const enrichedRatings = ratings.map(({ likedBy, ...r }) => {
+      // Never publish who liked a review, only how many and whether the
+      // viewer did. likedBy holds real user ids.
+      const likes = {
+        likeCount: likedBy.length,
+        likedByMe: viewerId !== null && likedBy.includes(viewerId),
+      };
       if (r.isAnonymous) {
         const anonId = r.userId === viewerId ? r.userId : `anon-${r.id}`;
         return {
           ...r,
+          ...likes,
           userId: anonId,
           profile: {
             id: anonId,
@@ -59,7 +74,14 @@ export async function GET() {
           },
         };
       }
-      return r;
+      return {
+        ...r,
+        ...likes,
+        profile: r.profile && {
+          ...r.profile,
+          avatarUrl: safeAvatarUrl(r.profile.avatarUrl),
+        },
+      };
     });
 
     return NextResponse.json({
@@ -112,14 +134,13 @@ export async function POST(request: Request) {
       create: {
         id: user.id,
         email: user.email,
+        // user_metadata is user-editable from the browser; cap its length.
         name:
-          (user.user_metadata?.full_name as string | undefined) ||
-          (user.user_metadata?.name as string | undefined) ||
-          null,
+          metadataName(user.user_metadata?.full_name) ||
+          metadataName(user.user_metadata?.name),
         avatarUrl:
-          (user.user_metadata?.avatar_url as string | undefined) ||
-          (user.user_metadata?.picture as string | undefined) ||
-          null,
+          safeAvatarUrl(user.user_metadata?.avatar_url) ||
+          safeAvatarUrl(user.user_metadata?.picture),
       },
       update: {},
     });
@@ -140,7 +161,12 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ success: true, rating: pageRating }, { status: 200 });
+    // likedBy holds other users' ids; the author only needs the count.
+    const { likedBy, ...ownRating } = pageRating;
+    return NextResponse.json(
+      { success: true, rating: { ...ownRating, likeCount: likedBy.length } },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("POST Page Rating Error:", error);
     return NextResponse.json({ error: "Failed to submit rating" }, { status: 500 });
