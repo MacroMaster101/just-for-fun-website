@@ -612,9 +612,10 @@ async function getRssFallbackVideos(): Promise<ApiVideo[]> {
         id,
         title,
         description,
-        thumbnail:
-          extractAttribute(entry, "media:thumbnail", "url") ||
-          `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+        // Build the URL ourselves: the feed points at i1–i4.ytimg.com, which
+        // the CSP img-src and next/image remotePatterns don't allow, so those
+        // thumbnails rendered as broken images.
+        thumbnail: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
         publishedAt: decodeXml(extractTag(entry, "published")),
         duration: "--",
         views: "--",
@@ -633,19 +634,6 @@ function extractTag(entry: string, tag: string) {
   const escapedTag = tag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const match = new RegExp(
     `<${escapedTag}>([\\s\\S]*?)<\\/${escapedTag}>`
-  ).exec(entry);
-  return match?.[1] || "";
-}
-
-function extractAttribute(entry: string, tag: string, attribute: string) {
-  const escapedTag = tag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const escapedAttribute = attribute.replace(
-    /[.*+?^${}()|[\]\\]/g,
-    "\\$&"
-  );
-  const match = new RegExp(
-    `<${escapedTag}[^>]*\\s${escapedAttribute}="([^"]*)"`,
-    "i"
   ).exec(entry);
   return match?.[1] || "";
 }

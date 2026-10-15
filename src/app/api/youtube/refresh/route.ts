@@ -76,7 +76,7 @@ async function handle(req: NextRequest) {
     }
   }
 
-  const { ok, payload, skipped, reason } = await refreshYouTubeCache();
+  const { ok, payload, skipped, reason } = await refreshYouTubeCache({ force });
   return NextResponse.json({
     ok,
     skipped: skipped ?? false,
