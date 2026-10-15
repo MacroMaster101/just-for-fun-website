@@ -16,7 +16,7 @@ the reader's light or dark mode.
 | Authentication → Invite user | `invite-user.html` | `You're invited to join Just For Fun` | A |
 | Authentication → Magic link or OTP | `magic-link.html` | `Your Just For Fun sign-in link` | A |
 | Authentication → Change email address | `change-email.html` | `Confirm your new email for Just For Fun` | A |
-| Authentication → Reset password | `reset-password.html` | `Reset your Just For Fun password` | A |
+| Authentication → Reset password | `reset-password.html` | `Reset your Just For Fun password` | C |
 | Authentication → Reauthentication | `reauthentication.html` | `Your Just For Fun verification code: {{ .Token }}` | C |
 | Security → Password changed | `password-changed.html` | `Your Just For Fun password was changed` | F |
 | Security → Email address changed | `email-changed.html` | `Your Just For Fun email address was changed` | F |

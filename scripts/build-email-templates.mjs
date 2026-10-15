@@ -232,18 +232,20 @@ ${note(`This link expires in ${EXPIRY}. Didn't ask for this? Ignore this email a
   {
     file: "reset-password.html",
     dashboard: "Authentication → Reset password",
-    style: "A",
+    // The sign-in window asks for this code (Forgot password → code → new
+    // password); the button is a one-tap backup.
+    style: "C",
     subject: "Reset your Just For Fun password",
     html: layout({
-      preheader: "Tap to choose a new password for your Just For Fun account.",
+      preheader: "Your Just For Fun password reset code is inside.",
       why: "You're receiving this because a password reset was requested for this address at j4fn.site.",
       body: `
-${icon("🔑")}
-${h1("Reset your password")}
-${p("We got a request to reset the password for your Just For Fun account. Tap the button below to choose a new one.")}
+${h1("Reset your password", "center")}
+${p("Enter this code in the Just For Fun sign-in window to choose a new password.", { align: "center" })}
+${codeBox("{{ .Token }}")}
+${p("Or reset it with one tap:", { align: "center", mb: 14 })}
 ${button("Choose a new password", "{{ .ConfirmationURL }}")}
-${fallback("{{ .ConfirmationURL }}")}
-${note(`This link works once and expires in ${EXPIRY}. Didn't ask for a reset? Ignore this email; your password won't change.`)}`,
+${note(`The code and link work once and expire in ${EXPIRY}. We'll never ask for this code by phone, chat or DM. Didn't ask for a reset? Ignore this email; your password won't change.`)}`,
     }),
   },
   {
