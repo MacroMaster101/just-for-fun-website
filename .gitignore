@@ -37,8 +37,12 @@ yarn-error.log*
 # vercel
 .vercel
 
-# claude
+# AI assistant / agent local files
 .claude/
+CLAUDE.local.md
+.cursor/
+.aider*
+graphify-out/
 
 # editor
 .vscode/
@@ -50,3 +54,8 @@ next-env.d.ts
 
 # Supabase CLI local state (created by `supabase link`)
 supabase/.temp/
+supabase/.branches/
+
+# misc local files
+*.log
+Thumbs.db

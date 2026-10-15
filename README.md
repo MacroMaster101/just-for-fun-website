@@ -105,7 +105,11 @@ supabase link --project-ref PROJECTREF
 supabase db push
 ```
 
-### 5. Run it
+### 5. Set up auth emails
+
+In Supabase → Authentication → Emails → **SMTP Settings**, send through Resend: host `smtp.resend.com`, port `465`, username `resend`, password a Resend API key with sending access. Then paste the branded templates from [`supabase/templates/`](supabase/templates/README.md) into **Templates** (subjects are listed in that README). To change them, edit [`scripts/build-email-templates.mjs`](scripts/build-email-templates.mjs) and run `node scripts/build-email-templates.mjs`.
+
+### 6. Run it
 
 ```bash
 npm run dev
