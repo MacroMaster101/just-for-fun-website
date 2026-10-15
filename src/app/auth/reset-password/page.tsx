@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { isStrongPassword } from "@/lib/passwordStrength";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -34,8 +35,11 @@ export default function ResetPasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (pw.length < 6) {
-      setError("Password must be at least 6 characters.");
+    // Same rules as sign-up and the in-modal reset.
+    if (!isStrongPassword(pw)) {
+      setError(
+        "Use at least 8 characters with an uppercase letter, a lowercase letter, a number and a special character."
+      );
       return;
     }
     if (pw !== confirm) {
@@ -94,10 +98,10 @@ export default function ResetPasswordPage() {
                 <input
                   type={showPw ? "text" : "password"}
                   required
-                  minLength={6}
+                  minLength={8}
                   value={pw}
                   onChange={(e) => setPw(e.target.value)}
-                  placeholder="At least 6 characters"
+                  placeholder="At least 8 characters, mixed"
                   className="w-full rounded-lg border border-white/10 bg-[#0a0a0a] pl-3 pr-10 py-2.5 text-sm text-white placeholder:text-neutral-600 focus:border-[#ff0033] focus:outline-none"
                 />
                 <button
@@ -118,7 +122,7 @@ export default function ResetPasswordPage() {
                 <input
                   type={showConfirm ? "text" : "password"}
                   required
-                  minLength={6}
+                  minLength={8}
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
                   placeholder="Re-enter password"

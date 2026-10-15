@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { Eye, EyeOff, Loader2, Mail, X } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Eye, EyeOff, KeyRound, Loader2, Mail, X } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { isValidEmail } from "@/lib/isValidEmail";
+import { getPasswordStrength, isStrongPassword, PASSWORD_RULES } from "@/lib/passwordStrength";
 import { useAuth } from "@/components/auth/AuthProvider";
 
 interface AuthModalProps {
@@ -16,6 +17,23 @@ interface AuthModalProps {
 
 type Provider = "google" | "facebook" | "discord";
 type AuthMode = "login" | "signup";
+// Forgot-password flow: email → code from the email → new password → done.
+type ResetStep = "email" | "code" | "password" | "done";
+
+// Supabase rate-limits reset emails per address (60s by default).
+const RESEND_COOLDOWN_S = 60;
+
+const RESET_STEPS: Record<Exclude<ResetStep, "done">, { n: number; label: string }> = {
+  email: { n: 1, label: "Your email" },
+  code: { n: 2, label: "Enter the code" },
+  password: { n: 3, label: "New password" },
+};
+
+const inputClass =
+  "rounded-lg border border-white/10 bg-[#0a0a0a] px-3 py-2.5 text-sm text-white placeholder:text-neutral-600 focus:border-[#ff0033] focus:outline-none";
+const primaryButtonClass =
+  "mt-1 flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#ff0033] to-[#ff2d55] px-4 py-3 text-sm font-black uppercase tracking-wide text-white shadow-[0_0_24px_rgba(255,0,51,0.4)] transition hover:shadow-[0_0_32px_rgba(255,0,51,0.6)] disabled:cursor-not-allowed disabled:opacity-60";
+const labelTextClass = "text-[0.625rem] font-black uppercase tracking-[0.2em] text-neutral-500";
 
 const RequirementRow = ({ met, text }: { met: boolean; text: string }) => (
   <div className="flex items-center gap-2 text-[0.6875rem] leading-tight">
@@ -31,6 +49,58 @@ const RequirementRow = ({ met, text }: { met: boolean; text: string }) => (
     <span className={`transition-colors ${met ? "text-neutral-300" : "text-neutral-500"}`}>
       {text}
     </span>
+  </div>
+);
+
+const PasswordChecklist = ({ password }: { password: string }) => {
+  const strength = getPasswordStrength(password);
+  return (
+    <div className="mt-1 rounded-lg border border-white/5 bg-white/[0.02] p-3 text-xs">
+      <p className="mb-2 font-black uppercase tracking-wider text-neutral-400 text-[0.5625rem]">
+        Password Requirements
+      </p>
+      <div className="grid grid-cols-1 gap-2">
+        {PASSWORD_RULES.map(([key, text]) => (
+          <RequirementRow key={key} met={strength[key]} text={text} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const PasswordInput = ({
+  value,
+  onChange,
+  placeholder,
+  autoComplete,
+  show,
+  onToggle,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  autoComplete: string;
+  show: boolean;
+  onToggle: () => void;
+}) => (
+  <div className="relative">
+    <input
+      type={show ? "text" : "password"}
+      required
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      autoComplete={autoComplete}
+      className={`w-full ${inputClass} pr-10`}
+    />
+    <button
+      type="button"
+      onClick={onToggle}
+      className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-300 transition-colors"
+      title={show ? "Hide password" : "Show password"}
+    >
+      {show ? <EyeOff size={16} /> : <Eye size={16} />}
+    </button>
   </div>
 );
 
@@ -52,14 +122,21 @@ export const AuthModal = ({
   const [info, setInfo] = useState<string | null>(null);
   const [isSignedUp, setIsSignedUp] = useState(false);
 
+  const [resetStep, setResetStep] = useState<ResetStep | null>(null);
+  const [code, setCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [resendIn, setResendIn] = useState(0);
+
   // Auto-close the modal if the user is already logged in (e.g. after OAuth
-  // success). Without this, the modal could remain visible on top of the
-  // logged-in UI if it was re-opened or never closed.
+  // success). Skipped during the reset flow: verifying the code signs the
+  // user in, but they still need to choose a new password.
   useEffect(() => {
-    if (isOpen && user) {
+    if (isOpen && user && resetStep === null) {
       onClose();
     }
-  }, [isOpen, user, onClose]);
+  }, [isOpen, user, resetStep, onClose]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -74,6 +151,12 @@ export const AuthModal = ({
       setName("");
       setRememberMe(true);
       setBusy(false);
+      setResetStep(null);
+      setCode("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setShowNewPassword(false);
+      setResendIn(0);
     }, 0);
     return () => clearTimeout(t);
   }, [isOpen, initialMode, initialError]);
@@ -91,28 +174,22 @@ export const AuthModal = ({
     };
   }, [isOpen, onClose]);
 
+  // Countdown for the "Resend code" button.
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const t = setTimeout(() => setResendIn((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendIn]);
+
   if (!isOpen) return null;
   if (typeof document === "undefined") return null;
 
-  const isEmailValid = isValidEmail;
+  const isPasswordStrong = isStrongPassword(password);
 
-  const getPasswordStrength = (pass: string) => {
-    return {
-      length: pass.length >= 8,
-      uppercase: /[A-Z]/.test(pass),
-      lowercase: /[a-z]/.test(pass),
-      digit: /\d/.test(pass),
-      special: /[@$!%*?&_#^+=()[\]{}|;:',.<>/?~-]/.test(pass),
-    };
+  const resetMessages = () => {
+    setError(null);
+    setInfo(null);
   };
-
-  const strength = getPasswordStrength(password);
-  const isPasswordStrong =
-    strength.length &&
-    strength.uppercase &&
-    strength.lowercase &&
-    strength.digit &&
-    strength.special;
 
   const handleOAuth = async (provider: Provider) => {
     setBusy(true);
@@ -143,10 +220,9 @@ export const AuthModal = ({
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
-    setError(null);
-    setInfo(null);
+    resetMessages();
 
-    if (!isEmailValid(email)) {
+    if (!isValidEmail(email)) {
       setError("Please enter a valid email address.");
       setBusy(false);
       return;
@@ -195,52 +271,299 @@ export const AuthModal = ({
     }
   };
 
-  const handleMagicLink = async () => {
-    if (!email) {
-      setError("Enter your email first.");
+  // ---------- forgot password ----------
+
+  const startReset = () => {
+    resetMessages();
+    setCode("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setResetStep("email");
+  };
+
+  const exitReset = () => {
+    resetMessages();
+    setResetStep(null);
+    setMode("login");
+  };
+
+  const sendResetCode = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    resetMessages();
+    if (!isValidEmail(email)) {
+      setError("Please enter a valid email address.");
       return;
     }
     setBusy(true);
-    setError(null);
-    setInfo(null);
     try {
-      const { error } = await supabase().auth.signInWithOtp({
-        email,
-        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      // The email also contains a link to /auth/reset-password as a backup.
+      const { error } = await supabase().auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
       });
-      if (error) setError(error.message);
-      else setInfo("Magic link sent. Check your inbox.");
+      if (error) {
+        setError(error.message);
+        return;
+      }
+      // Same message whether or not the address has an account, so the
+      // form can't be used to check who is registered.
+      setInfo(`If an account exists for ${email}, we've sent it a 6-digit code.`);
+      setCode("");
+      setResendIn(RESEND_COOLDOWN_S);
+      setResetStep("code");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "An unexpected error occurred sending the magic link.");
-      console.error("Magic link error:", err);
+      setError(err instanceof Error ? err.message : "Could not send the reset code. Please try again.");
+      console.error("Reset code error:", err);
     } finally {
       setBusy(false);
     }
   };
 
-  const handleForgotPassword = async () => {
-    if (!email) {
-      setError("Enter your email first, then click Forgot password.");
+  const verifyResetCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    resetMessages();
+    const token = code.replace(/\s+/g, "");
+    if (!/^\d{6,10}$/.test(token)) {
+      setError("Enter the code from the email.");
       return;
     }
     setBusy(true);
-    setError(null);
-    setInfo(null);
     try {
-      const { error } = await supabase().auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
-      });
-      if (error) setError(error.message);
-      else
-        setInfo(
-          "Password reset link sent. Check your inbox and follow the link to set a new password."
-        );
+      const { error } = await supabase().auth.verifyOtp({ email, token, type: "recovery" });
+      if (error) {
+        setError("That code is wrong or has expired. Check the latest email, or send a new code.");
+        return;
+      }
+      setResetStep("password");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "An unexpected error occurred sending the reset link.");
-      console.error("Forgot password error:", err);
+      setError(err instanceof Error ? err.message : "Could not check the code. Please try again.");
+      console.error("Verify code error:", err);
     } finally {
       setBusy(false);
     }
+  };
+
+  const saveNewPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    resetMessages();
+    if (!isStrongPassword(newPassword)) {
+      setError("Password does not meet security standards.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const { error } = await supabase().auth.updateUser({ password: newPassword });
+      if (error) {
+        setError(error.message);
+        return;
+      }
+      setResetStep("done");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Could not update your password. Please try again.");
+      console.error("Update password error:", err);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const messages = (
+    <>
+      {error && (
+        <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-300">
+          {error}
+        </p>
+      )}
+      {info && (
+        <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-300">
+          {info}
+        </p>
+      )}
+    </>
+  );
+
+  const busyLabel = (
+    <>
+      <Loader2 size={16} className="animate-spin" />
+      Please wait...
+    </>
+  );
+
+  const renderReset = () => {
+    if (resetStep === "done") {
+      return (
+        <div className="flex flex-col items-center text-center py-4">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400 mb-4">
+            <CheckCircle2 size={30} />
+          </div>
+          <h2 className="font-display text-2xl font-black uppercase tracking-wide text-white mb-2">
+            Password Updated
+          </h2>
+          <p className="text-sm text-neutral-300 mb-6 max-w-xs leading-relaxed">
+            Your new password is saved and you&apos;re signed in. Use it next time you log in.
+          </p>
+          <button type="button" onClick={onClose} className={`w-full ${primaryButtonClass}`}>
+            Continue
+          </button>
+        </div>
+      );
+    }
+
+    const step = RESET_STEPS[resetStep as Exclude<ResetStep, "done">];
+    return (
+      <>
+        <div className="mb-6">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#ff0033]/15 text-[#ff4b5f]">
+              <KeyRound size={20} />
+            </span>
+            <div>
+              <h2 className="font-display text-2xl font-black uppercase tracking-wide text-white">
+                Reset Password
+              </h2>
+              <p className="mt-0.5 text-xs font-bold uppercase tracking-[0.2em] text-[#ff2d55]">
+                Step {step.n} of 3 · {step.label}
+              </p>
+            </div>
+          </div>
+          <div className="mt-4 grid grid-cols-3 gap-1.5" aria-hidden>
+            {[1, 2, 3].map((n) => (
+              <div
+                key={n}
+                className={`h-1 rounded-full transition-colors ${n <= step.n ? "bg-[#ff0033]" : "bg-white/10"}`}
+              />
+            ))}
+          </div>
+        </div>
+
+        {resetStep === "email" && (
+          <form onSubmit={sendResetCode} className="grid gap-3">
+            <p className="text-sm leading-relaxed text-neutral-400">
+              Enter the email you signed up with and we&apos;ll send you a 6-digit code to reset your password.
+            </p>
+            <label className="grid gap-1.5">
+              <span className={labelTextClass}>Email</span>
+              <input
+                type="email"
+                required
+                autoFocus
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                className={inputClass}
+              />
+            </label>
+            {messages}
+            <button type="submit" disabled={busy} className={primaryButtonClass}>
+              {busy ? busyLabel : "Send Code"}
+            </button>
+          </form>
+        )}
+
+        {resetStep === "code" && (
+          <form onSubmit={verifyResetCode} className="grid gap-3">
+            <p className="text-sm leading-relaxed text-neutral-400">
+              Check <span className="font-bold text-white">{email}</span> for an email from Just For Fun
+              and enter the code below. It expires in 1 hour.
+            </p>
+            <label className="grid gap-1.5">
+              <span className={labelTextClass}>Code</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                autoFocus
+                required
+                maxLength={10}
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+                placeholder="123456"
+                className={`${inputClass} text-center font-mono text-xl tracking-[0.5em]`}
+              />
+            </label>
+            {messages}
+            <button type="submit" disabled={busy || code.length < 6} className={primaryButtonClass}>
+              {busy ? busyLabel : "Verify Code"}
+            </button>
+            <div className="flex items-center justify-between text-xs">
+              <button
+                type="button"
+                onClick={() => {
+                  resetMessages();
+                  setResetStep("email");
+                }}
+                className="text-neutral-400 hover:text-white"
+              >
+                Use a different email
+              </button>
+              <button
+                type="button"
+                disabled={busy || resendIn > 0}
+                onClick={() => sendResetCode()}
+                className="font-bold text-[#ff4b5f] hover:text-[#ff0033] disabled:cursor-not-allowed disabled:text-neutral-600"
+              >
+                {resendIn > 0 ? `Resend code in ${resendIn}s` : "Resend code"}
+              </button>
+            </div>
+            <p className="rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2.5 text-[0.6875rem] leading-relaxed text-neutral-500">
+              Can&apos;t find it? Check spam or promotions. You can also tap the link in the email instead.
+            </p>
+          </form>
+        )}
+
+        {resetStep === "password" && (
+          <form onSubmit={saveNewPassword} className="grid gap-3">
+            <p className="text-sm leading-relaxed text-neutral-400">
+              Code confirmed. Choose a new password for <span className="font-bold text-white">{email}</span>.
+            </p>
+            <label className="grid gap-1.5">
+              <span className={labelTextClass}>New Password</span>
+              <PasswordInput
+                value={newPassword}
+                onChange={setNewPassword}
+                placeholder="Create a strong password"
+                autoComplete="new-password"
+                show={showNewPassword}
+                onToggle={() => setShowNewPassword(!showNewPassword)}
+              />
+            </label>
+            <label className="grid gap-1.5">
+              <span className={labelTextClass}>Confirm Password</span>
+              <PasswordInput
+                value={confirmPassword}
+                onChange={setConfirmPassword}
+                placeholder="Re-enter password"
+                autoComplete="new-password"
+                show={showNewPassword}
+                onToggle={() => setShowNewPassword(!showNewPassword)}
+              />
+            </label>
+            {newPassword.length > 0 && <PasswordChecklist password={newPassword} />}
+            {messages}
+            <button
+              type="submit"
+              disabled={busy || !isStrongPassword(newPassword) || newPassword !== confirmPassword}
+              className={primaryButtonClass}
+            >
+              {busy ? busyLabel : "Save New Password"}
+            </button>
+          </form>
+        )}
+
+        {resetStep !== "password" && (
+          <button
+            type="button"
+            onClick={exitReset}
+            className="mt-5 flex w-full items-center justify-center gap-1.5 text-xs font-bold text-neutral-400 hover:text-white"
+          >
+            <ArrowLeft size={12} /> Back to sign in
+          </button>
+        )}
+      </>
+    );
   };
 
   return createPortal(
@@ -260,7 +583,9 @@ export const AuthModal = ({
           <X size={18} />
         </button>
 
-        {isSignedUp ? (
+        {resetStep !== null ? (
+          renderReset()
+        ) : isSignedUp ? (
           <div className="flex flex-col items-center text-center py-4">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#ff0033]/15 text-[#ff4b5f] mb-4">
               <Mail size={30} className="animate-pulse" />
@@ -281,7 +606,7 @@ export const AuthModal = ({
                 setMode("login");
                 setPassword("");
               }}
-              className="w-full rounded-lg bg-gradient-to-r from-[#ff0033] to-[#ff2d55] px-4 py-3 text-sm font-black uppercase tracking-wide text-white shadow-[0_0_24px_rgba(255,0,51,0.4)] transition hover:shadow-[0_0_32px_rgba(255,0,51,0.6)]"
+              className={`w-full ${primaryButtonClass}`}
             >
               Back to Sign In
             </button>
@@ -328,71 +653,49 @@ export const AuthModal = ({
             <form onSubmit={handleEmailSubmit} className="grid gap-3">
               {mode === "signup" && (
                 <label className="grid gap-1.5">
-                  <span className="text-[0.625rem] font-black uppercase tracking-[0.2em] text-neutral-500">
-                    Display Name
-                  </span>
+                  <span className={labelTextClass}>Display Name</span>
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Your name (optional)"
-                    className="rounded-lg border border-white/10 bg-[#0a0a0a] px-3 py-2.5 text-sm text-white placeholder:text-neutral-600 focus:border-[#ff0033] focus:outline-none"
+                    className={inputClass}
                   />
                 </label>
               )}
               <label className="grid gap-1.5">
-                <span className="text-[0.625rem] font-black uppercase tracking-[0.2em] text-neutral-500">
-                  Email
-                </span>
+                <span className={labelTextClass}>Email</span>
                 <input
                   type="email"
                   required
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="rounded-lg border border-white/10 bg-[#0a0a0a] px-3 py-2.5 text-sm text-white placeholder:text-neutral-600 focus:border-[#ff0033] focus:outline-none"
+                  className={inputClass}
                 />
               </label>
               <label className="grid gap-1.5">
-                <span className="flex items-center justify-between text-[0.625rem] font-black uppercase tracking-[0.2em] text-neutral-500">
+                <span className={`flex items-center justify-between ${labelTextClass}`}>
                   <span>Password</span>
                   {mode === "login" && (
-                    <span className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={handleMagicLink}
-                        className="flex items-center gap-1 text-[#ff4b5f] hover:text-[#ff0033]"
-                      >
-                        <Mail size={10} /> Magic Link
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleForgotPassword}
-                        className="text-[#ff4b5f] hover:text-[#ff0033]"
-                      >
-                        Forgot?
-                      </button>
-                    </span>
+                    <button
+                      type="button"
+                      onClick={startReset}
+                      className="text-[#ff4b5f] hover:text-[#ff0033]"
+                    >
+                      Forgot password?
+                    </button>
                   )}
                 </span>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder={mode === "signup" ? "Create a strong password" : "Your password"}
-                    className="w-full rounded-lg border border-white/10 bg-[#0a0a0a] pl-3 pr-10 py-2.5 text-sm text-white placeholder:text-neutral-600 focus:border-[#ff0033] focus:outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-300 transition-colors"
-                    title={showPassword ? "Hide password" : "Show password"}
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
+                <PasswordInput
+                  value={password}
+                  onChange={setPassword}
+                  placeholder={mode === "signup" ? "Create a strong password" : "Your password"}
+                  autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                  show={showPassword}
+                  onToggle={() => setShowPassword(!showPassword)}
+                />
               </label>
 
             {/* Remember Me Checkbox */}
@@ -411,47 +714,16 @@ export const AuthModal = ({
             )}
 
             {/* Password Validation Checklist */}
-            {mode === "signup" && password.length > 0 && (
-              <div className="mt-1 rounded-lg border border-white/5 bg-white/[0.02] p-3 text-xs">
-                <p className="mb-2 font-black uppercase tracking-wider text-neutral-400 text-[0.5625rem]">
-                  Password Requirements
-                </p>
-                <div className="grid grid-cols-1 gap-2">
-                  <RequirementRow met={strength.length} text="At least 8 characters" />
-                  <RequirementRow met={strength.uppercase} text="At least one uppercase letter (A-Z)" />
-                  <RequirementRow met={strength.lowercase} text="At least one lowercase letter (a-z)" />
-                  <RequirementRow met={strength.digit} text="At least one number (0-9)" />
-                  <RequirementRow met={strength.special} text="At least one special character (e.g. @$!%*?&)" />
-                </div>
-              </div>
-            )}
+            {mode === "signup" && password.length > 0 && <PasswordChecklist password={password} />}
 
-            {error && (
-              <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-300">
-                {error}
-              </p>
-            )}
-            {info && (
-              <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-300">
-                {info}
-              </p>
-            )}
+            {messages}
 
             <button
               type="submit"
               disabled={busy || (mode === "signup" && !isPasswordStrong)}
-              className="mt-1 flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#ff0033] to-[#ff2d55] px-4 py-3 text-sm font-black uppercase tracking-wide text-white shadow-[0_0_24px_rgba(255,0,51,0.4)] transition hover:shadow-[0_0_32px_rgba(255,0,51,0.6)] disabled:cursor-not-allowed disabled:opacity-60"
+              className={primaryButtonClass}
             >
-              {busy ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  Please wait...
-                </>
-              ) : mode === "login" ? (
-                "Log In"
-              ) : (
-                "Sign Up"
-              )}
+              {busy ? busyLabel : mode === "login" ? "Log In" : "Sign Up"}
             </button>
           </form>
 
