@@ -3,6 +3,7 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { prisma } from "@/lib/prisma";
 import { isAllowedAvatarUrl, safeAvatarUrl } from "@/lib/avatar";
+import { rootAdminEmail } from "@/lib/auth/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -108,7 +109,7 @@ export async function PATCH(request: Request) {
  *
  * Refuses to delete admin accounts so an admin does not accidentally lock
  * themselves out. They must remove themselves from the AdminEmail allowlist
- * or change NEXT_PUBLIC_ADMIN_EMAIL first.
+ * or change ADMIN_EMAIL first.
  */
 export async function DELETE() {
   const supabase = await supabaseServer();
@@ -120,12 +121,12 @@ export async function DELETE() {
   }
 
   const email = user.email?.toLowerCase().trim() ?? "";
-  const rootAdmin = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase().trim();
+  const rootAdmin = rootAdminEmail();
   if (rootAdmin && email === rootAdmin) {
     return NextResponse.json(
       {
         error:
-          "Root admin cannot be deleted from the UI. Update NEXT_PUBLIC_ADMIN_EMAIL first.",
+          "Root admin cannot be deleted from the UI. Update ADMIN_EMAIL first.",
       },
       { status: 403 }
     );

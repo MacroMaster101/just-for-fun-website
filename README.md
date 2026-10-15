@@ -79,8 +79,8 @@ Copy `.env.example` to `.env` and fill in your values:
 | `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public Supabase client config |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-only key for admin uploads and account deletion |
 | `YOUTUBE_API_KEY` / `YOUTUBE_CHANNEL_ID` / `YOUTUBE_CHANNEL_HANDLE` | YouTube Data API sync |
-| `NEXT_PUBLIC_ADMIN_EMAIL` | Root admin account |
-| `CRON_SECRET` | Protects `/api/youtube/refresh` |
+| `ADMIN_EMAIL` | Root admin account (server-only) |
+| `CRON_SECRET` | Protects the daily `/api/youtube/refresh` cron |
 | `SMTP_USER` / `SMTP_PASS` | Contact form and reply emails |
 | `RAWG_API_KEY` | Game search in the admin panel |
 | `DISCORD_CHALLENGE_WEBHOOK_URL` | Challenge Slot → Discord posts |
@@ -95,9 +95,14 @@ Use the direct (session) connection for schema changes, since the transaction po
 
 Then lock the tables away from Supabase's public Data API. Run [`prisma/security/lock-down-data-api.sql`](prisma/security/lock-down-data-api.sql) in the Supabase SQL Editor, and re-run it whenever `db push` adds new tables. The app only accesses these tables through Prisma, so this changes nothing for the site.
 
-### 4. Create storage buckets
+### 4. Set up storage buckets
 
-Create these **public** buckets in Supabase Storage: `avatars`, `squad-avatars`, `game-logos`, `highlights`, and `sound-clips` (auto-created on the first admin audio upload if missing).
+Link the Supabase CLI to your project and apply the storage migration, which creates the public buckets (`avatars`, `squad-avatars`, `game-logos`, `highlights`, `sound-clips`) with their size and file-type limits:
+
+```bash
+supabase link --project-ref PROJECTREF
+supabase db push
+```
 
 ### 5. Run it
 
@@ -105,7 +110,7 @@ Create these **public** buckets in Supabase Storage: `avatars`, `squad-avatars`,
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Sign in with the `NEXT_PUBLIC_ADMIN_EMAIL` account (verified email required) and visit `/admin`.
+Open [http://localhost:3000](http://localhost:3000). Sign in with the `ADMIN_EMAIL` account (verified email required) and visit `/admin`.
 
 ## 🕹️ Scripts
 
@@ -135,7 +140,7 @@ Open [http://localhost:3000](http://localhost:3000). Sign in with the `NEXT_PUBL
 
 ## 📡 YouTube cache
 
-`/api/youtube/refresh` (GET or POST) refreshes the cached channel data. Vercel Cron calls it daily with `Authorization: Bearer <CRON_SECRET>`; signed-in admins can also trigger it from the dashboard. To protect API quota, it refreshes at most once every 15 minutes unless `?force=1` is passed.
+`/api/youtube/refresh` refreshes the cached channel data. Vercel Cron calls it daily with `GET` and `Authorization: Bearer <CRON_SECRET>` (the only accepted form of the secret), and that daily run also prunes profiles whose auth account was deleted. Signed-in admins can trigger a refresh from the dashboard, which uses `POST`. To protect API quota, it refreshes at most once every 15 minutes unless `?force=1` is passed.
 
 ## 🌿 Branch workflow
 

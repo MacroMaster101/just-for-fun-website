@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { listAuthUsers } from "@/lib/authUsers";
+import { rootAdminEmail } from "@/lib/auth/admin";
 import { safeAvatarUrl } from "@/lib/avatar";
 
 // Public data only, so cache it: this keeps anonymous traffic from
@@ -27,7 +28,7 @@ export async function GET() {
   try {
     const [adminRows, rootAdmin, rows, authList] = await Promise.all([
       prisma.adminEmail.findMany({ select: { email: true } }),
-      Promise.resolve(process.env.NEXT_PUBLIC_ADMIN_EMAIL),
+      Promise.resolve(rootAdminEmail()),
       prisma.profile.findMany({
         orderBy: { createdAt: "desc" },
         take: 200,
