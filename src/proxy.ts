@@ -99,7 +99,7 @@ export async function proxy(request: NextRequest) {
       const url = request.nextUrl.clone();
       url.pathname = "/";
       url.search = "";
-      url.searchParams.set("auth_error", "Sign in required to access /admin.");
+      url.searchParams.set("auth_error", "admin_required");
       return NextResponse.redirect(url);
     }
   } catch (err) {

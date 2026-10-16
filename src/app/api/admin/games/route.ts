@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { verifyAdmin } from "@/lib/auth/admin";
 import { prisma } from "@/lib/prisma";
+import { safeLinkUrl } from "@/lib/safeUrl";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ function normalize(raw: GameInput) {
     typeof v === "string" ? v.trim() : fallback;
   return {
     name: str(raw.name).slice(0, 60),
-    logoUrl: str(raw.logoUrl),
+    logoUrl: safeLinkUrl(raw.logoUrl),
     sortOrder: typeof raw.sortOrder === "number" ? raw.sortOrder : 0,
   };
 }

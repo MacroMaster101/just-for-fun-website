@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { verifyAdmin } from "@/lib/auth/admin";
 import { prisma } from "@/lib/prisma";
+import { safeLinkUrl } from "@/lib/safeUrl";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,9 @@ const ALLOWED_KEYS: Record<string, (v: string) => string | null> = {
         }
         if (typeof item.logoUrl !== "string") {
           return "Each game must have a logoUrl.";
+        }
+        if (item.logoUrl.trim() && !safeLinkUrl(item.logoUrl)) {
+          return "Each game logoUrl must be an http(s) URL.";
         }
       }
       return null;

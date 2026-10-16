@@ -157,7 +157,8 @@ export async function POST(request: Request) {
         rating: ratingVal,
         comment: commentVal,
         isAnonymous: !!body?.isAnonymous,
-        isFlagged: false, // Reset flag if updated
+        // isFlagged is left alone: only an admin can clear a flag (admin
+        // ratings PATCH), otherwise authors could re-save to remove it.
       },
     });
 

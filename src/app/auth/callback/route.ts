@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
+import { authErrorCode } from "@/lib/authErrors";
 
 export const dynamic = "force-dynamic";
 
@@ -32,10 +33,10 @@ export async function GET(request: NextRequest) {
 
   if (error || errorCode || errorDescription) {
     console.error("OAuth callback error:", error, errorDescription);
-    const msg = errorDescription || error || "Authentication failed";
-    return NextResponse.redirect(
-      `${url.origin}/?auth_error=${encodeURIComponent(msg)}`
-    );
+    // Pass a fixed code, not the provider's text, so crafted links can't
+    // put arbitrary messages in the sign-in modal.
+    const reason = authErrorCode(errorCode, error, errorDescription);
+    return NextResponse.redirect(`${url.origin}/?auth_error=${reason}`);
   }
 
   if (code) {
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest) {
     if (error) {
       console.error("OAuth callback error during exchange:", error.message);
       return NextResponse.redirect(
-        `${url.origin}/?auth_error=${encodeURIComponent(error.message)}`
+        `${url.origin}/?auth_error=${authErrorCode(error.code, error.message)}`
       );
     }
   }

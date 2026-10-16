@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { verifyAdmin } from "@/lib/auth/admin";
 import { prisma } from "@/lib/prisma";
+import { safeLinkUrl } from "@/lib/safeUrl";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +31,7 @@ function normalize(raw: MerchInput) {
     description: str(raw.description).slice(0, 500),
     price: Math.max(0, num(raw.price)),
     emoji: str(raw.emoji, "🛍️").slice(0, 8),
-    imageUrl: str(raw.imageUrl),
+    imageUrl: safeLinkUrl(raw.imageUrl),
     grade,
     sortOrder: Math.trunc(num(raw.sortOrder)),
   };
