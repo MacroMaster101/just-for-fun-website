@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import {
   fetchFreshYouTubePayload,
@@ -9,6 +10,10 @@ const CACHE_KEY = "main";
 // Marker row written when a refresh fails (quota exceeded, API error,
 // missing key). Lives in the same table so every serverless instance sees it.
 const FAILED_REFRESH_KEY = "main:last-failed-refresh";
+// Claimed at the start of every non-forced refresh, before any YouTube call,
+// so other instances skip theirs even if this one is killed mid-refresh.
+const REFRESH_ATTEMPT_KEY = "main:last-refresh-attempt";
+const MIN_ATTEMPT_GAP_MS = 15 * 60 * 1000; // 15 minutes
 // Soft TTL — if a cache hit is older than this, the user-facing route
 // triggers a background refresh (stale-while-revalidate). The cron job is
 // the primary refresher; this is a safety net.
@@ -99,6 +104,15 @@ export async function refreshYouTubeCache({ force = false }: { force?: boolean }
           reason: `Backing off after a failed refresh: ${failure}`,
         };
       }
+      if (await recentRefreshAttempt()) {
+        return {
+          ok: true,
+          payload: (await readCachedPayload()) ?? emptyPayload,
+          skipped: true,
+          reason: "Another refresh started in the last 15 minutes.",
+        };
+      }
+      await claimRefreshAttempt();
     } catch (err) {
       console.error("Refresh backoff check failed:", err);
     }
@@ -159,6 +173,23 @@ async function recentRefreshFailure(): Promise<string | null> {
   return typeof message === "string" && message ? message : "refresh failed";
 }
 
+async function recentRefreshAttempt(): Promise<boolean> {
+  const row = await prisma.youTubeCache.findUnique({
+    where: { key: REFRESH_ATTEMPT_KEY },
+    select: { updatedAt: true },
+  });
+  return !!row && Date.now() - row.updatedAt.getTime() < MIN_ATTEMPT_GAP_MS;
+}
+
+async function claimRefreshAttempt() {
+  const payload = { at: new Date().toISOString() };
+  await prisma.youTubeCache.upsert({
+    where: { key: REFRESH_ATTEMPT_KEY },
+    create: { key: REFRESH_ATTEMPT_KEY, payload },
+    update: { payload },
+  });
+}
+
 async function recordRefreshFailure(message: string | undefined) {
   const payload = { message: message || "refresh failed", at: new Date().toISOString() };
   await prisma.youTubeCache.upsert({
@@ -184,9 +215,19 @@ async function writeCache(payload: YouTubePayload) {
 function triggerBackgroundRefresh() {
   if (backgroundRefreshInFlight) return;
   backgroundRefreshInFlight = true;
-  refreshYouTubeCache()
-    .catch((err) => console.error("Background refresh failed:", err))
-    .finally(() => {
-      backgroundRefreshInFlight = false;
-    });
+  const run = () =>
+    refreshYouTubeCache()
+      .catch((err) => console.error("Background refresh failed:", err))
+      .finally(() => {
+        backgroundRefreshInFlight = false;
+      });
+  // On Vercel a plain un-awaited promise is frozen once the response is
+  // sent, so refreshes died half-way (after spending quota) and never wrote
+  // the cache. after() keeps the function alive until the refresh finishes.
+  try {
+    after(run);
+  } catch {
+    // Called outside a request scope (e.g. a script): just run it.
+    void run();
+  }
 }

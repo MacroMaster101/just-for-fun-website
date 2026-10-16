@@ -199,7 +199,8 @@ export async function fetchFreshYouTubePayload(): Promise<YouTubePayload> {
 
     // Upcoming scheduled streams (eventType=upcoming on search.list).
     // Fetched in parallel with the rest would save a bit of latency but the
-    // cron job runs at 06:00 UTC daily so it's not worth the complexity.
+    // cron job runs once a day (08:30 UTC, after the quota reset) so it's not
+    // worth the complexity.
     const upcomingStreams = await getUpcomingStreams(channel.id);
 
     return {
