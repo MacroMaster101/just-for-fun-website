@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { getCachedYouTubePayload } from "@/lib/youtubeCache";
 
-// 15 min Next ISR + 1 h SWR on top of the Postgres cache.
-export const revalidate = 900;
+// Dynamic (not ISR): a stale cache starts a background refresh via after(),
+// and the YouTube/RSS fetches inside it are rejected during a static
+// re-render ("Dynamic server usage"). Visitors are still served from
+// Vercel's edge cache through the Cache-Control header below.
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   const { payload, cachedAt } = await getCachedYouTubePayload();
