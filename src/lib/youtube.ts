@@ -597,7 +597,12 @@ async function getRssFallbackVideos(): Promise<ApiVideo[]> {
   const feedUrl = new URL("https://www.youtube.com/feeds/videos.xml");
   feedUrl.searchParams.set("channel_id", CHANNEL_ID);
 
-  const response = await fetch(feedUrl, { cache: "no-store" });
+  // YouTube's feed returns 404 intermittently; one retry usually succeeds.
+  let response = await fetch(feedUrl, { cache: "no-store" });
+  if (!response.ok) {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    response = await fetch(feedUrl, { cache: "no-store" });
+  }
   if (!response.ok) return [];
 
   const xml = await response.text();

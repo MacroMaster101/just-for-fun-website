@@ -59,7 +59,7 @@ export async function getCachedYouTubePayload(): Promise<{
       return { payload: fresh, cachedAt: new Date(), fromCache: false };
     }
 
-    const payload = row.payload as unknown as YouTubePayload;
+    const payload = withAllowedThumbnails(row.payload as unknown as YouTubePayload);
     const cachedAt = row.updatedAt;
     const age = Date.now() - cachedAt.getTime();
 
@@ -126,9 +126,15 @@ export async function refreshYouTubeCache({ force = false }: { force?: boolean }
     );
     try {
       const existingPayload = await readCachedPayload();
-      if (existingPayload && existingPayload.source === "youtube") {
+      // Keep a real API payload over any fallback, and never replace a list
+      // of videos with an empty one (the RSS feed 404s intermittently).
+      const keepExisting =
+        existingPayload &&
+        (existingPayload.source === "youtube" ||
+          (fresh.videos.length === 0 && (existingPayload.videos?.length ?? 0) > 0));
+      if (existingPayload && keepExisting) {
         console.warn(
-          "YouTube refresh returned fallback; keeping previous good cache.",
+          "YouTube refresh returned fallback; keeping previous cache.",
           fresh.message
         );
         return {
@@ -154,6 +160,24 @@ export async function refreshYouTubeCache({ force = false }: { force?: boolean }
     console.error("YouTube cache write failed:", err);
     return { ok: false, payload: fresh };
   }
+}
+
+/**
+ * Older cached payloads (from the RSS fallback) point thumbnails at
+ * i1–i4.ytimg.com, which the CSP and next/image don't allow. Rewrite them
+ * to i.ytimg.com (same image path) when reading, so they display without
+ * waiting for the next refresh.
+ */
+function withAllowedThumbnails(payload: YouTubePayload): YouTubePayload {
+  if (!Array.isArray(payload?.videos)) return payload;
+  return {
+    ...payload,
+    videos: payload.videos.map((video) =>
+      typeof video.thumbnail === "string"
+        ? { ...video, thumbnail: video.thumbnail.replace(/^https:\/\/i\d\.ytimg\.com\//, "https://i.ytimg.com/") }
+        : video
+    ),
+  };
 }
 
 async function readCachedPayload(): Promise<YouTubePayload | null> {
