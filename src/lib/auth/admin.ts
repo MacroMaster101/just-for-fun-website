@@ -17,13 +17,10 @@ export function verifiedEmail(user: User | null): string | null {
 /**
  * The root admin's email, normalised, or null if unset. Server-only: it
  * deliberately has no NEXT_PUBLIC_ prefix so it can never be bundled into
- * client code. NEXT_PUBLIC_ADMIN_EMAIL is still read as a fallback until
- * every environment has been switched over to ADMIN_EMAIL.
+ * client code.
  */
 export function rootAdminEmail(): string | null {
-  const value = (process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL || "")
-    .toLowerCase()
-    .trim();
+  const value = (process.env.ADMIN_EMAIL || "").toLowerCase().trim();
   return value || null;
 }
 

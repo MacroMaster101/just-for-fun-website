@@ -24,6 +24,7 @@ import { UserMenu } from "@/components/auth/UserMenu";
 import { NotificationBell } from "@/components/auth/NotificationBell";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { authErrorMessage } from "@/lib/authErrors";
 
 const navLinks = [
   { name: "Home", href: "#hero", icon: Home },
@@ -97,13 +98,15 @@ export const Header = () => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const errorMsg =
+    const rawError =
       params.get("auth_error") ||
       params.get("error_description") ||
-      hashParams.get("error_description");
-    if (errorMsg) {
+      hashParams.get("error_description") ||
+      hashParams.get("error_code");
+    if (rawError) {
+      // The URL is attacker-controllable, so only a fixed message is shown.
       // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time mount: reading auth error from URL params
-      openAuth("login", errorMsg);
+      openAuth("login", authErrorMessage(rawError));
       const cleanUrl = window.location.pathname + window.location.hash;
       window.history.replaceState({}, document.title, cleanUrl);
     }

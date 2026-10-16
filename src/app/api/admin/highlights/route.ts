@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { verifyAdmin } from "@/lib/auth/admin";
 import { prisma } from "@/lib/prisma";
+import { safeLinkUrl } from "@/lib/safeUrl";
 
 export const dynamic = "force-dynamic";
 
@@ -53,8 +54,7 @@ export async function PATCH(request: Request) {
   if (description !== undefined) data.description = description;
   const duration = str(body.duration);
   if (duration !== undefined) data.duration = duration;
-  const thumbnailUrl = str(body.thumbnailUrl);
-  if (thumbnailUrl !== undefined) data.thumbnailUrl = thumbnailUrl;
+  if (typeof body.thumbnailUrl === "string") data.thumbnailUrl = safeLinkUrl(body.thumbnailUrl);
 
   if (typeof body.status === "string" && STATUSES.has(body.status)) {
     data.status = body.status;

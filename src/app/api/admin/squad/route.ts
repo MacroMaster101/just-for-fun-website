@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { verifyAdmin } from "@/lib/auth/admin";
 import { prisma } from "@/lib/prisma";
+import { safeLinkUrl } from "@/lib/safeUrl";
 
 interface SquadMemberInput {
   name?: unknown;
@@ -31,12 +32,10 @@ function normalizeInput(raw: SquadMemberInput) {
   return {
     name: str(raw.name),
     role: str(raw.role),
-    avatarUrl: str(raw.avatarUrl),
+    avatarUrl: safeLinkUrl(raw.avatarUrl),
     favoriteGames: games,
     signatureAgent: str(raw.signatureAgent),
-    twitchUrl: typeof raw.twitchUrl === "string" && raw.twitchUrl.trim()
-      ? raw.twitchUrl.trim()
-      : null,
+    twitchUrl: safeLinkUrl(raw.twitchUrl) || null,
     cpu: str(raw.cpu),
     gpu: str(raw.gpu),
     ram: str(raw.ram),
