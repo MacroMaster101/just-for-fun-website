@@ -7,9 +7,10 @@ import { HOUR, MINUTE, ipSubject, rateLimit } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
+// Signed-out spins post with the J4FN logo instead of Discord's default avatar.
 const ANONYMOUS_ACTOR = {
   name: "Anonymous",
-  avatarUrl: null as string | null,
+  avatarUrl: "https://j4fn.site/logo-mark.png" as string | null,
 };
 
 const MAX_NAME_LENGTH = 60;
